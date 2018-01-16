@@ -9,7 +9,7 @@ import (
 
 func maybe(err error) {
 	if err != nil {
-		fmt.Printf("Error: %s", err)
+		fmt.Printf("Error:\n%s\n", err)
 		os.Exit(1)
 	}
 }
@@ -18,19 +18,19 @@ func startTask(task Task, prompter Prompter, db *Store) {
 	taskID, err := db.AddTask(task)
 	maybe(err)
 	for i := 0; i < task.count; i++ {
-		// Create a new "Pomo" to represent
+		// Create a record for
 		// this particular stent of work
-		pomo := &Pomo{TaskID: taskID}
+		record := &Record{}
 		// Prompt the client
 		maybe(prompter.Prompt("Begin Working!"))
-		pomo.Start = time.Now()
+		record.Start = time.Now()
 		// Wait the specified interval
 		time.Sleep(task.duration)
 		maybe(prompter.Prompt("Take a Break!"))
 		// Record how long the user waited
 		// until closing the notification
-		pomo.End = time.Now()
-		maybe(db.AddPomo(*pomo))
+		record.End = time.Now()
+		maybe(db.AddRecord(taskID, *record))
 	}
 
 }
@@ -41,13 +41,14 @@ func start(cmd *cli.Cmd) {
 		duration = cmd.StringOpt("d duration", "25m", "duration of each stent")
 		count    = cmd.IntOpt("c count", 4, "number of working stents")
 		name     = cmd.StringArg("NAME", "", "descriptive name of the given task")
-		path     = cmd.StringOpt("d db", "~/.pomo/state.db", "path to the pomo sqlite database")
+		path     = cmd.StringOpt("p path", defaultDBPath(), "path to the pomo state directory")
 	)
 	cmd.Action = func() {
 		parsed, err := time.ParseDuration(*duration)
 		maybe(err)
 		db, err := NewStore(*path)
 		maybe(err)
+		defer db.Close()
 		task := Task{
 			Name:     *name,
 			count:    *count,
@@ -57,7 +58,18 @@ func start(cmd *cli.Cmd) {
 	}
 }
 
-func initialize(cmd *cli.Cmd) {}
+func initialize(cmd *cli.Cmd) {
+	cmd.Spec = "[OPTIONS]"
+	var (
+		path = cmd.StringOpt("p path", defaultDBPath(), "path to the pomo state directory")
+	)
+	cmd.Action = func() {
+		db, err := NewStore(*path)
+		maybe(err)
+		defer db.Close()
+		maybe(initDB(db))
+	}
+}
 
 func list(cmd *cli.Cmd) {}
 

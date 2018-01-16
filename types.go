@@ -14,9 +14,9 @@ type Task struct {
 	duration time.Duration
 }
 
-// Pomo is a stetch of work performed on a
+// Record is a stetch of work performed on a
 // specific task.
-type Pomo struct {
+type Record struct {
 	TaskID int       `json:"task_id"`
 	Start  time.Time `json:"start"`
 	End    time.Time `json:"end"`
