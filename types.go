@@ -8,8 +8,9 @@ import (
 
 // Task describes some activity
 type Task struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
+	ID       int       `json:"id"`
+	Name     string    `json:"name"`
+	Records  []*Record `json:"records"`
 	count    int
 	duration time.Duration
 }
@@ -17,9 +18,8 @@ type Task struct {
 // Record is a stetch of work performed on a
 // specific task.
 type Record struct {
-	TaskID int       `json:"task_id"`
-	Start  time.Time `json:"start"`
-	End    time.Time `json:"end"`
+	Start time.Time `json:"start"`
+	End   time.Time `json:"end"`
 }
 
 // Prompter prompts a user with a message.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/jawher/mow.cli"
 	"os"
@@ -15,7 +16,7 @@ func maybe(err error) {
 }
 
 func startTask(task Task, prompter Prompter, db *Store) {
-	taskID, err := db.AddTask(task)
+	taskID, err := db.CreateTask(task)
 	maybe(err)
 	for i := 0; i < task.count; i++ {
 		// Create a record for
@@ -30,7 +31,7 @@ func startTask(task Task, prompter Prompter, db *Store) {
 		// Record how long the user waited
 		// until closing the notification
 		record.End = time.Now()
-		maybe(db.AddRecord(taskID, *record))
+		maybe(db.CreateRecord(taskID, *record))
 	}
 
 }
@@ -71,7 +72,19 @@ func initialize(cmd *cli.Cmd) {
 	}
 }
 
-func list(cmd *cli.Cmd) {}
+func list(cmd *cli.Cmd) {
+	var (
+		path = cmd.StringOpt("p path", defaultDBPath(), "path to the pomo state directory")
+	)
+	cmd.Action = func() {
+		db, err := NewStore(*path)
+		maybe(err)
+		defer db.Close()
+		tasks, err := db.ReadTasks()
+		maybe(err)
+		maybe(json.NewEncoder(os.Stdout).Encode(tasks))
+	}
+}
 
 func main() {
 	app := cli.App("pomo", "Pomodoro CLI")
