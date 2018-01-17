@@ -108,6 +108,24 @@ func (s Store) ReadRecords(taskID int) ([]*Record, error) {
 	return records, nil
 }
 
+func (s Store) DeleteTask(taskID int) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec("DELETE FROM task WHERE rowid = $1", &taskID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	_, err = tx.Exec("DELETE FROM record WHERE task_id = $1", &taskID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
 func (s Store) Close() error { return s.db.Close() }
 
 func initDB(db *Store) error {

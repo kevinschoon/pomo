@@ -86,7 +86,16 @@ func list(path *string) func(*cli.Cmd) {
 }
 
 func _delete(path *string) func(*cli.Cmd) {
-	return func(cmd *cli.Cmd) {}
+	return func(cmd *cli.Cmd) {
+		cmd.Spec = "[OPTIONS] TASK_ID"
+		var taskID = cmd.IntArg("TASK_ID", -1, "task to delete")
+		cmd.Action = func() {
+			db, err := NewStore(*path)
+			maybe(err)
+			defer db.Close()
+			maybe(db.DeleteTask(*taskID))
+		}
+	}
 }
 
 func main() {
