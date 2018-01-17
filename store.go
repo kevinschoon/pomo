@@ -36,7 +36,7 @@ func (s Store) CreateTask(task Task) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	_, err = tx.Exec("INSERT INTO task (name) VALUES ($1)", task.Name)
+	_, err = tx.Exec("INSERT INTO task (message) VALUES ($1)", task.Message)
 	if err != nil {
 		tx.Rollback()
 		return -1, err
@@ -60,14 +60,14 @@ func (s Store) CreateRecord(taskID int, record Record) error {
 }
 
 func (s Store) ReadTasks() ([]*Task, error) {
-	rows, err := s.db.Query(`SELECT rowid,name FROM task`)
+	rows, err := s.db.Query(`SELECT rowid,message FROM task`)
 	if err != nil {
 		return nil, err
 	}
 	tasks := []*Task{}
 	for rows.Next() {
 		task := &Task{Records: []*Record{}}
-		err = rows.Scan(&task.ID, &task.Name)
+		err = rows.Scan(&task.ID, &task.Message)
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +113,7 @@ func (s Store) Close() error { return s.db.Close() }
 func initDB(db *Store) error {
 	stmt := `
     CREATE TABLE task (
-	name TEXT
+	message TEXT
     );
     CREATE TABLE record (
 	task_id INTEGER,

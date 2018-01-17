@@ -9,7 +9,7 @@ import (
 // Task describes some activity
 type Task struct {
 	ID       int       `json:"id"`
-	Name     string    `json:"name"`
+	Message  string    `json:"message"`
 	Records  []*Record `json:"records"`
 	count    int
 	duration time.Duration

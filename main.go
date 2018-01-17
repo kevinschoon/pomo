@@ -37,11 +37,11 @@ func startTask(task Task, prompter Prompter, db *Store) {
 }
 
 func start(cmd *cli.Cmd) {
-	cmd.Spec = "[OPTIONS] NAME"
+	cmd.Spec = "[OPTIONS] MESSAGE"
 	var (
 		duration = cmd.StringOpt("d duration", "25m", "duration of each stent")
 		count    = cmd.IntOpt("c count", 4, "number of working stents")
-		name     = cmd.StringArg("NAME", "", "descriptive name of the given task")
+		message  = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
 		path     = cmd.StringOpt("p path", defaultDBPath(), "path to the pomo state directory")
 	)
 	cmd.Action = func() {
@@ -51,7 +51,7 @@ func start(cmd *cli.Cmd) {
 		maybe(err)
 		defer db.Close()
 		task := Task{
-			Name:     *name,
+			Message:  *message,
 			count:    *count,
 			duration: parsed,
 		}
