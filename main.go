@@ -50,9 +50,9 @@ func list(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS]"
 		var (
-			asJSON  = cmd.BoolOpt("json", false, "output task history as JSON")
-			reverse = cmd.BoolOpt("r reverse", false, "sort tasks assending in age")
-			limit   = cmd.IntOpt("n limit", 0, "limit the number of results by n")
+			asJSON = cmd.BoolOpt("json", false, "output task history as JSON")
+			assend = cmd.BoolOpt("assend", true, "sort tasks assending in age")
+			limit  = cmd.IntOpt("n limit", 0, "limit the number of results by n")
 		)
 		cmd.Action = func() {
 			db, err := NewStore(*path)
@@ -60,7 +60,7 @@ func list(path *string) func(*cli.Cmd) {
 			defer db.Close()
 			tasks, err := db.ReadTasks()
 			maybe(err)
-			if *reverse {
+			if *assend {
 				sort.Sort(sort.Reverse(ByID(tasks)))
 			}
 			if *limit > 0 && (len(tasks) > *limit) {
