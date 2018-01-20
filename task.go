@@ -17,7 +17,8 @@ import (
 func display(writer io.Writer, msg Message) {
 	fmt.Fprintf(
 		writer,
-		"%s remaining [ pomodoro %d/%d ]\n",
+		"%s %s remaining [ pomodoro %d/%d ]\n",
+		msg.Wheel,
 		(msg.Duration - time.Since(msg.Start)).Truncate(time.Second),
 		msg.CurrentPomodoro,
 		msg.Pomodoros,
@@ -31,6 +32,7 @@ func run(task Task, prompter Prompter, db *Store) {
 	writer.Start()
 	ticker := time.NewTicker(RefreshInterval)
 	timer := time.NewTimer(task.duration)
+	wheel := &Wheel{}
 	var p int
 	for p < task.pomodoros {
 		pomodoro := &Pomodoro{}
@@ -44,6 +46,7 @@ func run(task Task, prompter Prompter, db *Store) {
 				Start:           pomodoro.Start,
 				Duration:        task.duration,
 				Pomodoros:       task.pomodoros,
+				Wheel:           wheel,
 				CurrentPomodoro: p,
 			})
 			goto loop

@@ -20,6 +20,30 @@ type Message struct {
 	Duration        time.Duration
 	Pomodoros       int
 	CurrentPomodoro int
+	Wheel           *Wheel
+}
+
+// Wheel keeps track of an ASCII spinner
+type Wheel struct {
+	state int
+}
+
+func (w *Wheel) String() string {
+	switch w.state {
+	case 0:
+		w.state++
+		return "|"
+	case 1:
+		w.state++
+		return "/"
+	case 2:
+		w.state++
+		return "-"
+	case 3:
+		w.state = 0
+		return "\\"
+	}
+	return ""
 }
 
 // Config represents user preferences
