@@ -15,33 +15,12 @@ func maybe(err error) {
 	}
 }
 
-func startTask(task Task, prompter Prompter, db *Store) {
-	taskID, err := db.CreateTask(task)
-	maybe(err)
-	for i := 0; i < task.count; i++ {
-		// Create a record for
-		// this particular stent of work
-		record := &Record{}
-		// Prompt the client
-		maybe(prompter.Prompt("Begin Working!"))
-		record.Start = time.Now()
-		// Wait the specified interval
-		time.Sleep(task.duration)
-		maybe(prompter.Prompt("Take a Break!"))
-		// Record how long the user waited
-		// until closing the notification
-		record.End = time.Now()
-		maybe(db.CreateRecord(taskID, *record))
-	}
-
-}
-
 func start(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS] MESSAGE"
 		var (
 			duration = cmd.StringOpt("d duration", "25m", "duration of each stent")
-			count    = cmd.IntOpt("c count", 4, "number of working stents")
+			stents   = cmd.IntOpt("s stents", 4, "number of working stents")
 			message  = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
 			tags     = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
 		)
@@ -54,10 +33,10 @@ func start(path *string) func(*cli.Cmd) {
 			task := Task{
 				Message:  *message,
 				Tags:     *tags,
-				count:    *count,
+				stents:   *stents,
 				duration: parsed,
 			}
-			startTask(task, &I3{}, db)
+			run(task, &I3{}, db)
 		}
 	}
 }

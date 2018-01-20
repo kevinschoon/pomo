@@ -5,14 +5,28 @@ import (
 	"time"
 )
 
+// RefreshInterval is the frequency at which
+// the display is updated.
+const RefreshInterval = 800 * time.Millisecond
+
+// Message is used internally for updating
+// the display.
+type Message struct {
+	Start        time.Time
+	Duration     time.Duration
+	Stents       int
+	CurrentStent int
+}
+
 // Task describes some activity
 type Task struct {
 	ID      int       `json:"id"`
 	Message string    `json:"message"`
 	Records []*Record `json:"records"`
 	// Free-form tags associated with this task
-	Tags     []string `json:"tags"`
-	count    int
+	Tags []string `json:"tags"`
+	// Number of iterations to perform the task
+	stents   int
 	duration time.Duration
 }
 
