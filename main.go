@@ -19,10 +19,10 @@ func start(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS] MESSAGE"
 		var (
-			duration = cmd.StringOpt("d duration", "25m", "duration of each stent")
-			stents   = cmd.IntOpt("s stents", 4, "number of working stents")
-			message  = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
-			tags     = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
+			duration  = cmd.StringOpt("d duration", "25m", "duration of each stent")
+			pomodoros = cmd.IntOpt("p pomodoros", 4, "number of pomodoros")
+			message   = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
+			tags      = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
 		)
 		cmd.Action = func() {
 			parsed, err := time.ParseDuration(*duration)
@@ -31,10 +31,10 @@ func start(path *string) func(*cli.Cmd) {
 			maybe(err)
 			defer db.Close()
 			task := Task{
-				Message:  *message,
-				Tags:     *tags,
-				stents:   *stents,
-				duration: parsed,
+				Message:   *message,
+				Tags:      *tags,
+				pomodoros: *pomodoros,
+				duration:  parsed,
 			}
 			run(task, &I3{}, db)
 		}

@@ -50,12 +50,12 @@ func (s Store) CreateTask(task Task) (int, error) {
 	return taskID, tx.Commit()
 }
 
-func (s Store) CreateRecord(taskID int, record Record) error {
+func (s Store) CreatePomodoro(taskID int, pomodoro Pomodoro) error {
 	_, err := s.db.Exec(
-		`INSERT INTO record (task_id, start, end) VALUES ($1, $2, $3)`,
+		`INSERT INTO pomodoro (task_id, start, end) VALUES ($1, $2, $3)`,
 		taskID,
-		record.Start,
-		record.End,
+		pomodoro.Start,
+		pomodoro.End,
 	)
 	return err
 }
@@ -68,47 +68,47 @@ func (s Store) ReadTasks() ([]*Task, error) {
 	tasks := []*Task{}
 	for rows.Next() {
 		var tags string
-		task := &Task{Records: []*Record{}}
+		task := &Task{Pomodoros: []*Pomodoro{}}
 		err = rows.Scan(&task.ID, &task.Message, &tags)
 		if err != nil {
 			return nil, err
 		}
 		task.Tags = strings.Split(tags, ",")
-		records, err := s.ReadRecords(task.ID)
+		pomodoros, err := s.ReadPomodoros(task.ID)
 		if err != nil {
 			return nil, err
 		}
-		for _, record := range records {
-			task.Records = append(task.Records, record)
+		for _, pomodoro := range pomodoros {
+			task.Pomodoros = append(task.Pomodoros, pomodoro)
 		}
 		tasks = append(tasks, task)
 	}
 	return tasks, nil
 }
 
-func (s Store) ReadRecords(taskID int) ([]*Record, error) {
-	rows, err := s.db.Query(`SELECT start,end FROM record WHERE task_id = $1`, &taskID)
+func (s Store) ReadPomodoros(taskID int) ([]*Pomodoro, error) {
+	rows, err := s.db.Query(`SELECT start,end FROM pomodoro WHERE task_id = $1`, &taskID)
 	if err != nil {
 		return nil, err
 	}
-	records := []*Record{}
+	pomodoros := []*Pomodoro{}
 	for rows.Next() {
 		var (
 			startStr string
 			endStr   string
 		)
-		record := &Record{}
+		pomodoro := &Pomodoro{}
 		err = rows.Scan(&startStr, &endStr)
 		if err != nil {
 			return nil, err
 		}
 		start, _ := time.Parse(datetimeFmt, startStr)
 		end, _ := time.Parse(datetimeFmt, endStr)
-		record.Start = start
-		record.End = end
-		records = append(records, record)
+		pomodoro.Start = start
+		pomodoro.End = end
+		pomodoros = append(pomodoros, pomodoro)
 	}
-	return records, nil
+	return pomodoros, nil
 }
 
 func (s Store) DeleteTask(taskID int) error {
@@ -137,7 +137,7 @@ func initDB(db *Store) error {
 	message TEXT,
 	tags TEXT
     );
-    CREATE TABLE record (
+    CREATE TABLE pomodoro (
 	task_id INTEGER,
 	start DATETTIME,
 	end DATETTIME

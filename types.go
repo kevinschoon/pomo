@@ -12,27 +12,27 @@ const RefreshInterval = 800 * time.Millisecond
 // Message is used internally for updating
 // the display.
 type Message struct {
-	Start        time.Time
-	Duration     time.Duration
-	Stents       int
-	CurrentStent int
+	Start           time.Time
+	Duration        time.Duration
+	Pomodoros       int
+	CurrentPomodoro int
 }
 
 // Task describes some activity
 type Task struct {
-	ID      int       `json:"id"`
-	Message string    `json:"message"`
-	Records []*Record `json:"records"`
+	ID        int         `json:"id"`
+	Message   string      `json:"message"`
+	Pomodoros []*Pomodoro `json:"pomodoros"`
 	// Free-form tags associated with this task
 	Tags []string `json:"tags"`
-	// Number of iterations to perform the task
-	stents   int
-	duration time.Duration
+	// Number of pomodoros for this task
+	pomodoros int
+	duration  time.Duration
 }
 
-// Record is a stetch of work performed on a
-// specific task.
-type Record struct {
+// Pomodoro is a unit of time to spend working
+// on a single task.
+type Pomodoro struct {
 	Start time.Time `json:"start"`
 	End   time.Time `json:"end"`
 }
