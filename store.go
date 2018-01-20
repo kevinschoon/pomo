@@ -73,7 +73,9 @@ func (s Store) ReadTasks() ([]*Task, error) {
 		if err != nil {
 			return nil, err
 		}
-		task.Tags = strings.Split(tags, ",")
+		if tags != "" {
+			task.Tags = strings.Split(tags, ",")
+		}
 		pomodoros, err := s.ReadPomodoros(task.ID)
 		if err != nil {
 			return nil, err
