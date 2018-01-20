@@ -89,14 +89,16 @@ func NewConfig(path string) (*Config, error) {
 
 // Task describes some activity
 type Task struct {
-	ID        int         `json:"id"`
-	Message   string      `json:"message"`
+	ID      int    `json:"id"`
+	Message string `json:"message"`
+	// Array of completed pomodoros
 	Pomodoros []*Pomodoro `json:"pomodoros"`
 	// Free-form tags associated with this task
 	Tags []string `json:"tags"`
 	// Number of pomodoros for this task
-	pomodoros int
-	duration  time.Duration
+	NPomodoros int `json:"n_pomodoros"`
+	// Duration of each pomodoro
+	Duration time.Duration `json:"duration"`
 }
 
 // ByID is a sortable array of tasks

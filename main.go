@@ -24,10 +24,10 @@ func start(path *string) func(*cli.Cmd) {
 			maybe(err)
 			defer db.Close()
 			task := Task{
-				Message:   *message,
-				Tags:      *tags,
-				pomodoros: *pomodoros,
-				duration:  parsed,
+				Message:    *message,
+				Tags:       *tags,
+				NPomodoros: *pomodoros,
+				Duration:   parsed,
 			}
 			run(task, &I3{}, db)
 		}

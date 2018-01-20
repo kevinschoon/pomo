@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	//"github.com/fatih/color"
+	"github.com/fatih/color"
 	"os"
 	"os/user"
+	"time"
 )
 
 func maybe(err error) {
@@ -22,17 +23,34 @@ func defaultConfigPath() string {
 
 func summerizeTasks(config *Config, tasks []*Task) {
 	for _, task := range tasks {
-		var tags string
+		fmt.Printf("%d: [%s] ", task.ID, task.Duration.Truncate(time.Second))
+		// a list of green/red pomodoros
+		// green[x x] red[x x]
+		fmt.Printf("[")
+		for i := 0; i < task.NPomodoros; i++ {
+			if i > 0 {
+				fmt.Printf(" ")
+			}
+			if len(task.Pomodoros) >= i {
+				color.New(color.FgGreen).Printf("X")
+			} else {
+				color.New(color.FgRed).Printf("X")
+			}
+		}
+		fmt.Printf("]")
 		if len(task.Tags) > 0 {
+			fmt.Printf(" [")
 			for i, tag := range task.Tags {
 				if color, ok := config.Colors[tag]; ok {
 					if i > 0 {
-						tags += " "
+						fmt.Printf(" ")
 					}
-					tags += color.SprintfFunc()("%s", tag)
+					color.Printf("%s", tag)
 				}
 			}
+			fmt.Printf("]")
 		}
-		fmt.Printf("%d [%s]: %s\n", task.ID, tags, task.Message)
+		fmt.Printf(" - %s", task.Message)
+		fmt.Printf("\n")
 	}
 }

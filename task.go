@@ -31,21 +31,21 @@ func run(task Task, prompter Prompter, db *Store) {
 	writer := uilive.New()
 	writer.Start()
 	ticker := time.NewTicker(RefreshInterval)
-	timer := time.NewTimer(task.duration)
+	timer := time.NewTimer(task.Duration)
 	wheel := &Wheel{}
 	var p int
-	for p < task.pomodoros {
+	for p < task.NPomodoros {
 		pomodoro := &Pomodoro{}
 		maybe(prompter.Prompt("Begin working!"))
 		pomodoro.Start = time.Now()
-		timer.Reset(task.duration)
+		timer.Reset(task.Duration)
 	loop:
 		select {
 		case <-ticker.C:
 			display(writer, Message{
 				Start:           pomodoro.Start,
-				Duration:        task.duration,
-				Pomodoros:       task.pomodoros,
+				Duration:        task.Duration,
+				Pomodoros:       task.NPomodoros,
 				Wheel:           wheel,
 				CurrentPomodoro: p,
 			})

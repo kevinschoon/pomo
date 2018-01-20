@@ -30,7 +30,9 @@ func (s Store) CreateTask(task Task) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	_, err = tx.Exec("INSERT INTO task (message,tags) VALUES ($1,$2)", task.Message, strings.Join(task.Tags, ","))
+	_, err = tx.Exec(
+		"INSERT INTO task (message,pomodoros,duration,tags) VALUES ($1,$2,$3,$4)",
+		task.Message, task.NPomodoros, task.Duration.String(), strings.Join(task.Tags, ","))
 	if err != nil {
 		tx.Rollback()
 		return -1, err
@@ -54,18 +56,23 @@ func (s Store) CreatePomodoro(taskID int, pomodoro Pomodoro) error {
 }
 
 func (s Store) ReadTasks() ([]*Task, error) {
-	rows, err := s.db.Query(`SELECT rowid,message,tags FROM task`)
+	rows, err := s.db.Query(`SELECT rowid,message,pomodoros,duration,tags FROM task`)
 	if err != nil {
 		return nil, err
 	}
 	tasks := []*Task{}
 	for rows.Next() {
-		var tags string
+		var (
+			tags        string
+			strDuration string
+		)
 		task := &Task{Pomodoros: []*Pomodoro{}}
-		err = rows.Scan(&task.ID, &task.Message, &tags)
+		err = rows.Scan(&task.ID, &task.Message, &task.NPomodoros, &strDuration, &tags)
 		if err != nil {
 			return nil, err
 		}
+		duration, _ := time.ParseDuration(strDuration)
+		task.Duration = duration
 		if tags != "" {
 			task.Tags = strings.Split(tags, ",")
 		}
@@ -130,6 +137,8 @@ func initDB(db *Store) error {
 	stmt := `
     CREATE TABLE task (
 	message TEXT,
+	pomodoros INTEGER,
+	duration TEXT,
 	tags TEXT
     );
     CREATE TABLE pomodoro (
