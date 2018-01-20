@@ -1,6 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/fatih/color"
+	"io/ioutil"
 	"os/exec"
 	"time"
 )
@@ -16,6 +20,47 @@ type Message struct {
 	Duration        time.Duration
 	Pomodoros       int
 	CurrentPomodoro int
+}
+
+// Config represents user preferences
+type Config struct {
+	Colors map[string]*color.Color
+}
+
+var colorMap = map[string]*color.Color{
+	"red":   color.New(color.FgRed),
+	"blue":  color.New(color.FgBlue),
+	"green": color.New(color.FgGreen),
+	"white": color.New(color.FgWhite),
+}
+
+func (c *Config) UnmarshalJSON(raw []byte) error {
+	config := &struct {
+		Colors map[string]string `json:"colors"`
+	}{}
+	err := json.Unmarshal(raw, config)
+	if err != nil {
+		return err
+	}
+	for key, name := range config.Colors {
+		if color, ok := colorMap[name]; ok {
+			c.Colors[key] = color
+		} else {
+			return fmt.Errorf("bad color choice: %s", name)
+		}
+	}
+	return nil
+}
+
+func NewConfig(path string) (*Config, error) {
+	raw, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	config := &Config{
+		Colors: map[string]*color.Color{},
+	}
+	return config, json.Unmarshal(raw, config)
 }
 
 // Task describes some activity

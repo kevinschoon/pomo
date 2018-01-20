@@ -4,19 +4,12 @@ import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"os"
-	"os/user"
 	"strings"
 	"time"
 )
 
 // 2018-01-16 19:05:21.752851759+08:00
 const datetimeFmt = "2006-01-02 15:04:05.999999999-07:00"
-
-func defaultDBPath() string {
-	u, err := user.Current()
-	maybe(err)
-	return u.HomeDir + "/.pomo"
-}
 
 type Store struct {
 	db *sql.DB

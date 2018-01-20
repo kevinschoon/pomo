@@ -2,18 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/jawher/mow.cli"
 	"os"
 	"time"
 )
-
-func maybe(err error) {
-	if err != nil {
-		fmt.Printf("Error:\n%s\n", err)
-		os.Exit(1)
-	}
-}
 
 func start(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
@@ -55,13 +47,20 @@ func initialize(path *string) func(*cli.Cmd) {
 
 func list(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
+		cmd.Spec = "[OPTIONS]"
+		var asJSON = cmd.BoolOpt("json", false, "output task history as JSON")
 		cmd.Action = func() {
 			db, err := NewStore(*path)
 			maybe(err)
 			defer db.Close()
 			tasks, err := db.ReadTasks()
 			maybe(err)
-			maybe(json.NewEncoder(os.Stdout).Encode(tasks))
+			if *asJSON {
+				maybe(json.NewEncoder(os.Stdout).Encode(tasks))
+				return
+			}
+			config, _ := NewConfig(*path + "/config.json")
+			summerizeTasks(config, tasks)
 		}
 	}
 }
@@ -83,7 +82,7 @@ func main() {
 	app := cli.App("pomo", "Pomodoro CLI")
 	app.Spec = "[OPTIONS]"
 	var (
-		path = app.StringOpt("p path", defaultDBPath(), "path to the pomo state directory")
+		path = app.StringOpt("p path", defaultConfigPath(), "path to the pomo config directory")
 	)
 	app.Command("start s", "start a new task", start(path))
 	app.Command("init", "initialize the sqlite database", initialize(path))
