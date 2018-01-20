@@ -5,6 +5,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"os/user"
+	"strings"
 	"time"
 )
 
@@ -36,7 +37,7 @@ func (s Store) CreateTask(task Task) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	_, err = tx.Exec("INSERT INTO task (message) VALUES ($1)", task.Message)
+	_, err = tx.Exec("INSERT INTO task (message,tags) VALUES ($1,$2)", task.Message, strings.Join(task.Tags, ","))
 	if err != nil {
 		tx.Rollback()
 		return -1, err
@@ -60,17 +61,19 @@ func (s Store) CreateRecord(taskID int, record Record) error {
 }
 
 func (s Store) ReadTasks() ([]*Task, error) {
-	rows, err := s.db.Query(`SELECT rowid,message FROM task`)
+	rows, err := s.db.Query(`SELECT rowid,message,tags FROM task`)
 	if err != nil {
 		return nil, err
 	}
 	tasks := []*Task{}
 	for rows.Next() {
+		var tags string
 		task := &Task{Records: []*Record{}}
-		err = rows.Scan(&task.ID, &task.Message)
+		err = rows.Scan(&task.ID, &task.Message, &tags)
 		if err != nil {
 			return nil, err
 		}
+		task.Tags = strings.Split(tags, ",")
 		records, err := s.ReadRecords(task.ID)
 		if err != nil {
 			return nil, err
@@ -131,7 +134,8 @@ func (s Store) Close() error { return s.db.Close() }
 func initDB(db *Store) error {
 	stmt := `
     CREATE TABLE task (
-	message TEXT
+	message TEXT,
+	tags TEXT
     );
     CREATE TABLE record (
 	task_id INTEGER,

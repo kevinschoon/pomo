@@ -7,9 +7,11 @@ import (
 
 // Task describes some activity
 type Task struct {
-	ID       int       `json:"id"`
-	Message  string    `json:"message"`
-	Records  []*Record `json:"records"`
+	ID      int       `json:"id"`
+	Message string    `json:"message"`
+	Records []*Record `json:"records"`
+	// Free-form tags associated with this task
+	Tags     []string `json:"tags"`
 	count    int
 	duration time.Duration
 }

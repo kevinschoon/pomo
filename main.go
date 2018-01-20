@@ -43,6 +43,7 @@ func start(path *string) func(*cli.Cmd) {
 			duration = cmd.StringOpt("d duration", "25m", "duration of each stent")
 			count    = cmd.IntOpt("c count", 4, "number of working stents")
 			message  = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
+			tags     = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
 		)
 		cmd.Action = func() {
 			parsed, err := time.ParseDuration(*duration)
@@ -52,6 +53,7 @@ func start(path *string) func(*cli.Cmd) {
 			defer db.Close()
 			task := Task{
 				Message:  *message,
+				Tags:     *tags,
 				count:    *count,
 				duration: parsed,
 			}
