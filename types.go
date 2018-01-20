@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os/exec"
 	"time"
 )
@@ -31,7 +30,7 @@ type Prompter interface {
 type I3 struct{}
 
 func (i *I3) Prompt(message string) error {
-	raw, err := exec.Command(
+	_, err := exec.Command(
 		"/bin/i3-nagbar",
 		"-m",
 		message,
@@ -39,6 +38,5 @@ func (i *I3) Prompt(message string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(raw))
 	return nil
 }
