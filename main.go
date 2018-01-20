@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/jawher/mow.cli"
 	"os"
+	"sort"
 	"time"
 )
 
@@ -48,13 +49,23 @@ func initialize(path *string) func(*cli.Cmd) {
 func list(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS]"
-		var asJSON = cmd.BoolOpt("json", false, "output task history as JSON")
+		var (
+			asJSON  = cmd.BoolOpt("json", false, "output task history as JSON")
+			reverse = cmd.BoolOpt("r reverse", false, "sort tasks assending in age")
+			limit   = cmd.IntOpt("n limit", 0, "limit the number of results by n")
+		)
 		cmd.Action = func() {
 			db, err := NewStore(*path)
 			maybe(err)
 			defer db.Close()
 			tasks, err := db.ReadTasks()
 			maybe(err)
+			if *reverse {
+				sort.Sort(sort.Reverse(ByID(tasks)))
+			}
+			if *limit > 0 && (len(tasks) > *limit) {
+				tasks = tasks[0:*limit]
+			}
 			if *asJSON {
 				maybe(json.NewEncoder(os.Stdout).Encode(tasks))
 				return

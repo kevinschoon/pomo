@@ -75,6 +75,13 @@ type Task struct {
 	duration  time.Duration
 }
 
+// ByID is a sortable array of tasks
+type ByID []*Task
+
+func (b ByID) Len() int           { return len(b) }
+func (b ByID) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b ByID) Less(i, j int) bool { return b[i].ID < b[j].ID }
+
 // Pomodoro is a unit of time to spend working
 // on a single task.
 type Pomodoro struct {
