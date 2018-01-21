@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"io/ioutil"
-	"os/exec"
 	"time"
+
+	"github.com/kevinschoon/pomo/libnotify"
 )
 
 // RefreshInterval is the frequency at which
@@ -115,22 +116,57 @@ type Pomodoro struct {
 	End   time.Time `json:"end"`
 }
 
-// Prompter prompts a user with a message.
-type Prompter interface {
-	Prompt(string) error
+// Notifier implements a system specific
+// notification. On Linux this libnotify.
+// TODO: OSX, Windows(?)
+type Notifier interface {
+	Begin(int, Task) error
+	Break(Task) error
+	Finish(Task) error
 }
 
-// I3 implements a prompter for i3
-type I3 struct{}
+// LibNotifier implements a Linux
+// notifier client.
+type LibNotifier struct {
+	client   *libnotify.Client
+	iconPath string
+}
 
-func (i *I3) Prompt(message string) error {
-	_, err := exec.Command(
-		"/bin/i3-nagbar",
-		"-m",
-		message,
-	).Output()
-	if err != nil {
-		return err
+func NewLibNotifier() Notifier {
+	ln := &LibNotifier{
+		client: libnotify.NewClient(),
 	}
-	return nil
+	// Write the tomato icon to a temp path
+	raw := MustAsset("tomato-icon.png")
+	fp, _ := ioutil.TempFile("", "pomo")
+	fp.Write(raw)
+	ln.iconPath = fp.Name()
+	fp.Close()
+	return ln
+}
+
+func (ln LibNotifier) Begin(count int, t Task) error {
+	return ln.client.Notify(libnotify.Notification{
+		Title: t.Message,
+		Body:  fmt.Sprintf("Task is starting (%d/%d pomodoros)", count, t.NPomodoros),
+		Icon:  ln.iconPath,
+	})
+}
+
+func (ln LibNotifier) Break(t Task) error {
+	return ln.client.Notify(libnotify.Notification{
+		Title:   t.Message,
+		Urgency: "critical",
+		Body:    fmt.Sprintf("Time to take a break!\nPress enter at the console to initiate the break."),
+		Icon:    ln.iconPath,
+	})
+}
+
+func (ln LibNotifier) Finish(t Task) error {
+	return ln.client.Notify(libnotify.Notification{
+		Title:   t.Message,
+		Urgency: "critical",
+		Body:    fmt.Sprintf("This task session is complete!"),
+		Icon:    ln.iconPath,
+	})
 }

@@ -23,13 +23,15 @@ func start(path *string) func(*cli.Cmd) {
 			db, err := NewStore(*path)
 			maybe(err)
 			defer db.Close()
-			task := Task{
+			task := &Task{
 				Message:    *message,
 				Tags:       *tags,
 				NPomodoros: *pomodoros,
 				Duration:   parsed,
 			}
-			run(task, &I3{}, db)
+			runner, err := NewTaskRunner(task, db)
+			maybe(err)
+			maybe(runner.Run())
 		}
 	}
 }
