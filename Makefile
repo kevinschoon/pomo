@@ -1,15 +1,23 @@
+VERSION ?= $(shell git describe --tags 2>/dev/null)
+ifeq "$(VERSION)" ""
+	VERSION := UNKNOWN
+endif
 
 .PHONY: \
-	all 
+	all \
+	test
 
 all: bin/pomo
 
 clean: 
-	rm -v bin/pomo bindata.go
+	rm -v bin/* 2> /dev/null || true
 
 bindata.go:
 	go-bindata -pkg main -o $@ tomato-icon.png
 
+test:
+	go test ./...
+
 bin/pomo: bindata.go
-	mkdir bin 2>/dev/null
-	go build -o bin/pomo
+	@echo mkdir bin 2>/dev/null || true
+	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo

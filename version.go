@@ -1,3 +1,3 @@
 package main
 
-var version = "undefined"
+var Version = "undefined"
