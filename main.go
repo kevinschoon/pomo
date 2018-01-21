@@ -97,6 +97,7 @@ func main() {
 	var (
 		path = app.StringOpt("p path", defaultConfigPath(), "path to the pomo config directory")
 	)
+	app.Version("v version", version)
 	app.Command("start s", "start a new task", start(path))
 	app.Command("init", "initialize the sqlite database", initialize(path))
 	app.Command("list l", "list historical tasks", list(path))
