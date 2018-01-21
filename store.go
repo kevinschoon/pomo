@@ -123,7 +123,7 @@ func (s Store) DeleteTask(taskID int) error {
 		tx.Rollback()
 		return err
 	}
-	_, err = tx.Exec("DELETE FROM record WHERE task_id = $1", &taskID)
+	_, err = tx.Exec("DELETE FROM pomodoro WHERE task_id = $1", &taskID)
 	if err != nil {
 		tx.Rollback()
 		return err
