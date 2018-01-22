@@ -7,7 +7,8 @@ endif
 	all \
 	test \
 	docs \
-	readme
+	readme \
+	release
 
 all: bin/pomo
 
@@ -21,12 +22,12 @@ bindata.go:
 test:
 	go test ./...
 
-bin/pomo: bindata.go
+release: bindata.go
 	@echo mkdir bin 2>/dev/null || true
-	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo
+	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo-$(VERSION)-linux
 
-docs: www/data/readme.json
+docs: readme
 	cd www && hugo -d ../docs
 
 readme:
-	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > $@
+	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > www/data/readme.json
