@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+         
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Pomo</title>
+        <style>
+
+    html body {
+        font-family: 'Raleway', sans-serif;
+        background-color: white;
+    }
+
+    :root {
+        --accent: red;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="/pomo/css/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+
+
+ <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/solarized-dark.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script>  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/kotlin.min.js"></script>  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/scala.min.js"></script>  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/swift.min.js"></script> 
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.19" />
+        
+        <link href="pomo/index.xml" rel="alternate" type="application/rss+xml" title="Pomo" />
+        <link href="pomo/index.xml" rel="feed" type="application/rss+xml" title="Pomo" />
+        
+        
+        
+    </head>
+
+    
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script>
+
+    <body>
+         
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">Pomo</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="intro">
+
+         <img class="profile" src="/tomato.png"> 
+
+        <h1>Pomo</h1>
+
+        <h2>Pomodoro Command Line Interface</h2>
+
+        <div class="btn-group" role="group" aria-label="...">
+            <button type="button" class="btn btn-default">
+                <a href="https://github.com/kevinschoon/pomo">install pomo</a>
+            </button>
+        </div>
+
+
+    </div>
+
+    <div class="readme">
+        <code>pomo</code> is a simple CLI implementation of the <a href="https://en.wikipedia.org/wiki/Pomodoro_Technique">Pomodoro Technique</a>. It was written for use on a Linux desktop but can easily be ported over to other platforms.</p>
+
+<h2 id="background">Background</h2>
+
+<p>The Pomodoro Technique is simple and effective time management technique:</p>
+
+<ul>
+<li>Decide on a task you want to accomplish</li>
+<li>Break the task into timed intervals (pomodoros), [approx. 25 min]</li>
+<li>After each pomodoro take a short break [approx. 3 - 5 min]</li>
+<li>Once all pomodoros are completed take a longer break [approx 15 - 20 min]</li>
+<li>Repeat</li>
+</ul>
+
+<h2 id="installation">Installation</h2>
+
+<h3 id="binaries">Binaries</h3>
+
+<p>Check out the <a href="https://github.com/kevinschoon/pomo/releases">releases section</a> for the latest binrary.</p>
+
+<h3 id="source">Source</h3>
+
+<pre><code> go get github.com/kevinschoon/pomo
+ cd $GOPATH/github.com/kevinschoon/pomo
+ make
+ ./bin/pomo
+</code></pre>
+
+<h2 id="usage">Usage</h2>
+
+<pre><code># Initialize the SQLite database and state directory
+pomo init
+# Start a new task
+# Add a tag &quot;dev&quot;, allocate 2 pomodoros for 1 minute each
+pomo start -t dev -p 2 -d 1m &quot;Write Some Codes&quot;
+...
+# List previous tasks
+# pomo list
+...
+</code></pre>
+
+<h2 id="dependencies">Dependencies</h2>
+
+<p><code>pomo</code> depends on the <a href="https://developer.gnome.org/libnotify/">libnotify</a> client package, a notification <a href="https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers">server</a> (installed with most Linux desktop environments),  and <a href="https://sqlite.org/">SQLite</a>.</p>
+
+<h2 id="roadmap">Roadmap</h2>
+
+<ul>
+<li>Support OSX</li>
+<li>Support Windows</li>
+<li>Generate charts</li>
+<li>Alternate notifiers</li>
+<li>??</li>
+</ul>
+
+    </div>
+
+</main>

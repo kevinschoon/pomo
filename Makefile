@@ -5,12 +5,15 @@ endif
 
 .PHONY: \
 	all \
-	test
+	test \
+	docs \
+	readme
 
 all: bin/pomo
 
 clean: 
 	rm -v bin/* 2> /dev/null || true
+	rm -v docs/* 2> /dev/null || true
 
 bindata.go:
 	go-bindata -pkg main -o $@ tomato-icon.png
@@ -22,5 +25,8 @@ bin/pomo: bindata.go
 	@echo mkdir bin 2>/dev/null || true
 	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo
 
-www/data/readme.json:
+docs: www/data/readme.json
+	cd www && hugo -d ../docs
+
+readme:
 	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > $@
