@@ -1,10 +1,10 @@
 # 🍅 pomo
 
-`pomo` is a simple CLI implementation of the [Pomodoro Technique](https://en.wikipedia.org/wiki/Pomodoro_Technique). It was written for use on a Linux desktop but can easily be ported over to other platforms.
+`pomo` is a simple CLI for using the [Pomodoro Technique](https://en.wikipedia.org/wiki/Pomodoro_Technique). There are [some](https://taskwarrior.org/) [amazing](https://todoist.com/) task management systems but `pomo` is more of a task *execution* or [timeboxing](https://en.wikipedia.org/wiki/Timeboxing) system. `pomo` helps you track what you did, how long it took you do it, and how long you expect it will take.
 
 ## Background
 
-The Pomodoro Technique is simple and effective time management technique:
+The Pomodoro Technique is simple and effective:
 
   * Decide on a task you want to accomplish
   * Break the task into timed intervals (pomodoros), [approx. 25 min]
@@ -14,11 +14,23 @@ The Pomodoro Technique is simple and effective time management technique:
 
 ## Installation
 
-### Binaries
+`pomo` depends on the [libnotify](https://developer.gnome.org/libnotify/) client package, a notification [server](https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers) (installed with most Linux desktop environments), and [SQLite](https://sqlite.org/).
 
-Check out the [releases section](https://github.com/kevinschoon/pomo/releases) for the latest binrary.
+Binaries are available in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
 
-### Source
+### Linux
+
+#### Binaries
+
+```
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.1.0/pomo-0.1.0-linux 
+echo f4587b566d135e05a6c1b1bec50fe3378f643f654319ca4662d5fe3aa590b8d2 pomo | sha256sum -c -
+chmod +x pomo
+./pomo -v
+# Copy pomo to somewhere on your $PATH
+```
+
+#### Source
 
  ```
  go get github.com/kevinschoon/pomo
@@ -40,10 +52,6 @@ pomo start -t dev -p 2 -d 1m "Write Some Codes"
 # pomo list
 ...
 ```
-
-## Dependencies
-
-`pomo` depends on the [libnotify](https://developer.gnome.org/libnotify/) client package, a notification [server](https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers) (installed with most Linux desktop environments),  and [SQLite](https://sqlite.org/).
 
 ## Roadmap
 
