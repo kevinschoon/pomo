@@ -16,4 +16,4 @@ theme = "minimal"
     highlight = true
     highlightStyle = "solarized-dark"
     highlightLanguages = ["go", "haskell", "kotlin", "scala", "swift"]
-    profilePic = "/tomato.png"
+    profilePic = "./tomato.png"
