@@ -60,3 +60,10 @@ pomo start -t dev -p 2 -d 1m "Write Some Codes"
   * Generate charts
   * Alternate notifiers
   * ??
+
+## Credits
+
+ * [pomodoro technique](https://cirillocompany.de/pages/pomodoro-technique/book/)
+ * [logo by rones](https://openclipart.org/detail/262421/tomato-by-rones)
+ * [website generate by hugo](http://gohugo.io/)
+ * [theme by calintat](https://github.com/calintat/minimal)
