@@ -21,3 +21,6 @@ test:
 bin/pomo: bindata.go
 	@echo mkdir bin 2>/dev/null || true
 	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo
+
+www/data/readme.json:
+	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > $@
