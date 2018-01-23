@@ -116,6 +116,11 @@ type Pomodoro struct {
 	End   time.Time `json:"end"`
 }
 
+// Duration returns the runtime of the pomodoro
+func (p Pomodoro) Duration() time.Duration {
+	return (p.End.Sub(p.Start))
+}
+
 // Notifier implements a system specific
 // notification. On Linux this libnotify.
 // TODO: OSX, Windows(?)
