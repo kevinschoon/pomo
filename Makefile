@@ -21,6 +21,7 @@ bindata.go:
 
 test:
 	go test ./...
+	go vet ./...
 
 release: bindata.go
 	@echo mkdir bin 2>/dev/null || true
