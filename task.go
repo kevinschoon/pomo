@@ -1,19 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"github.com/gosuri/uilive"
 	"time"
 )
 
 type TaskRunner struct {
 	count    int
+	state    State
 	task     *Task
 	store    *Store
-	writer   *uilive.Writer
-	timer    *time.Timer
-	ticker   *time.Ticker
+	started  time.Time
+	pause    chan bool
+	toggle   chan bool
 	notifier Notifier
+	duration time.Duration
 }
 
 func NewTaskRunner(task *Task, store *Store) (*TaskRunner, error) {
@@ -25,14 +25,90 @@ func NewTaskRunner(task *Task, store *Store) (*TaskRunner, error) {
 	tr := &TaskRunner{
 		task:     task,
 		store:    store,
+		state:    State(0),
+		pause:    make(chan bool),
+		toggle:   make(chan bool),
 		notifier: NewLibNotifier(),
-		writer:   uilive.New(),
-		timer:    time.NewTimer(task.Duration),
-		ticker:   time.NewTicker(RefreshInterval),
+		duration: task.Duration,
 	}
-	tr.writer.Start()
 	return tr, nil
 }
+
+func (t *TaskRunner) Start() {
+	go t.run()
+}
+
+func (t *TaskRunner) TimeRemaining() time.Duration {
+	return (t.duration - time.Since(t.started)).Truncate(time.Second)
+}
+
+func (t *TaskRunner) run() error {
+	for t.count < t.task.NPomodoros {
+		// Create a new pomodoro where we
+		// track the start / end time of
+		// of this session.
+		pomodoro := &Pomodoro{}
+		// Start this pomodoro
+		pomodoro.Start = time.Now()
+		// Set state to RUNNING
+		t.state = RUNNING
+		// Create a new timer
+		timer := time.NewTimer(t.duration)
+		// Record our started time
+		t.started = pomodoro.Start
+	loop:
+		select {
+		case <-timer.C:
+			// Timer ended so now we set the
+			// state as BREAKING
+			t.state = BREAKING
+		case <-t.toggle:
+			// Catch any toggles when we
+			// are not expecting them
+			goto loop
+		case <-t.pause:
+			timer.Stop()
+			// Record the remaining time of this pomodoro
+			remaining := t.TimeRemaining()
+			// Change state to PAUSED
+			t.state = PAUSED
+			// Wait for the user to press [p]
+			<-t.pause
+			// Resume the timer at previous
+			// remaining time
+			timer.Reset(remaining)
+			t.started = time.Now()
+			t.duration = remaining
+			// Restore state to RUNNING
+			t.state = RUNNING
+			goto loop
+		}
+		if t.count+1 == t.task.NPomodoros {
+			break
+		}
+		// User concludes the break
+		<-t.toggle
+		pomodoro.End = time.Now()
+		err := t.store.CreatePomodoro(t.task.ID, *pomodoro)
+		if err != nil {
+			return err
+		}
+		t.duration = t.task.Duration
+		t.count++
+	}
+	t.state = COMPLETE
+	return nil
+}
+
+func (t *TaskRunner) Toggle() {
+	t.toggle <- true
+}
+
+func (t *TaskRunner) Pause() {
+	t.pause <- true
+}
+
+/*
 
 func (t *TaskRunner) Run() error {
 	for t.count < t.task.NPomodoros {
@@ -40,7 +116,7 @@ func (t *TaskRunner) Run() error {
 		wheel := &Wheel{}
 		// This pomodoro
 		pomodoro := &Pomodoro{}
-		prompt("press enter to begin")
+		//prompt("press enter to begin")
 		// Emit a desktop notification
 		// that the task is beginning.
 		t.notifier.Begin(t.count, *t.task)
@@ -53,21 +129,22 @@ func (t *TaskRunner) Run() error {
 	loop:
 		select {
 		case <-t.ticker.C:
-			t.updateUI(Message{
+			t.msgCh <- Message{
 				Start:           pomodoro.Start,
 				Duration:        t.task.Duration,
 				Pomodoros:       t.task.NPomodoros,
 				Wheel:           wheel,
 				CurrentPomodoro: t.count,
-			})
+				State:           RUNNING,
+			}
 			goto loop
 		case <-t.timer.C:
 			// Send a notification for the
 			// user to take a break. We record
 			// how long it actually takes for
 			// them to initiate the break.
-			t.notifier.Break(*t.task)
-			prompt("press enter to take a break")
+			//t.notifier.Break(*t.task)
+			//prompt("press enter to take a break")
 			// Record the task as complete
 			pomodoro.End = time.Now()
 			// Record the session in the db
@@ -81,14 +158,4 @@ func (t *TaskRunner) Run() error {
 	}
 	return nil
 }
-
-func (t *TaskRunner) updateUI(msg Message) {
-	fmt.Fprintf(
-		t.writer,
-		"%s %s remaining [ pomodoro %d/%d ]\n",
-		msg.Wheel,
-		(msg.Duration - time.Since(msg.Start)).Truncate(time.Second),
-		msg.CurrentPomodoro,
-		msg.Pomodoros,
-	)
-}
+*/

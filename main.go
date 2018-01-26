@@ -31,7 +31,9 @@ func start(path *string) func(*cli.Cmd) {
 			}
 			runner, err := NewTaskRunner(task, db)
 			maybe(err)
-			maybe(runner.Run())
+			runner.Start()
+			startUI(runner)
+			//maybe(runner.Run())
 		}
 	}
 }

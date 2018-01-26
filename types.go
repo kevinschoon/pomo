@@ -10,6 +10,29 @@ import (
 	"github.com/kevinschoon/pomo/libnotify"
 )
 
+type State int
+
+func (s State) String() string {
+	switch s {
+	case RUNNING:
+		return "RUNNING"
+	case BREAKING:
+		return "BREAKING"
+	case COMPLETE:
+		return "COMPLETE"
+	case PAUSED:
+		return "PAUSED"
+	}
+	return ""
+}
+
+const (
+	RUNNING State = iota + 1
+	BREAKING
+	COMPLETE
+	PAUSED
+)
+
 // RefreshInterval is the frequency at which
 // the display is updated.
 const RefreshInterval = 800 * time.Millisecond
@@ -21,6 +44,7 @@ type Message struct {
 	Duration        time.Duration
 	Pomodoros       int
 	CurrentPomodoro int
+	State           State
 	Wheel           *Wheel
 }
 
@@ -125,9 +149,7 @@ func (p Pomodoro) Duration() time.Duration {
 // notification. On Linux this libnotify.
 // TODO: OSX, Windows(?)
 type Notifier interface {
-	Begin(int, Task) error
-	Break(Task) error
-	Finish(Task) error
+	Notify(string, string) error
 }
 
 // LibNotifier implements a Linux
@@ -150,28 +172,12 @@ func NewLibNotifier() Notifier {
 	return ln
 }
 
-func (ln LibNotifier) Begin(count int, t Task) error {
-	return ln.client.Notify(libnotify.Notification{
-		Title: t.Message,
-		Body:  fmt.Sprintf("Task is starting (%d/%d pomodoros)", count, t.NPomodoros),
-		Icon:  ln.iconPath,
-	})
-}
-
-func (ln LibNotifier) Break(t Task) error {
-	return ln.client.Notify(libnotify.Notification{
-		Title:   t.Message,
-		Urgency: "critical",
-		Body:    fmt.Sprintf("Time to take a break!\nPress enter at the console to initiate the break."),
-		Icon:    ln.iconPath,
-	})
-}
-
-func (ln LibNotifier) Finish(t Task) error {
-	return ln.client.Notify(libnotify.Notification{
-		Title:   t.Message,
-		Urgency: "critical",
-		Body:    fmt.Sprintf("This task session is complete!"),
-		Icon:    ln.iconPath,
-	})
+func (ln LibNotifier) Notify(title, body string) error {
+	return ln.client.Notify(
+		libnotify.Notification{
+			Title: title,
+			Body:  body,
+			Icon:  ln.iconPath,
+		},
+	)
 }
