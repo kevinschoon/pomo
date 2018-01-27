@@ -10,21 +10,37 @@ func status(runner *TaskRunner) termui.GridBufferer {
 	switch runner.state {
 	case RUNNING:
 		text = fmt.Sprintf(
-			"%s %s remaining [ pomodoro %d/%d ]",
-			"X",
+			`%s remaining - [%d/%d] Pomodoros completed
+
+			[q] - quit [p] - pause
+			`,
 			runner.TimeRemaining(),
 			runner.count,
 			runner.nPomodoros,
 		)
 	case BREAKING:
-		text = "Time to take a break.\nPress [enter] to begin the next Pomodoro!"
+		text = `It is time to take a break!
+
+		Take a step back, reflect on your progress, or have a coffee.
+		Once you a ready press [enter] to begin the next Pomodoro.
+
+		[q] - quit [p] - pause
+		`
 	case PAUSED:
-		text = "Press p to resume"
+		text = `Pomo is suspended, this time does not count against your progress.
+
+		[q] - quit [p] - unpause
+		`
 	case COMPLETE:
-		text = "Press q to quit"
+		text = `This session has concluded, press [q] to exit. If you are
+		going to continue working, consider taking an extended break 
+		before starting again.
+
+		[q] - quit
+		`
 	}
 	par := termui.NewPar(text)
-	par.Height = 10
+	par.Height = 8
 	par.BorderLabel = fmt.Sprintf("Pomo - %s", runner.state)
 	par.BorderLabelFg = termui.ColorWhite
 	par.BorderFg = termui.ColorRed
