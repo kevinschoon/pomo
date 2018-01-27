@@ -37,35 +37,22 @@ const (
 // the display is updated.
 const RefreshInterval = 800 * time.Millisecond
 
-// Message is used internally for updating
-// the display.
-type Message struct {
-	Start           time.Time
-	Duration        time.Duration
-	Pomodoros       int
-	CurrentPomodoro int
-	State           State
-	Wheel           *Wheel
-}
-
 // Wheel keeps track of an ASCII spinner
-type Wheel struct {
-	state int
-}
+type Wheel int
 
 func (w *Wheel) String() string {
-	switch w.state {
+	switch int(*w) {
 	case 0:
-		w.state++
+		*w++
 		return "|"
 	case 1:
-		w.state++
+		*w++
 		return "/"
 	case 2:
-		w.state++
+		*w++
 		return "-"
 	case 3:
-		w.state = 0
+		*w = 0
 		return "\\"
 	}
 	return ""
