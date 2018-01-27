@@ -139,6 +139,11 @@ type Notifier interface {
 	Notify(string, string) error
 }
 
+// NoopNotifier does nothing
+type NoopNotifier struct{}
+
+func (n NoopNotifier) Notify(string, string) error { return nil }
+
 // LibNotifier implements a Linux
 // notifier client.
 type LibNotifier struct {

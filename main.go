@@ -4,9 +4,17 @@ import (
 	"encoding/json"
 	"github.com/jawher/mow.cli"
 	"os"
+	"runtime"
 	"sort"
 	"time"
 )
+
+func notifier() Notifier {
+	if runtime.GOOS == "linux" {
+		return NewLibNotifier()
+	}
+	return NoopNotifier{}
+}
 
 func start(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
@@ -29,11 +37,10 @@ func start(path *string) func(*cli.Cmd) {
 				NPomodoros: *pomodoros,
 				Duration:   parsed,
 			}
-			runner, err := NewTaskRunner(task, db)
+			runner, err := NewTaskRunner(task, db, notifier())
 			maybe(err)
 			runner.Start()
 			startUI(runner)
-			//maybe(runner.Run())
 		}
 	}
 }

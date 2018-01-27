@@ -21,7 +21,7 @@ func TestTaskRunner(t *testing.T) {
 		Duration:   time.Second * 2,
 		NPomodoros: 2,
 		Message:    fmt.Sprint("Test Task"),
-	}, store)
+	}, store, NoopNotifier{})
 	if err != nil {
 		t.Error(err)
 	}

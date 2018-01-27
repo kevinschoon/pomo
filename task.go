@@ -19,7 +19,7 @@ type TaskRunner struct {
 	duration     time.Duration
 }
 
-func NewTaskRunner(task *Task, store *Store) (*TaskRunner, error) {
+func NewTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunner, error) {
 	taskID, err := store.CreateTask(*task)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func NewTaskRunner(task *Task, store *Store) (*TaskRunner, error) {
 		state:        State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
-		notifier:     NewLibNotifier(),
+		notifier:     notifier,
 		duration:     task.Duration,
 	}
 	return tr, nil
@@ -97,6 +97,8 @@ func (t *TaskRunner) run() error {
 		if t.count == t.nPomodoros {
 			break
 		}
+
+		t.notifier.Notify("Pomo", "It is time to take a break!")
 		// Reset the duration incase it
 		// was paused.
 		t.duration = t.origDuration
