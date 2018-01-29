@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-func notifier() Notifier {
+func notifier(iconPath string) Notifier {
 	if runtime.GOOS == "linux" {
-		return NewLibNotifier()
+		return NewLibNotifier(iconPath)
 	}
 	return NoopNotifier{}
 }
@@ -37,7 +37,7 @@ func start(path *string) func(*cli.Cmd) {
 				NPomodoros: *pomodoros,
 				Duration:   parsed,
 			}
-			runner, err := NewTaskRunner(task, db, notifier())
+			runner, err := NewTaskRunner(task, db, notifier(*path+"/icon.png"))
 			maybe(err)
 			runner.Start()
 			startUI(runner)

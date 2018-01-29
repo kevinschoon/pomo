@@ -159,16 +159,18 @@ type LibNotifier struct {
 	iconPath string
 }
 
-func NewLibNotifier() Notifier {
+func NewLibNotifier(iconPath string) Notifier {
 	ln := &LibNotifier{
 		client: libnotify.NewClient(),
 	}
-	// Write the tomato icon to a temp path
-	raw := MustAsset("tomato-icon.png")
-	fp, _ := ioutil.TempFile("", "pomo")
-	fp.Write(raw)
-	ln.iconPath = fp.Name()
-	fp.Close()
+	// Write the built-in tomato icon if it
+	// doesn't already exist.
+	_, err := os.Stat(iconPath)
+	if os.IsNotExist(err) {
+		raw := MustAsset("tomato-icon.png")
+		ioutil.WriteFile(iconPath, raw, 0644)
+	}
+	ln.iconPath = iconPath
 	return ln
 }
 
