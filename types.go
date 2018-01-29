@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/kevinschoon/pomo/libnotify"
@@ -91,6 +92,13 @@ func (c *Config) UnmarshalJSON(raw []byte) error {
 func NewConfig(path string) (*Config, error) {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
+		// Create an empty config file
+		// if it does not already exist.
+		if os.IsNotExist(err) {
+			raw, _ := json.Marshal(map[string]*color.Color{})
+			ioutil.WriteFile(path, raw, 0644)
+			return NewConfig(path)
+		}
 		return nil, err
 	}
 	config := &Config{
