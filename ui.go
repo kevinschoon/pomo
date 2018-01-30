@@ -14,6 +14,7 @@ func status(wheel *Wheel, runner *TaskRunner) termui.GridBufferer {
 
 			%s %s remaining
 
+
 			[q] - quit [p] - pause
 			`,
 			runner.count,
@@ -34,12 +35,14 @@ func status(wheel *Wheel, runner *TaskRunner) termui.GridBufferer {
 
 		Press [p] to continue.
 
+
 		[q] - quit [p] - unpause
 		`
 	case COMPLETE:
 		text = `This session has concluded. 
 		
 		Press [q] to exit.
+
 
 		[q] - quit
 		`
