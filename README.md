@@ -26,7 +26,7 @@ The Pomodoro Technique is simple and effective:
 Binaries are available in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
 
 ```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.1.0/pomo-0.1.0-linux 
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.2.0/pomo-0.2.0-linux 
 echo f74156fdcdaec9574d64891b8fc76b7e5b0b2c00a446eb58e0fe4341fc83e9ad pomo | sha256sum -c -
 chmod +x pomo
 ./pomo -v
