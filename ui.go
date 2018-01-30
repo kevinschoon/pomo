@@ -5,36 +5,41 @@ import (
 	"github.com/gizak/termui"
 )
 
-func status(runner *TaskRunner) termui.GridBufferer {
+func status(wheel *Wheel, runner *TaskRunner) termui.GridBufferer {
 	var text string
 	switch runner.state {
 	case RUNNING:
 		text = fmt.Sprintf(
-			`%s remaining - [%d/%d] Pomodoros completed
+			`[%d/%d] Pomodoros completed
+
+			%s %s remaining
 
 			[q] - quit [p] - pause
 			`,
-			runner.TimeRemaining(),
 			runner.count,
 			runner.nPomodoros,
+			wheel,
+			runner.TimeRemaining(),
 		)
 	case BREAKING:
 		text = `It is time to take a break!
 
-		Take a step back, reflect on your progress, or have a coffee.
-		Once you a ready press [enter] to begin the next Pomodoro.
+		Once you a ready press [enter] 
+		to begin the next Pomodoro.
 
 		[q] - quit [p] - pause
 		`
 	case PAUSED:
-		text = `Pomo is suspended, this time does not count against your progress.
+		text = `Pomo is suspended.
+
+		Press [p] to continue.
 
 		[q] - quit [p] - unpause
 		`
 	case COMPLETE:
-		text = `This session has concluded, press [q] to exit. If you are
-		going to continue working, consider taking an extended break 
-		before starting again.
+		text = `This session has concluded. 
+		
+		Press [q] to exit.
 
 		[q] - quit
 		`
@@ -82,27 +87,28 @@ func startUI(runner *TaskRunner) {
 	if err != nil {
 		panic(err)
 	}
+	wheel := Wheel(0)
 
 	defer termui.Close()
 
-	termui.Render(centered(status(runner)))
+	termui.Render(centered(status(&wheel, runner)))
 
 	termui.Handle("/timer/1s", func(termui.Event) {
-		termui.Render(centered(status(runner)))
+		termui.Render(centered(status(&wheel, runner)))
 	})
 
 	termui.Handle("/sys/wnd/resize", func(termui.Event) {
-		termui.Render(centered(status(runner)))
+		termui.Render(centered(status(&wheel, runner)))
 	})
 
 	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
 		runner.Toggle()
-		termui.Render(centered(status(runner)))
+		termui.Render(centered(status(&wheel, runner)))
 	})
 
 	termui.Handle("/sys/kbd/p", func(termui.Event) {
 		runner.Pause()
-		termui.Render(centered(status(runner)))
+		termui.Render(centered(status(&wheel, runner)))
 	})
 
 	termui.Handle("/sys/kbd/q", func(termui.Event) {
