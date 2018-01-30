@@ -2,16 +2,22 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/jawher/mow.cli"
 	"os"
 	"runtime"
 	"sort"
 	"time"
+
+	"github.com/jawher/mow.cli"
 )
 
 func notifier(iconPath string) Notifier {
-	if runtime.GOOS == "linux" {
+	switch runtime.GOOS {
+	case "linux":
 		return NewLibNotifier(iconPath)
+	case "darwin":
+		return NewAllNotifier(iconPath)
+	case "windows":
+		return NewAllNotifier(iconPath)
 	}
 	return NoopNotifier{}
 }
