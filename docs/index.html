@@ -123,7 +123,9 @@
     </div>
 
     <div class="readme">
-        <h1 id="pomo">🍅 pomo</h1>
+        <p align="center"><img src="https://raw.githubusercontent.com/kevinschoon/pomo/master/www/static/demo.gif" alt="demo"/></p>
+
+<h1 id="pomo">🍅 pomo</h1>
 
 <p><code>pomo</code> is a simple CLI for using the <a href="https://en.wikipedia.org/wiki/Pomodoro_Technique">Pomodoro Technique</a>. There are <a href="https://taskwarrior.org/">some</a> <a href="https://todoist.com/">amazing</a> task management systems but <code>pomo</code> is more of a task <em>execution</em> or <a href="https://en.wikipedia.org/wiki/Timeboxing">timeboxing</a> system. <code>pomo</code> helps you track what you did, how long it took you do it, and how much effort you expect it to take.</p>
 
@@ -141,22 +143,22 @@
 
 <h2 id="installation">Installation</h2>
 
-<p><code>pomo</code> depends on the <a href="https://developer.gnome.org/libnotify/">libnotify</a> client package, a notification <a href="https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers">server</a> (installed with most Linux desktop environments), and <a href="https://sqlite.org/">SQLite</a>.</p>
+<h3 id="dependencies">Dependencies</h3>
+
+<p><code>pomo</code> depends on the <a href="https://sqlite.org">SQLite</a> runtime, make sure it is installed before continuing. If running on Linux <code>pomo</code> will attempt to send notifications via <a href="https://developer.gnome.org/libnotify">libnotify</a>.</p>
+
+<h3 id="binaries">Binaries</h3>
 
 <p>Binaries are available in the <a href="https://github.com/kevinschoon/pomo/releases">releases section</a> on github.</p>
 
-<h3 id="linux">Linux</h3>
-
-<h4 id="binaries">Binaries</h4>
-
 <pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.1.0/pomo-0.1.0-linux 
-echo f4587b566d135e05a6c1b1bec50fe3378f643f654319ca4662d5fe3aa590b8d2 pomo | sha256sum -c -
+echo f74156fdcdaec9574d64891b8fc76b7e5b0b2c00a446eb58e0fe4341fc83e9ad pomo | sha256sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
 </code></pre>
 
-<h4 id="source">Source</h4>
+<h3 id="source">Source</h3>
 
 <pre><code> go get github.com/kevinschoon/pomo
  cd $GOPATH/github.com/kevinschoon/pomo
@@ -166,24 +168,21 @@ chmod +x pomo
 
 <h2 id="usage">Usage</h2>
 
-<pre><code># Initialize the SQLite database and state directory
-pomo init
-# Start a new task
-# Add a tag &quot;dev&quot;, allocate 2 pomodoros for 1 minute each
-pomo start -t dev -p 2 -d 1m &quot;Write Some Codes&quot;
-...
-# List previous tasks
-# pomo list
-...
+<p>Once <code>pomo</code> is installed you need to initialize it&rsquo;s database.</p>
+
+<pre><code>pomo init
+</code></pre>
+
+<p>Start a 4 pomodoro session at 25 minute intervals:</p>
+
+<pre><code>pomo start -t my-project &quot;write some codes&quot;
 </code></pre>
 
 <h2 id="roadmap">Roadmap</h2>
 
 <ul>
-<li>Support OSX</li>
-<li>Support Windows</li>
 <li>Generate charts</li>
-<li>Alternate notifiers</li>
+<li>Notifiers for OSX and Windows(?)</li>
 <li>??</li>
 </ul>
 

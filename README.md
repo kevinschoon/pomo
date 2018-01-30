@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/kevinschoon/pomo/master/www/static/demo.gif" alt="demo"/></p>
+
 # 🍅 pomo
 
 `pomo` is a simple CLI for using the [Pomodoro Technique](https://en.wikipedia.org/wiki/Pomodoro_Technique). There are [some](https://taskwarrior.org/) [amazing](https://todoist.com/) task management systems but `pomo` is more of a task *execution* or [timeboxing](https://en.wikipedia.org/wiki/Timeboxing) system. `pomo` helps you track what you did, how long it took you do it, and how much effort you expect it to take.
@@ -14,23 +16,24 @@ The Pomodoro Technique is simple and effective:
 
 ## Installation
 
-`pomo` depends on the [libnotify](https://developer.gnome.org/libnotify/) client package, a notification [server](https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers) (installed with most Linux desktop environments), and [SQLite](https://sqlite.org/).
+### Dependencies
+
+`pomo` depends on the [SQLite](https://sqlite.org) runtime, make sure it is installed before continuing. If running on Linux `pomo` will attempt to send notifications via [libnotify](https://developer.gnome.org/libnotify). 
+
+
+### Binaries
 
 Binaries are available in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
 
-### Linux
-
-#### Binaries
-
 ```
 curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.1.0/pomo-0.1.0-linux 
-echo f4587b566d135e05a6c1b1bec50fe3378f643f654319ca4662d5fe3aa590b8d2 pomo | sha256sum -c -
+echo f74156fdcdaec9574d64891b8fc76b7e5b0b2c00a446eb58e0fe4341fc83e9ad pomo | sha256sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
 ```
 
-#### Source
+### Source
 
  ```
  go get github.com/kevinschoon/pomo
@@ -41,24 +44,21 @@ chmod +x pomo
 
 ## Usage
 
+Once `pomo` is installed you need to initialize it's database.
+
 ```
-# Initialize the SQLite database and state directory
 pomo init
-# Start a new task
-# Add a tag "dev", allocate 2 pomodoros for 1 minute each
-pomo start -t dev -p 2 -d 1m "Write Some Codes"
-...
-# List previous tasks
-# pomo list
-...
+```
+
+Start a 4 pomodoro session at 25 minute intervals:
+```
+pomo start -t my-project "write some codes"
 ```
 
 ## Roadmap
 
-  * Support OSX
-  * Support Windows
   * Generate charts
-  * Alternate notifiers
+  * Notifiers for OSX and Windows(?)
   * ??
 
 ## Credits
