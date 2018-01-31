@@ -15,9 +15,9 @@ func notifier(iconPath string) Notifier {
 	case "linux":
 		return NewLibNotifier(iconPath)
 	case "darwin":
-		return NewAllNotifier(iconPath)
+		return NewDarwinNotifier(iconPath)
 	case "windows":
-		return NewAllNotifier(iconPath)
+		return NewWindowsNotifier(iconPath)
 	}
 	return NoopNotifier{}
 }
