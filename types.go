@@ -9,8 +9,6 @@ import (
 
 	"github.com/0xAX/notificator"
 	"github.com/fatih/color"
-
-	"github.com/kevinschoon/pomo/libnotify"
 )
 
 type State int
@@ -142,8 +140,7 @@ func (p Pomodoro) Duration() time.Duration {
 	return (p.End.Sub(p.Start))
 }
 
-// Notifier implements a system specific
-// notification. On Linux this libnotify.
+// Notifier sends a system notification
 type Notifier interface {
 	Notify(string, string) error
 }
@@ -153,45 +150,13 @@ type NoopNotifier struct{}
 
 func (n NoopNotifier) Notify(string, string) error { return nil }
 
-// LibNotifier implements a Linux
-// notifier client.
-type LibNotifier struct {
-	client   *libnotify.Client
-	iconPath string
-}
-
-func NewLibNotifier(iconPath string) Notifier {
-	ln := &LibNotifier{
-		client: libnotify.NewClient(),
-	}
-	// Write the built-in tomato icon if it
-	// doesn't already exist.
-	_, err := os.Stat(iconPath)
-	if os.IsNotExist(err) {
-		raw := MustAsset("tomato-icon.png")
-		ioutil.WriteFile(iconPath, raw, 0644)
-	}
-	ln.iconPath = iconPath
-	return ln
-}
-
-func (ln LibNotifier) Notify(title, body string) error {
-	return ln.client.Notify(
-		libnotify.Notification{
-			Title: title,
-			Body:  body,
-			Icon:  ln.iconPath,
-		},
-	)
-}
-
-// xnotifier can push notifications to mac, linux and windows.
-type xnotifier struct {
+// Xnotifier can push notifications to mac, linux and windows.
+type Xnotifier struct {
 	*notificator.Notificator
 	iconPath string
 }
 
-func newXnotifier(iconPath string) xnotifier {
+func NewXnotifier(iconPath string) Notifier {
 	// Write the built-in tomato icon if it
 	// doesn't already exist.
 	_, err := os.Stat(iconPath)
@@ -199,25 +164,13 @@ func newXnotifier(iconPath string) xnotifier {
 		raw := MustAsset("tomato-icon.png")
 		_ = ioutil.WriteFile(iconPath, raw, 0644)
 	}
-	return xnotifier{
+	return Xnotifier{
 		Notificator: notificator.New(notificator.Options{}),
 		iconPath:    iconPath,
 	}
 }
 
 // Notify sends a notification to the OS.
-func (n xnotifier) Notify(title, body string) error {
+func (n Xnotifier) Notify(title, body string) error {
 	return n.Push(title, body, n.iconPath, notificator.UR_NORMAL)
-}
-
-type DarwinNotifier = xnotifier
-
-func NewDarwinNotifier(iconPath string) DarwinNotifier {
-	return newXnotifier(iconPath)
-}
-
-type WindowsNotifier = xnotifier
-
-func NewWindowsNotifier(iconPath string) WindowsNotifier {
-	return newXnotifier(iconPath)
 }

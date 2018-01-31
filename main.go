@@ -3,24 +3,11 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"runtime"
 	"sort"
 	"time"
 
 	"github.com/jawher/mow.cli"
 )
-
-func notifier(iconPath string) Notifier {
-	switch runtime.GOOS {
-	case "linux":
-		return NewLibNotifier(iconPath)
-	case "darwin":
-		return NewDarwinNotifier(iconPath)
-	case "windows":
-		return NewWindowsNotifier(iconPath)
-	}
-	return NoopNotifier{}
-}
 
 func start(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
@@ -43,7 +30,7 @@ func start(path *string) func(*cli.Cmd) {
 				NPomodoros: *pomodoros,
 				Duration:   parsed,
 			}
-			runner, err := NewTaskRunner(task, db, notifier(*path+"/icon.png"))
+			runner, err := NewTaskRunner(task, db, NewXnotifier(*path+"/icon.png"))
 			maybe(err)
 			runner.Start()
 			startUI(runner)
