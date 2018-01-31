@@ -34,10 +34,6 @@ const (
 	PAUSED
 )
 
-// RefreshInterval is the frequency at which
-// the display is updated.
-const RefreshInterval = 800 * time.Millisecond
-
 // Wheel keeps track of an ASCII spinner
 type Wheel int
 

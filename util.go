@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/fatih/color"
 	"os"
@@ -20,12 +19,6 @@ func defaultConfigPath() string {
 	u, err := user.Current()
 	maybe(err)
 	return u.HomeDir + "/.pomo"
-}
-
-func prompt(text string) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println(text)
-	reader.ReadString('\n')
 }
 
 func summerizeTasks(config *Config, tasks []*Task) {
