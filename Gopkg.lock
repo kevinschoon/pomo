@@ -8,16 +8,22 @@
   version = "v1.5.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/gosuri/uilive"
+  name = "github.com/gizak/termui"
   packages = ["."]
-  revision = "ac356e6e42cd31fcef8e6aec13ae9ed6fe87713e"
+  revision = "24acd523c756fd9728824cdfac66aad9d8982fb7"
+  version = "v2.2.0"
 
 [[projects]]
   name = "github.com/jawher/mow.cli"
   packages = ["."]
   revision = "0e80ee9f63156ea1954dc2375c33a1c7e752c25c"
   version = "v1.0.3"
+
+[[projects]]
+  name = "github.com/maruel/panicparse"
+  packages = ["stack"]
+  revision = "766956aceb8ff49664065ae50bef0ae8a0a83ec4"
+  version = "v1.0.2"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -32,10 +38,28 @@
   version = "v0.0.3"
 
 [[projects]]
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
+  version = "v0.0.2"
+
+[[projects]]
   name = "github.com/mattn/go-sqlite3"
   packages = ["."]
   revision = "6c771bb9887719704b210e87e934f08be014bdb1"
   version = "v1.6.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/go-wordwrap"
+  packages = ["."]
+  revision = "ad45545899c7b13c020ea92b2072220eefad42b8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nsf/termbox-go"
+  packages = ["."]
+  revision = "88b7b944be8bc8d8ec6195fca97c5869ba20f99d"
 
 [[projects]]
   branch = "master"
@@ -46,6 +70,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1a1f721ab61fd1976d54ba03bad816beaefd926604a77b24c318305d4082f779"
+  inputs-digest = "59a956a9d4768c1668abfcf5af67434d0f8251797d381c64b9dcf013a3dfcb34"
   solver-name = "gps-cdcl"
   solver-version = 1

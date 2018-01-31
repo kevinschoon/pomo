@@ -1,3 +1,4 @@
+
 # Gopkg.toml example
 #
 # Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
@@ -21,13 +22,17 @@
 
 
 [[constraint]]
-  name = "github.com/fatih/color"
-  version = "1.5.0"
+  name = "github.com/maruel/ut"
+  version = "1.0.0"
 
 [[constraint]]
-  name = "github.com/jawher/mow.cli"
-  version = "1.0.3"
+  name = "github.com/mattn/go-colorable"
+  version = "0.0.9"
 
 [[constraint]]
-  name = "github.com/mattn/go-sqlite3"
-  version = "1.6.0"
+  name = "github.com/mattn/go-isatty"
+  version = "0.0.2"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/mgutz/ansi"
