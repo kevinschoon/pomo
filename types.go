@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/0xAX/notificator"
 	"github.com/fatih/color"
 
 	"github.com/kevinschoon/pomo/libnotify"
@@ -184,13 +185,13 @@ func (ln LibNotifier) Notify(title, body string) error {
 	)
 }
 
-// notificator can push notifications to mac, linux and windows.
-type notificator struct {
+// xnotifier can push notifications to mac, linux and windows.
+type xnotifier struct {
 	*notificator.Notificator
 	iconPath string
 }
 
-func newNotificator(iconPath string) notificator {
+func newXnotifier(iconPath string) xnotifier {
 	// Write the built-in tomato icon if it
 	// doesn't already exist.
 	_, err := os.Stat(iconPath)
@@ -198,25 +199,25 @@ func newNotificator(iconPath string) notificator {
 		raw := MustAsset("tomato-icon.png")
 		_ = ioutil.WriteFile(iconPath, raw, 0644)
 	}
-	return notificator{
+	return xnotifier{
 		Notificator: notificator.New(notificator.Options{}),
 		iconPath:    iconPath,
 	}
 }
 
 // Notify sends a notification to the OS.
-func (n notificator) Notify(title, body string) error {
+func (n xnotifier) Notify(title, body string) error {
 	return n.Push(title, body, n.iconPath, notificator.UR_NORMAL)
 }
 
-type DarwinNotifier = notificator
+type DarwinNotifier = xnotifier
 
 func NewDarwinNotifier(iconPath string) DarwinNotifier {
-	return newNotificator(iconPath)
+	return newXnotifier(iconPath)
 }
 
-type WindowsNotifier = notificator
+type WindowsNotifier = xnotifier
 
 func NewWindowsNotifier(iconPath string) WindowsNotifier {
-	return newNotificator(iconPath)
+	return newXnotifier(iconPath)
 }
