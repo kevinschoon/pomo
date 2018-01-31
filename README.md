@@ -16,18 +16,13 @@ The Pomodoro Technique is simple and effective:
 
 ## Installation
 
-### Dependencies
-
-`pomo` depends on the [SQLite](https://sqlite.org) runtime, make sure it is installed before continuing. If running on Linux `pomo` will attempt to send notifications via [libnotify](https://developer.gnome.org/libnotify). 
-
-
 ### Binaries
 
 Binaries are available in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
 
 ```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.2.0/pomo-0.2.0-linux 
-echo f74156fdcdaec9574d64891b8fc76b7e5b0b2c00a446eb58e0fe4341fc83e9ad pomo | sha256sum -c -
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.3.0/pomo-0.3.0-linux 
+echo 2fb16d362d6ffef582fe5e8691272d93b021d14f32cbeda6895f0bb94d413903 pomo | sha256sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
@@ -37,9 +32,7 @@ chmod +x pomo
 
  ```
  go get github.com/kevinschoon/pomo
- cd $GOPATH/github.com/kevinschoon/pomo
- make
- ./bin/pomo
+ pomo -v
  ```
 
 ## Usage
@@ -57,8 +50,8 @@ pomo start -t my-project "write some codes"
 
 ## Roadmap
 
-  * Generate charts
-  * Notifiers for OSX and Windows(?)
+  * Generate charts/burn down
+  * System tray notification/icon
   * ??
 
 ## Credits

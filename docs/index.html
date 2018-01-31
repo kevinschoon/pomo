@@ -142,16 +142,12 @@
 
 <h2 id="installation">Installation</h2>
 
-<h3 id="dependencies">Dependencies</h3>
-
-<p><code>pomo</code> depends on the <a href="https://sqlite.org">SQLite</a> runtime, make sure it is installed before continuing. If running on Linux <code>pomo</code> will attempt to send notifications via <a href="https://developer.gnome.org/libnotify">libnotify</a>.</p>
-
 <h3 id="binaries">Binaries</h3>
 
 <p>Binaries are available in the <a href="https://github.com/kevinschoon/pomo/releases">releases section</a> on github.</p>
 
-<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.2.0/pomo-0.2.0-linux 
-echo f74156fdcdaec9574d64891b8fc76b7e5b0b2c00a446eb58e0fe4341fc83e9ad pomo | sha256sum -c -
+<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.3.0/pomo-0.3.0-linux 
+echo 2fb16d362d6ffef582fe5e8691272d93b021d14f32cbeda6895f0bb94d413903 pomo | sha256sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
@@ -160,9 +156,7 @@ chmod +x pomo
 <h3 id="source">Source</h3>
 
 <pre><code> go get github.com/kevinschoon/pomo
- cd $GOPATH/github.com/kevinschoon/pomo
- make
- ./bin/pomo
+ pomo -v
 </code></pre>
 
 <h2 id="usage">Usage</h2>
@@ -180,8 +174,8 @@ chmod +x pomo
 <h2 id="roadmap">Roadmap</h2>
 
 <ul>
-<li>Generate charts</li>
-<li>Notifiers for OSX and Windows(?)</li>
+<li>Generate charts/burn down</li>
+<li>System tray notification/icon</li>
 <li>??</li>
 </ul>
 
