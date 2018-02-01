@@ -22,8 +22,7 @@ test:
 	go test ./...
 	go vet ./...
 
-release: bindata.go
-	@echo mkdir bin 2>/dev/null || true
+release: bin bindata.go
 	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo-$(VERSION)-linux
 
 docs: readme
@@ -32,5 +31,5 @@ docs: readme
 readme: www/data
 	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > www/data/readme.json
 
-www/data:
+www/data bin:
 	mkdir -p $@
