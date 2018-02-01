@@ -106,6 +106,7 @@ func (t *TaskRunner) run() error {
 		<-t.toggle
 
 	}
+	t.notifier.Notify("Pomo", "Pomo session has completed!")
 	t.state = COMPLETE
 	return nil
 }
