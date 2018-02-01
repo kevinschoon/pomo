@@ -13,22 +13,24 @@ endif
 all: bin/pomo
 
 clean: 
-	rm -v bin/* 2> /dev/null || true
-	rm -v docs/* 2> /dev/null || true
+	-rm -fv bin/* docs/*
 
-bindata.go:
-	go-bindata -pkg main -o $@ tomato-icon.png
+bindata.go: tomato-icon.png
+	go-bindata -pkg main -o $@ $^
 
 test:
 	go test ./...
 	go vet ./...
 
-release: bindata.go
-	@echo mkdir bin 2>/dev/null || true
+release: bin bindata.go
 	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo-$(VERSION)-linux
 
 docs: readme
 	cd www && hugo -d ../docs
 
-readme:
-	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > www/data/readme.json
+readme: www/data/readme.json
+
+www/data/readme.json: www/data README.md
+	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > $@
+www/data bin:
+	mkdir -p $@
