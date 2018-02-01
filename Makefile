@@ -28,7 +28,7 @@ bin/pomo-$(VERSION)-linux-amd64: bin bindata.go
 	go build -ldflags "-X main.Version=$(VERSION)" -o $@
 
 bin/pomo-$(VERSION)-linux-amd64.md5:
-	md5sum bin/pomo-$(VERSION)-linux-amd64 > $@
+	md5sum bin/pomo-$(VERSION)-linux-amd64 | sed -e 's/bin\///' > $@
 
 bin/pomo-$(VERSION)-darwin-amd64: bin bindata.go
 	# This is used to cross-compile a Darwin compatible Mach-O executable 
@@ -37,7 +37,7 @@ bin/pomo-$(VERSION)-darwin-amd64: bin bindata.go
 
 
 bin/pomo-$(VERSION)-darwin-amd64.md5:
-	md5sum bin/pomo-$(VERSION)-darwin-amd64 > $@
+	md5sum bin/pomo-$(VERSION)-darwin-amd64 | sed -e 's/bin\///' > $@
 
 release-linux: bin/pomo-$(VERSION)-linux-amd64 bin/pomo-$(VERSION)-linux-amd64.md5
 
