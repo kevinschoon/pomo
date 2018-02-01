@@ -29,5 +29,8 @@ release: bindata.go
 docs: readme
 	cd www && hugo -d ../docs
 
-readme:
+readme: www/data
 	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > www/data/readme.json
+
+www/data:
+	mkdir -p $@
