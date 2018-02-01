@@ -18,14 +18,29 @@ The Pomodoro Technique is simple and effective:
 
 ### Binaries
 
-Binaries are available in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
+Binaries are available for Linux and Darwin platforms in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
+
+#### Linux
 
 ```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.3.0/pomo-0.3.0-linux 
-echo 2fb16d362d6ffef582fe5e8691272d93b021d14f32cbeda6895f0bb94d413903 pomo | sha256sum -c -
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-linux-amd64
+# Optionally verify file integrity
+echo 2543baef75c58c01a246e8d79ac59c93  pomo | md5sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
+```
+
+#### Darwin
+
+```
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-darwin-amd64
+# Optionally verify file integrity
+[[ $(md5 -r pomo) != "7d5217f0e8f792f469a20ae86d4c35c2 pomo" ]] && echo "invalid hash!"
+chmod +x pomo
+./pomo -v
+# Copy pomo to somewhere on your $PATH
+
 ```
 
 ### Source
