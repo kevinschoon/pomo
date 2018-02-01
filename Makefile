@@ -39,9 +39,9 @@ bin/pomo-$(VERSION)-darwin-amd64: bin bindata.go
 bin/pomo-$(VERSION)-darwin-amd64.md5:
 	md5sum bin/pomo-$(VERSION)-darwin-amd64 > $@
 
-release-linux: bin/pomo-$(VERSION)-linux-amd64 bin/pomo-$(VERSION)-linux-amd64
+release-linux: bin/pomo-$(VERSION)-linux-amd64 bin/pomo-$(VERSION)-linux-amd64.md5
 
-release-darwin: bin/pomo-$(VERSION)-darwin-amd64 bin/pomo-$(VERSION)-darwin-amd64
+release-darwin: bin/pomo-$(VERSION)-darwin-amd64 bin/pomo-$(VERSION)-darwin-amd64.md5
 
 release: release-linux release-darwin
 
