@@ -15,8 +15,8 @@ all: bin/pomo
 clean: 
 	-rm -fv bin/* docs/*
 
-bindata.go:
-	go-bindata -pkg main -o $@ tomato-icon.png
+bindata.go: tomato-icon.png
+	go-bindata -pkg main -o $@ $^
 
 test:
 	go test ./...
