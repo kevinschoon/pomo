@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/0xAX/notificator"
+  packages = ["."]
+  revision = "88d57ee9043ba88d6a62e437fa15dda1ca0d2b59"
+
+[[projects]]
   name = "github.com/fatih/color"
   packages = ["."]
   revision = "570b54cabe6b8eb0bc2dfce68d964677d63b5260"
@@ -70,6 +76,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "59a956a9d4768c1668abfcf5af67434d0f8251797d381c64b9dcf013a3dfcb34"
+  inputs-digest = "5913a16a0927350ebbd5117158473bb0252181f6aa8777cb5a095a18dee8bd40"
   solver-name = "gps-cdcl"
   solver-version = 1
