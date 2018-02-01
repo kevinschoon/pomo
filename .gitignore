@@ -25,7 +25,8 @@ _testmain.go
 
 *.swp
 
-bin/
+bin/*
+!bin/.gitkeep
 
 www/public/
 www/data/
