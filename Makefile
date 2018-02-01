@@ -31,6 +31,6 @@ docs: readme
 readme: www/data/readme.json
 
 www/data/readme.json: www/data README.md
-	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > www/data/readme.json
+	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > $@
 www/data bin:
 	mkdir -p $@
