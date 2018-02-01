@@ -13,8 +13,7 @@ endif
 all: bin/pomo
 
 clean: 
-	rm -v bin/* 2> /dev/null || true
-	rm -v docs/* 2> /dev/null || true
+	-rm -fv bin/* docs/*
 
 bindata.go:
 	go-bindata -pkg main -o $@ tomato-icon.png
