@@ -25,7 +25,7 @@ Binaries are available for Linux and Darwin platforms in the [releases section](
 ```
 curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-linux-amd64
 # Optionally verify file integrity
-echo 2543baef75c58c01a246e8d79ac59c93  pomo | md5sum -c -
+echo 2543baef75c58c01a246e8d79ac59c93 pomo | md5sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
