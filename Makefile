@@ -22,8 +22,14 @@ test:
 	go test ./...
 	go vet ./...
 
-release: bin bindata.go
-	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo-$(VERSION)-linux
+release-linux: bin bindata.go
+	go build -ldflags "-X main.Version=$(VERSION)" -o bin/pomo-$(VERSION)-linux-amd64
+
+release-osx: bin bindata.go
+	# This is used to cross-compile a Darwin compatible Mach-O executable 
+	# on Linux for OSX, you need to install https://github.com/tpoechtrager/osxcross
+	PATH="$$PATH:/usr/local/osx-ndk-x86/bin" GOOS=darwin GOARCH=amd64 CC=/usr/local/osx-ndk-x86/bin/x86_64-apple-darwin15-cc CGO_ENABLED=1 go build $(FLAGS) -o bin/pomo-$(VERSION)-darwin-amd64
+
 
 docs: readme
 	cd www && hugo -d ../docs
