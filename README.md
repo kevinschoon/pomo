@@ -18,7 +18,7 @@ The Pomodoro Technique is simple and effective:
 
 ### Binaries
 
-Binaries are available for Linux and Darwin platforms in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
+Binaries are available for Linux and OSX platforms in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
 
 #### Linux
 
@@ -31,7 +31,7 @@ chmod +x pomo
 # Copy pomo to somewhere on your $PATH
 ```
 
-#### Darwin
+#### OSX
 
 ```
 curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-darwin-amd64
@@ -62,6 +62,25 @@ Start a 4 pomodoro session at 25 minute intervals:
 ```
 pomo start -t my-project "write some codes"
 ```
+
+## Configuration
+
+Pomo has a few configuration options which can be read from a JSON file in Pomo's state directory `~/.pomo/config.json`.
+
+### colors
+
+You can map colors to specific tags in the `colors` field.
+
+Example:
+```
+{
+    "colors": {
+        "my-project": "hiyellow",
+        "another-project": "green"
+    }
+}
+```
+
 
 ## Roadmap
 

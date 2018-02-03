@@ -144,7 +144,7 @@
 
 <h3 id="binaries">Binaries</h3>
 
-<p>Binaries are available for Linux and Darwin platforms in the <a href="https://github.com/kevinschoon/pomo/releases">releases section</a> on github.</p>
+<p>Binaries are available for Linux and OSX platforms in the <a href="https://github.com/kevinschoon/pomo/releases">releases section</a> on github.</p>
 
 <h4 id="linux">Linux</h4>
 
@@ -156,7 +156,7 @@ chmod +x pomo
 # Copy pomo to somewhere on your $PATH
 </code></pre>
 
-<h4 id="darwin">Darwin</h4>
+<h4 id="osx">OSX</h4>
 
 <pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-darwin-amd64
 # Optionally verify file integrity
@@ -183,6 +183,24 @@ chmod +x pomo
 <p>Start a 4 pomodoro session at 25 minute intervals:</p>
 
 <pre><code>pomo start -t my-project &quot;write some codes&quot;
+</code></pre>
+
+<h2 id="configuration">Configuration</h2>
+
+<p>Pomo has a few configuration options which can be read from a JSON file in Pomo&rsquo;s state directory <code>~/.pomo/config.json</code>.</p>
+
+<h3 id="colors">colors</h3>
+
+<p>You can map colors to specific tags in the <code>colors</code> field.</p>
+
+<p>Example:</p>
+
+<pre><code>{
+    &quot;colors&quot;: {
+        &quot;my-project&quot;: &quot;hiyellow&quot;,
+        &quot;another-project&quot;: &quot;green&quot;
+    }
+}
 </code></pre>
 
 <h2 id="roadmap">Roadmap</h2>
