@@ -74,7 +74,8 @@ func list(path *string) func(*cli.Cmd) {
 				maybe(json.NewEncoder(os.Stdout).Encode(tasks))
 				return
 			}
-			config, _ := NewConfig(*path + "/config.json")
+			config, err := NewConfig(*path + "/config.json")
+			maybe(err)
 			summerizeTasks(config, tasks)
 		}
 	}

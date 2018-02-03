@@ -11,6 +11,10 @@ import (
 	"github.com/fatih/color"
 )
 
+const (
+	defaultDateTimeFmt = "2006-01-02 15:04"
+)
+
 type State int
 
 func (s State) String() string {
@@ -57,7 +61,8 @@ func (w *Wheel) String() string {
 
 // Config represents user preferences
 type Config struct {
-	Colors map[string]*color.Color
+	Colors      map[string]*color.Color
+	DateTimeFmt string
 }
 
 var colorMap = map[string]*color.Color{
@@ -69,7 +74,8 @@ var colorMap = map[string]*color.Color{
 
 func (c *Config) UnmarshalJSON(raw []byte) error {
 	config := &struct {
-		Colors map[string]string `json:"colors"`
+		Colors      map[string]string `json:"colors"`
+		DateTimeFmt string            `json:"datetimefmt"`
 	}{}
 	err := json.Unmarshal(raw, config)
 	if err != nil {
@@ -81,6 +87,11 @@ func (c *Config) UnmarshalJSON(raw []byte) error {
 		} else {
 			return fmt.Errorf("bad color choice: %s", name)
 		}
+	}
+	if config.DateTimeFmt != "" {
+		c.DateTimeFmt = config.DateTimeFmt
+	} else {
+		c.DateTimeFmt = defaultDateTimeFmt
 	}
 	return nil
 }
@@ -99,6 +110,10 @@ func NewConfig(path string) (*Config, error) {
 	}
 	config := &Config{
 		Colors: map[string]*color.Color{},
+	}
+	err = json.Unmarshal(raw, config)
+	if err != nil {
+		return nil, err
 	}
 	return config, json.Unmarshal(raw, config)
 }

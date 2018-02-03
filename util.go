@@ -23,7 +23,11 @@ func defaultConfigPath() string {
 
 func summerizeTasks(config *Config, tasks []*Task) {
 	for _, task := range tasks {
-		fmt.Printf("%d: [%s] ", task.ID, task.Duration.Truncate(time.Second))
+		var start string
+		if len(task.Pomodoros) > 0 {
+			start = task.Pomodoros[0].Start.Format(config.DateTimeFmt)
+		}
+		fmt.Printf("%d: [%s] [%s] ", task.ID, start, task.Duration.Truncate(time.Second))
 		// a list of green/yellow/red pomodoros
 		// green indicates the pomodoro was finished normally
 		// yellow indicates the break was exceeded by +5minutes
