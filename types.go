@@ -66,10 +66,22 @@ type Config struct {
 }
 
 var colorMap = map[string]*color.Color{
-	"red":   color.New(color.FgRed),
-	"blue":  color.New(color.FgBlue),
-	"green": color.New(color.FgGreen),
-	"white": color.New(color.FgWhite),
+	"black":     color.New(color.FgBlack),
+	"hiblack":   color.New(color.FgHiBlack),
+	"blue":      color.New(color.FgBlue),
+	"hiblue":    color.New(color.FgHiBlue),
+	"cyan":      color.New(color.FgCyan),
+	"hicyan":    color.New(color.FgHiCyan),
+	"green":     color.New(color.FgGreen),
+	"higreen":   color.New(color.FgHiGreen),
+	"magenta":   color.New(color.FgMagenta),
+	"himagenta": color.New(color.FgHiMagenta),
+	"red":       color.New(color.FgRed),
+	"hired":     color.New(color.FgHiRed),
+	"white":     color.New(color.FgWhite),
+	"hiwrite":   color.New(color.FgHiWhite),
+	"yellow":    color.New(color.FgYellow),
+	"hiyellow":  color.New(color.FgHiYellow),
 }
 
 func (c *Config) UnmarshalJSON(raw []byte) error {
