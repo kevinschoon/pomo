@@ -163,6 +163,15 @@ func (p Pomodoro) Duration() time.Duration {
 	return (p.End.Sub(p.Start))
 }
 
+// Status is used to communicate the state
+// of a running Pomodoro session
+type Status struct {
+	State      State         `json:"state"`
+	Remaining  time.Duration `json:"remaining"`
+	Count      int           `json:"count"`
+	NPomodoros int           `json:"n_pomodoros"`
+}
+
 // Notifier sends a system notification
 type Notifier interface {
 	Notify(string, string) error

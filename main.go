@@ -32,6 +32,10 @@ func start(path *string) func(*cli.Cmd) {
 			}
 			runner, err := NewTaskRunner(task, db, NewXnotifier(*path+"/icon.png"))
 			maybe(err)
+			server, err := NewServer(*path+"/pomo.sock", runner)
+			maybe(err)
+			server.Start()
+			defer server.Stop()
 			runner.Start()
 			startUI(runner)
 		}
@@ -94,6 +98,23 @@ func _delete(path *string) func(*cli.Cmd) {
 	}
 }
 
+func _status(path *string) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		cmd.Spec = "[OPTIONS]"
+		cmd.Action = func() {
+			client, err := NewClient(*path + "/pomo.sock")
+			if err != nil {
+				outputStatus(Status{})
+				return
+			}
+			defer client.Close()
+			status, err := client.Status()
+			maybe(err)
+			outputStatus(*status)
+		}
+	}
+}
+
 func main() {
 	app := cli.App("pomo", "Pomodoro CLI")
 	app.Spec = "[OPTIONS]"
@@ -105,5 +126,6 @@ func main() {
 	app.Command("init", "initialize the sqlite database", initialize(path))
 	app.Command("list l", "list historical tasks", list(path))
 	app.Command("delete d", "delete a stored task", _delete(path))
+	app.Command("status st", "output the current status", _status(path))
 	app.Run(os.Args)
 }

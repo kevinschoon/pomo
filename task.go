@@ -118,3 +118,12 @@ func (t *TaskRunner) Toggle() {
 func (t *TaskRunner) Pause() {
 	t.pause <- true
 }
+
+func (t *TaskRunner) Status() *Status {
+	return &Status{
+		State:      t.state,
+		Count:      t.count,
+		NPomodoros: t.nPomodoros,
+		Remaining:  t.TimeRemaining(),
+	}
+}
