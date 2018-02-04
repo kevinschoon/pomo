@@ -17,7 +17,7 @@ func (s *Server) listen() {
 	for s.running {
 		conn, err := s.listener.Accept()
 		if err != nil {
-			panic(err)
+			break
 		}
 		buf := make([]byte, 512)
 		// Ignore any content
