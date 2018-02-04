@@ -23,9 +23,9 @@ Binaries are available for Linux and OSX platforms in the [releases section](htt
 #### Linux
 
 ```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-linux-amd64
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.5.0/pomo-0.5.0-linux-amd64
 # Optionally verify file integrity
-echo 2543baef75c58c01a246e8d79ac59c93 pomo | md5sum -c -
+echo 021d59be9a4d625c4e9ee7506c6d7594  pomo | md5sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
@@ -34,9 +34,9 @@ chmod +x pomo
 #### OSX
 
 ```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-darwin-amd64
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.5.0/pomo-0.5.0-darwin-amd64
 # Optionally verify file integrity
-[[ $(md5 -r pomo) != "7d5217f0e8f792f469a20ae86d4c35c2 pomo" ]] && echo "invalid hash!"
+[[ $(md5 -r pomo) != "63370c77f761f38b3c1976e9aaa1e7d3 pomo" ]] && echo "invalid hash!"
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
@@ -79,6 +79,28 @@ Example:
         "another-project": "green"
     }
 }
+```
+
+## Integrations
+
+### Status Bars
+
+The Pomo CLI can output the current state of a running task session via the `pomo status`
+making it easy to script and embed it's output in various Linux status bars.
+
+#### [Polybar](https://github.com/jaagr/polybar)
+
+You can create a module with the `custom/script` type and 
+embed Pomo's status output in your Polybar:
+
+```
+[module/pomo]
+type = custom/script
+interval = 1
+exec = pomo status
+label = %output:0:15%
+format-underline = ${colors.white}
+format-prefix-foreground = ${colors.white}
 ```
 
 

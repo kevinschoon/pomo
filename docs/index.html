@@ -148,9 +148,9 @@
 
 <h4 id="linux">Linux</h4>
 
-<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-linux-amd64
+<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.5.0/pomo-0.5.0-linux-amd64
 # Optionally verify file integrity
-echo 2543baef75c58c01a246e8d79ac59c93 pomo | md5sum -c -
+echo 021d59be9a4d625c4e9ee7506c6d7594  pomo | md5sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
@@ -158,9 +158,9 @@ chmod +x pomo
 
 <h4 id="osx">OSX</h4>
 
-<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.4.0/pomo-0.4.0-darwin-amd64
+<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.5.0/pomo-0.5.0-darwin-amd64
 # Optionally verify file integrity
-[[ $(md5 -r pomo) != &quot;7d5217f0e8f792f469a20ae86d4c35c2 pomo&quot; ]] &amp;&amp; echo &quot;invalid hash!&quot;
+[[ $(md5 -r pomo) != &quot;63370c77f761f38b3c1976e9aaa1e7d3 pomo&quot; ]] &amp;&amp; echo &quot;invalid hash!&quot;
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
@@ -201,6 +201,27 @@ chmod +x pomo
         &quot;another-project&quot;: &quot;green&quot;
     }
 }
+</code></pre>
+
+<h2 id="integrations">Integrations</h2>
+
+<h3 id="status-bars">Status Bars</h3>
+
+<p>The Pomo CLI can output the current state of a running task session via the <code>pomo status</code>
+making it easy to script and embed it&rsquo;s output in various Linux status bars.</p>
+
+<h4 id="polybar-https-github-com-jaagr-polybar"><a href="https://github.com/jaagr/polybar">Polybar</a></h4>
+
+<p>You can create a module with the <code>custom/script</code> type and
+embed Pomo&rsquo;s status output in your Polybar:</p>
+
+<pre><code>[module/pomo]
+type = custom/script
+interval = 1
+exec = pomo status
+label = %output:0:15%
+format-underline = ${colors.white}
+format-prefix-foreground = ${colors.white}
 </code></pre>
 
 <h2 id="roadmap">Roadmap</h2>
