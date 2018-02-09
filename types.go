@@ -151,6 +151,20 @@ func (b ByID) Len() int           { return len(b) }
 func (b ByID) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b ByID) Less(i, j int) bool { return b[i].ID < b[j].ID }
 
+// After returns tasks that were started after the
+// provided start time.
+func After(start time.Time, tasks []*Task) []*Task {
+	filtered := []*Task{}
+	for _, task := range tasks {
+		if len(task.Pomodoros) > 0 {
+			if start.Before(task.Pomodoros[0].Start) {
+				filtered = append(filtered, task)
+			}
+		}
+	}
+	return filtered
+}
+
 // Pomodoro is a unit of time to spend working
 // on a single task.
 type Pomodoro struct {
