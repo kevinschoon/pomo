@@ -98,9 +98,6 @@ embed Pomo's status output in your Polybar:
 type = custom/script
 interval = 1
 exec = pomo status
-label = %output:0:15%
-format-underline = ${colors.white}
-format-prefix-foreground = ${colors.white}
 ```
 
 
