@@ -60,7 +60,7 @@ func list(path *string) func(*cli.Cmd) {
 		var (
 			asJSON   = cmd.BoolOpt("json", false, "output task history as JSON")
 			assend   = cmd.BoolOpt("assend", false, "sort tasks assending in age")
-			all      = cmd.BoolOpt("a all", false, "output all tasks")
+			all      = cmd.BoolOpt("a all", true, "output all tasks")
 			limit    = cmd.IntOpt("n limit", 0, "limit the number of results by n")
 			duration = cmd.StringOpt("d duration", "24h", "show tasks within this duration")
 		)
