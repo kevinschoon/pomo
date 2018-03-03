@@ -57,7 +57,7 @@ func summerizeTasks(config *Config, tasks []*Task) {
 		if len(task.Tags) > 0 {
 			fmt.Printf(" [")
 			for i, tag := range task.Tags {
-				if i > 1 && i != len(task.Tags) {
+				if i > 0 && i != len(task.Tags) {
 					fmt.Printf(" ")
 				}
 				// user specified color mapping exists
