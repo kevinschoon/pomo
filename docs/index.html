@@ -148,9 +148,9 @@
 
 <h4 id="linux">Linux</h4>
 
-<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.5.0/pomo-0.5.0-linux-amd64
+<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.6.0/pomo-0.6.0-linux-amd64
 # Optionally verify file integrity
-echo 021d59be9a4d625c4e9ee7506c6d7594  pomo | md5sum -c -
+echo 97be4ccf66c4ae4e3e154f87b9bb0bf2  pomo | md5sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
@@ -158,9 +158,9 @@ chmod +x pomo
 
 <h4 id="osx">OSX</h4>
 
-<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.5.0/pomo-0.5.0-darwin-amd64
+<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.6.0/pomo-0.6.0-darwin-amd64
 # Optionally verify file integrity
-[[ $(md5 -r pomo) != &quot;63370c77f761f38b3c1976e9aaa1e7d3 pomo&quot; ]] &amp;&amp; echo &quot;invalid hash!&quot;
+[[ $(md5 -r pomo) != &quot;55d77a30dfd6f66c95e19dd83c7ec95c pomo&quot; ]] &amp;&amp; echo &quot;invalid hash!&quot;
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH

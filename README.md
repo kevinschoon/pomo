@@ -23,9 +23,9 @@ Binaries are available for Linux and OSX platforms in the [releases section](htt
 #### Linux
 
 ```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.5.0/pomo-0.5.0-linux-amd64
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.6.0/pomo-0.6.0-linux-amd64
 # Optionally verify file integrity
-echo 021d59be9a4d625c4e9ee7506c6d7594  pomo | md5sum -c -
+echo 97be4ccf66c4ae4e3e154f87b9bb0bf2  pomo | md5sum -c -
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
@@ -34,9 +34,9 @@ chmod +x pomo
 #### OSX
 
 ```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.5.0/pomo-0.5.0-darwin-amd64
+curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.6.0/pomo-0.6.0-darwin-amd64
 # Optionally verify file integrity
-[[ $(md5 -r pomo) != "63370c77f761f38b3c1976e9aaa1e7d3 pomo" ]] && echo "invalid hash!"
+[[ $(md5 -r pomo) != "55d77a30dfd6f66c95e19dd83c7ec95c pomo" ]] && echo "invalid hash!"
 chmod +x pomo
 ./pomo -v
 # Copy pomo to somewhere on your $PATH
