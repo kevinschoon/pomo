@@ -2,10 +2,11 @@ package main
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"strings"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // 2018-01-16 19:05:21.752851759+08:00

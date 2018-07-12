@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/fatih/color"
 	"os"
 	"os/user"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 func maybe(err error) {
