@@ -14,7 +14,10 @@ endif
 
 all: bin/pomo
 
-clean: 
+bin/pomo: test
+	go build -o $@
+
+clean:
 	-rm -rfv bin/* docs/*
 
 bindata.go: tomato-icon.png
