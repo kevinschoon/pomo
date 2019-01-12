@@ -5,8 +5,6 @@ import (
 	"os"
 	"sort"
 	"time"
-
-	"github.com/jawher/mow.cli"
 )
 
 func start(path *string) func(*cli.Cmd) {
@@ -38,6 +36,33 @@ func start(path *string) func(*cli.Cmd) {
 			defer server.Stop()
 			runner.Start()
 			startUI(runner)
+		}
+	}
+}
+
+func create(path *string) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		cmd.Spec = "[OPTIONS] MESSAGE"
+		var (
+			duration  = cmd.StringOpt("d duration", "25m", "duration of each stent")
+			pomodoros = cmd.IntOpt("p pomodoros", 4, "number of pomodoros")
+			message   = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
+			tags      = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
+		)
+		cmd.Action = func() {
+			parsed, err := time.ParseDuration(*duration)
+			maybe(err)
+			db, err := NewStore(*path)
+			maybe(err)
+			defer db.Close()
+			task := &Task{
+				Message:    *message,
+				Tags:       *tags,
+				NPomodoros: *pomodoros,
+				Duration:   parsed,
+			}
+			taskID, err := db.CreateTask(*task)
+			maybe(err)
 		}
 	}
 }
@@ -131,6 +156,7 @@ func main() {
 	app.Version("v version", Version)
 	app.Command("start s", "start a new task", start(path))
 	app.Command("init", "initialize the sqlite database", initialize(path))
+	app.Command("create c", "create a new task without starting", start(path))
 	app.Command("list l", "list historical tasks", list(path))
 	app.Command("delete d", "delete a stored task", _delete(path))
 	app.Command("status st", "output the current status", _status(path))
