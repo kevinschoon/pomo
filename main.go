@@ -156,7 +156,7 @@ func main() {
 	app.Version("v version", Version)
 	app.Command("start s", "start a new task", start(path))
 	app.Command("init", "initialize the sqlite database", initialize(path))
-	app.Command("create c", "create a new task without starting", start(path))
+	app.Command("create c", "create a new task without starting", create(path))
 	app.Command("list l", "list historical tasks", list(path))
 	app.Command("delete d", "delete a stored task", _delete(path))
 	app.Command("status st", "output the current status", _status(path))
