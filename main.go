@@ -5,6 +5,8 @@ import (
 	"os"
 	"sort"
 	"time"
+
+	cli "github.com/jawher/mow.cli"
 )
 
 func start(path *string) func(*cli.Cmd) {
@@ -63,6 +65,37 @@ func create(path *string) func(*cli.Cmd) {
 			}
 			taskID, err := db.CreateTask(*task)
 			maybe(err)
+		}
+	}
+}
+
+func begin(path *string) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		cmd.Spec = "ID"
+		var jobId = cmd.IntArg("ID", -1, "ID of Pomodoro to begin")
+
+		cmd.Action = func() {
+			db, err := NewStore(*path)
+			maybe(err)
+			defer db.Close()
+			tasks, err := db.ReadTasks()
+			maybe(err)
+			task := &Task{}
+			for _, task = range tasks {
+				if task.ID == *jobId {
+					break
+				}
+			}
+			if task.ID == *jobId {
+				runner, err := NewTaskRunner(task, db, NewXnotifier(*path+"/icon.png"))
+				maybe(err)
+				server, err := NewServer(*path+"/pomo.sock", runner)
+				maybe(err)
+				server.Start()
+				defer server.Stop()
+				runner.Start()
+				startUI(runner)
+			}
 		}
 	}
 }
@@ -157,6 +190,7 @@ func main() {
 	app.Command("start s", "start a new task", start(path))
 	app.Command("init", "initialize the sqlite database", initialize(path))
 	app.Command("create c", "create a new task without starting", create(path))
+	app.Command("begin b", "begin requested pomodoro", begin(path))
 	app.Command("list l", "list historical tasks", list(path))
 	app.Command("delete d", "delete a stored task", _delete(path))
 	app.Command("status st", "output the current status", _status(path))
