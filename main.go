@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"os"
 	"sort"
 	"time"
@@ -30,6 +32,14 @@ func start(path *string) func(*cli.Cmd) {
 				NPomodoros: *pomodoros,
 				Duration:   parsed,
 			}
+			maybe(db.With(func(tx *sql.Tx) error {
+				id, err := db.CreateTask(tx, *task)
+				if err != nil {
+					return err
+				}
+				task.ID = id
+				return nil
+			}))
 			runner, err := NewTaskRunner(task, db, NewXnotifier(*path+"/icon.png"))
 			maybe(err)
 			server, err := NewServer(*path+"/pomo.sock", runner)
@@ -63,39 +73,51 @@ func create(path *string) func(*cli.Cmd) {
 				NPomodoros: *pomodoros,
 				Duration:   parsed,
 			}
-			taskID, err := db.CreateTask(*task)
-			maybe(err)
+			maybe(db.With(func(tx *sql.Tx) error {
+				taskId, err := db.CreateTask(tx, *task)
+				if err != nil {
+					return err
+				}
+				fmt.Println(taskId)
+				return nil
+			}))
 		}
 	}
 }
 
 func begin(path *string) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
-		cmd.Spec = "ID"
-		var jobId = cmd.IntArg("ID", -1, "ID of Pomodoro to begin")
+		cmd.Spec = "[OPTIONS] TASK_ID"
+		var (
+			taskId = cmd.IntArg("TASK_ID", -1, "ID of Pomodoro to begin")
+		)
 
 		cmd.Action = func() {
 			db, err := NewStore(*path)
 			maybe(err)
 			defer db.Close()
-			tasks, err := db.ReadTasks()
-			maybe(err)
-			task := &Task{}
-			for _, task = range tasks {
-				if task.ID == *jobId {
-					break
+			var task *Task
+			maybe(db.With(func(tx *sql.Tx) error {
+				read, err := db.ReadTask(tx, *taskId)
+				if err != nil {
+					return err
 				}
-			}
-			if task.ID == *jobId {
-				runner, err := NewTaskRunner(task, db, NewXnotifier(*path+"/icon.png"))
-				maybe(err)
-				server, err := NewServer(*path+"/pomo.sock", runner)
-				maybe(err)
-				server.Start()
-				defer server.Stop()
-				runner.Start()
-				startUI(runner)
-			}
+				task = read
+				err = db.DeletePomodoros(tx, *taskId)
+				if err != nil {
+					return err
+				}
+				task.Pomodoros = []*Pomodoro{}
+				return nil
+			}))
+			runner, err := NewTaskRunner(task, db, NewXnotifier(*path+"/icon.png"))
+			maybe(err)
+			server, err := NewServer(*path+"/pomo.sock", runner)
+			maybe(err)
+			server.Start()
+			defer server.Stop()
+			runner.Start()
+			startUI(runner)
 		}
 	}
 }
@@ -128,24 +150,27 @@ func list(path *string) func(*cli.Cmd) {
 			db, err := NewStore(*path)
 			maybe(err)
 			defer db.Close()
-			tasks, err := db.ReadTasks()
-			maybe(err)
-			if *assend {
-				sort.Sort(sort.Reverse(ByID(tasks)))
-			}
-			if !*all {
-				tasks = After(time.Now().Add(-duration), tasks)
-			}
-			if *limit > 0 && (len(tasks) > *limit) {
-				tasks = tasks[0:*limit]
-			}
-			if *asJSON {
-				maybe(json.NewEncoder(os.Stdout).Encode(tasks))
-				return
-			}
-			config, err := NewConfig(*path + "/config.json")
-			maybe(err)
-			summerizeTasks(config, tasks)
+			maybe(db.With(func(tx *sql.Tx) error {
+				tasks, err := db.ReadTasks(tx)
+				maybe(err)
+				if *assend {
+					sort.Sort(sort.Reverse(ByID(tasks)))
+				}
+				if !*all {
+					tasks = After(time.Now().Add(-duration), tasks)
+				}
+				if *limit > 0 && (len(tasks) > *limit) {
+					tasks = tasks[0:*limit]
+				}
+				if *asJSON {
+					maybe(json.NewEncoder(os.Stdout).Encode(tasks))
+					return nil
+				}
+				config, err := NewConfig(*path + "/config.json")
+				maybe(err)
+				summerizeTasks(config, tasks)
+				return nil
+			}))
 		}
 	}
 }
@@ -158,7 +183,9 @@ func _delete(path *string) func(*cli.Cmd) {
 			db, err := NewStore(*path)
 			maybe(err)
 			defer db.Close()
-			maybe(db.DeleteTask(*taskID))
+			maybe(db.With(func(tx *sql.Tx) error {
+				return db.DeleteTask(tx, *taskID)
+			}))
 		}
 	}
 }

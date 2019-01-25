@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -20,12 +21,8 @@ type TaskRunner struct {
 }
 
 func NewTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunner, error) {
-	taskID, err := store.CreateTask(*task)
-	if err != nil {
-		return nil, err
-	}
 	tr := &TaskRunner{
-		taskID:       taskID,
+		taskID:       task.ID,
 		taskMessage:  task.Message,
 		nPomodoros:   task.NPomodoros,
 		origDuration: task.Duration,
@@ -89,7 +86,9 @@ func (t *TaskRunner) run() error {
 			goto loop
 		}
 		pomodoro.End = time.Now()
-		err := t.store.CreatePomodoro(t.taskID, *pomodoro)
+		err := t.store.With(func(tx *sql.Tx) error {
+			return t.store.CreatePomodoro(tx, t.taskID, *pomodoro)
+		})
 		if err != nil {
 			return err
 		}
