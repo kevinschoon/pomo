@@ -209,6 +209,7 @@ func _status(path *string) func(*cli.Cmd) {
 
 func main() {
 	app := cli.App("pomo", "Pomodoro CLI")
+	app.LongDesc = "Pomo helps you track what you did, how long it took you to do it, and how much effort you expect it to take."
 	app.Spec = "[OPTIONS]"
 	var (
 		path = app.StringOpt("p path", defaultConfigPath(), "path to the pomo config directory")
