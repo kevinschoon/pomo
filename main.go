@@ -63,7 +63,7 @@ func create(path *string) func(*cli.Cmd) {
 				NPomodoros: *pomodoros,
 				Duration:   parsed,
 			}
-			taskID, err := db.CreateTask(*task)
+			_, err = db.CreateTask(*task)
 			maybe(err)
 		}
 	}
