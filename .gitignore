@@ -30,5 +30,6 @@ bin/*
 
 www/public/
 www/data/
+www/static/install.sh
 
 docs/demo.gif

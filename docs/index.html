@@ -146,30 +146,17 @@
 
 <p>Binaries are available for Linux and OSX platforms in the <a href="https://github.com/kevinschoon/pomo/releases">releases section</a> on github.</p>
 
-<h4 id="linux">Linux</h4>
+<h3 id="installer-script">Installer Script</h3>
 
-<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.6.0/pomo-0.6.0-linux-amd64
-# Optionally verify file integrity
-echo 97be4ccf66c4ae4e3e154f87b9bb0bf2  pomo | md5sum -c -
-chmod +x pomo
-./pomo -v
-# Copy pomo to somewhere on your $PATH
-</code></pre>
+<p>A bash script to download and verify the latest release for Linux and OSX platforms can be run
+with the following command:</p>
 
-<h4 id="osx">OSX</h4>
-
-<pre><code>curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.6.0/pomo-0.6.0-darwin-amd64
-# Optionally verify file integrity
-[[ $(md5 -r pomo) != &quot;55d77a30dfd6f66c95e19dd83c7ec95c pomo&quot; ]] &amp;&amp; echo &quot;invalid hash!&quot;
-chmod +x pomo
-./pomo -v
-# Copy pomo to somewhere on your $PATH
-
+<pre><code class="language-bash">curl -L -s https://kevinschoon.github.io/pomo/install.sh | bash /dev/stdin
 </code></pre>
 
 <h3 id="source">Source</h3>
 
-<pre><code> go get github.com/kevinschoon/pomo
+<pre><code class="language-bash"> go get github.com/kevinschoon/pomo
  pomo -v
 </code></pre>
 
@@ -177,12 +164,12 @@ chmod +x pomo
 
 <p>Once <code>pomo</code> is installed you need to initialize it&rsquo;s database.</p>
 
-<pre><code>pomo init
+<pre><code class="language-bash">pomo init
 </code></pre>
 
 <p>Start a 4 pomodoro session at 25 minute intervals:</p>
 
-<pre><code>pomo start -t my-project &quot;write some codes&quot;
+<pre><code class="language-bash">pomo start -t my-project &quot;write some codes&quot;
 </code></pre>
 
 <h2 id="configuration">Configuration</h2>
@@ -195,7 +182,7 @@ chmod +x pomo
 
 <p>Example:</p>
 
-<pre><code>{
+<pre><code class="language-json">{
     &quot;colors&quot;: {
         &quot;my-project&quot;: &quot;hiyellow&quot;,
         &quot;another-project&quot;: &quot;green&quot;
@@ -215,7 +202,7 @@ making it easy to script and embed it&rsquo;s output in various Linux status bar
 <p>You can create a module with the <code>custom/script</code> type and
 embed Pomo&rsquo;s status output in your Polybar:</p>
 
-<pre><code>[module/pomo]
+<pre><code class="language-ini">[module/pomo]
 type = custom/script
 interval = 1
 exec = pomo status
@@ -225,7 +212,6 @@ exec = pomo status
 
 <ul>
 <li>Generate charts/burn down</li>
-<li>System tray notification/icon</li>
 <li>??</li>
 </ul>
 

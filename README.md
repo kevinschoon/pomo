@@ -20,32 +20,18 @@ The Pomodoro Technique is simple and effective:
 
 Binaries are available for Linux and OSX platforms in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
 
-#### Linux
+### Installer Script
 
-```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.6.0/pomo-0.6.0-linux-amd64
-# Optionally verify file integrity
-echo 97be4ccf66c4ae4e3e154f87b9bb0bf2  pomo | md5sum -c -
-chmod +x pomo
-./pomo -v
-# Copy pomo to somewhere on your $PATH
-```
+A bash script to download and verify the latest release for Linux and OSX platforms can be run
+with the following command:
 
-#### OSX
-
-```
-curl -L -o pomo https://github.com/kevinschoon/pomo/releases/download/0.6.0/pomo-0.6.0-darwin-amd64
-# Optionally verify file integrity
-[[ $(md5 -r pomo) != "55d77a30dfd6f66c95e19dd83c7ec95c pomo" ]] && echo "invalid hash!"
-chmod +x pomo
-./pomo -v
-# Copy pomo to somewhere on your $PATH
-
+```bash
+curl -L -s https://kevinschoon.github.io/pomo/install.sh | bash /dev/stdin
 ```
 
 ### Source
 
- ```
+ ```bash
  go get github.com/kevinschoon/pomo
  pomo -v
  ```
@@ -54,12 +40,12 @@ chmod +x pomo
 
 Once `pomo` is installed you need to initialize it's database.
 
-```
+``` bash
 pomo init
 ```
 
 Start a 4 pomodoro session at 25 minute intervals:
-```
+```bash
 pomo start -t my-project "write some codes"
 ```
 
@@ -72,7 +58,7 @@ Pomo has a few configuration options which can be read from a JSON file in Pomo'
 You can map colors to specific tags in the `colors` field.
 
 Example:
-```
+```json
 {
     "colors": {
         "my-project": "hiyellow",
@@ -93,7 +79,7 @@ making it easy to script and embed it's output in various Linux status bars.
 You can create a module with the `custom/script` type and 
 embed Pomo's status output in your Polybar:
 
-```
+```ini
 [module/pomo]
 type = custom/script
 interval = 1
@@ -104,7 +90,6 @@ exec = pomo status
 ## Roadmap
 
   * Generate charts/burn down
-  * System tray notification/icon
   * ??
 
 ## Credits

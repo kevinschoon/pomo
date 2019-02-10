@@ -48,12 +48,11 @@ release-darwin: bin/pomo-$(VERSION)-darwin-amd64 bin/pomo-$(VERSION)-darwin-amd6
 
 release: release-linux release-darwin
 
-docs: readme
-	cd www && hugo -d ../docs
-
-readme: www/data/readme.json
+docs: www/data/readme.json
+	cd www && cp ../install.sh static/ && hugo -d ../docs
 
 www/data/readme.json: www/data README.md
 	cat README.md | python -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' > $@
+
 www/data bin:
 	mkdir -p $@
