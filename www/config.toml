@@ -1,4 +1,4 @@
-baseURL = ""
+baseURL = "/pomo"
 languageCode = "en-us"
 title = "Pomo"
 theme = "minimal"
