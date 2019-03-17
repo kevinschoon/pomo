@@ -1,8 +1,8 @@
 #!/bin/bash
 
-POMO_VERSION="0.7.0"
-OSX_MD5="4aa452e021d07bbb2c7c3a15839fe5df"
-LINUX_MD5="84551ab258902e62d9d8e14368bfdf4b"
+POMO_VERSION="0.7.1"
+OSX_MD5="369a489fc1e9af234cd5db099c3efd83"
+LINUX_MD5="973f5c83218d1d3df5e43a2e6c171b7f"
 OSX_TARBALL="https://github.com/kevinschoon/pomo/releases/download/$POMO_VERSION/pomo-$POMO_VERSION-darwin-amd64"
 LINUX_TARBALL="https://github.com/kevinschoon/pomo/releases/download/$POMO_VERSION/pomo-$POMO_VERSION-linux-amd64"
 
