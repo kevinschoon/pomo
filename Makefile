@@ -1,4 +1,4 @@
-DOCKER_CMD=docker run --rm -ti --user 1000 -w /build/pomo -v $$PWD:/build/pomo
+DOCKER_CMD=docker run --rm -ti -w /build/pomo -v $$PWD:/build/pomo
 DOCKER_IMAGE=pomo-build
 VERSION ?= $(shell git describe --tags 2>/dev/null)
 ifeq "$(VERSION)" ""
