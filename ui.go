@@ -26,7 +26,7 @@ func render(wheel *Wheel, status *Status) termui.GridBufferer {
 	case BREAKING:
 		text = `It is time to take a break!
 
-		Once you a ready press [enter] 
+		Once you are ready, press [enter] 
 		to begin the next Pomodoro.
 
 		[q] - quit [p] - pause
