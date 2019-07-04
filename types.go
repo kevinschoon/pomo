@@ -1,18 +1,11 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/0xAX/notificator"
-	"github.com/fatih/color"
-)
-
-const (
-	defaultDateTimeFmt = "2006-01-02 15:04"
 )
 
 type State int
@@ -57,77 +50,6 @@ func (w *Wheel) String() string {
 		return "\\"
 	}
 	return ""
-}
-
-// Config represents user preferences
-type Config struct {
-	Colors      map[string]*color.Color
-	DateTimeFmt string
-}
-
-var colorMap = map[string]*color.Color{
-	"black":     color.New(color.FgBlack),
-	"hiblack":   color.New(color.FgHiBlack),
-	"blue":      color.New(color.FgBlue),
-	"hiblue":    color.New(color.FgHiBlue),
-	"cyan":      color.New(color.FgCyan),
-	"hicyan":    color.New(color.FgHiCyan),
-	"green":     color.New(color.FgGreen),
-	"higreen":   color.New(color.FgHiGreen),
-	"magenta":   color.New(color.FgMagenta),
-	"himagenta": color.New(color.FgHiMagenta),
-	"red":       color.New(color.FgRed),
-	"hired":     color.New(color.FgHiRed),
-	"white":     color.New(color.FgWhite),
-	"hiwrite":   color.New(color.FgHiWhite),
-	"yellow":    color.New(color.FgYellow),
-	"hiyellow":  color.New(color.FgHiYellow),
-}
-
-func (c *Config) UnmarshalJSON(raw []byte) error {
-	config := &struct {
-		Colors      map[string]string `json:"colors"`
-		DateTimeFmt string            `json:"datetimefmt"`
-	}{}
-	err := json.Unmarshal(raw, config)
-	if err != nil {
-		return err
-	}
-	for key, name := range config.Colors {
-		if color, ok := colorMap[name]; ok {
-			c.Colors[key] = color
-		} else {
-			return fmt.Errorf("bad color choice: %s", name)
-		}
-	}
-	if config.DateTimeFmt != "" {
-		c.DateTimeFmt = config.DateTimeFmt
-	} else {
-		c.DateTimeFmt = defaultDateTimeFmt
-	}
-	return nil
-}
-
-func NewConfig(path string) (*Config, error) {
-	raw, err := ioutil.ReadFile(path)
-	if err != nil {
-		// Create an empty config file
-		// if it does not already exist.
-		if os.IsNotExist(err) {
-			raw, _ := json.Marshal(map[string]*color.Color{})
-			ioutil.WriteFile(path, raw, 0644)
-			return NewConfig(path)
-		}
-		return nil, err
-	}
-	config := &Config{
-		Colors: map[string]*color.Color{},
-	}
-	err = json.Unmarshal(raw, config)
-	if err != nil {
-		return nil, err
-	}
-	return config, json.Unmarshal(raw, config)
 }
 
 // Task describes some activity

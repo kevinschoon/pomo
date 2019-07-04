@@ -207,6 +207,17 @@ func _status(path *string) func(*cli.Cmd) {
 	}
 }
 
+func config(path *string) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		cmd.Spec = "[OPTIONS]"
+		cmd.Action = func() {
+			config, err := NewConfig(*path + "/config.json")
+			maybe(err)
+			maybe(json.NewEncoder(os.Stdout).Encode(config))
+		}
+	}
+}
+
 func main() {
 	app := cli.App("pomo", "Pomodoro CLI")
 	app.LongDesc = "Pomo helps you track what you did, how long it took you to do it, and how much effort you expect it to take."
@@ -217,6 +228,7 @@ func main() {
 	app.Version("v version", Version)
 	app.Command("start s", "start a new task", start(path))
 	app.Command("init", "initialize the sqlite database", initialize(path))
+	app.Command("config cf", "display the current configuration", config(path))
 	app.Command("create c", "create a new task without starting", create(path))
 	app.Command("begin b", "begin requested pomodoro", begin(path))
 	app.Command("list l", "list historical tasks", list(path))
