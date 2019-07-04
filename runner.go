@@ -20,7 +20,11 @@ type TaskRunner struct {
 	duration     time.Duration
 }
 
-func NewTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunner, error) {
+func NewTaskRunner(task *Task, config *Config) (*TaskRunner, error) {
+	store, err := NewStore(config.DBPath)
+	if err != nil {
+		return nil, err
+	}
 	tr := &TaskRunner{
 		taskID:       task.ID,
 		taskMessage:  task.Message,
@@ -30,7 +34,7 @@ func NewTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunner, er
 		state:        State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
-		notifier:     notifier,
+		notifier:     NewXnotifier(config.IconPath),
 		duration:     task.Duration,
 	}
 	return tr, nil
@@ -44,6 +48,10 @@ func (t *TaskRunner) TimeRemaining() time.Duration {
 	return (t.duration - time.Since(t.started)).Truncate(time.Second)
 }
 
+func (t *TaskRunner) SetState(state State) {
+	t.state = state
+}
+
 func (t *TaskRunner) run() error {
 	for t.count < t.nPomodoros {
 		// Create a new pomodoro where we
@@ -52,8 +60,8 @@ func (t *TaskRunner) run() error {
 		pomodoro := &Pomodoro{}
 		// Start this pomodoro
 		pomodoro.Start = time.Now()
-		// Set state to RUNNING
-		t.state = RUNNING
+		// Set state to RUNNIN
+		t.SetState(RUNNING)
 		// Create a new timer
 		timer := time.NewTimer(t.duration)
 		// Record our started time
@@ -61,7 +69,7 @@ func (t *TaskRunner) run() error {
 	loop:
 		select {
 		case <-timer.C:
-			t.state = BREAKING
+			t.SetState(BREAKING)
 			t.count++
 		case <-t.toggle:
 			// Catch any toggles when we
@@ -72,7 +80,7 @@ func (t *TaskRunner) run() error {
 			// Record the remaining time of the current pomodoro
 			remaining := t.TimeRemaining()
 			// Change state to PAUSED
-			t.state = PAUSED
+			t.SetState(PAUSED)
 			// Wait for the user to press [p]
 			<-t.pause
 			// Resume the timer with previous
@@ -82,7 +90,7 @@ func (t *TaskRunner) run() error {
 			t.started = time.Now()
 			t.duration = remaining
 			// Restore state to RUNNING
-			t.state = RUNNING
+			t.SetState(RUNNING)
 			goto loop
 		}
 		pomodoro.End = time.Now()
@@ -106,7 +114,7 @@ func (t *TaskRunner) run() error {
 
 	}
 	t.notifier.Notify("Pomo", "Pomo session has completed!")
-	t.state = COMPLETE
+	t.SetState(COMPLETE)
 	return nil
 }
 

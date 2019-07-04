@@ -38,8 +38,8 @@ func (s *Server) Stop() {
 	s.listener.Close()
 }
 
-func NewServer(path string, runner *TaskRunner) (*Server, error) {
-	listener, err := net.Listen("unix", path)
+func NewServer(runner *TaskRunner, config *Config) (*Server, error) {
+	listener, err := net.Listen("unix", config.SocketPath)
 	if err != nil {
 		return nil, err
 	}

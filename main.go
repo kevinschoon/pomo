@@ -40,9 +40,9 @@ func start(config *Config) func(*cli.Cmd) {
 				task.ID = id
 				return nil
 			}))
-			runner, err := NewTaskRunner(task, db, NewXnotifier(config.IconPath))
+			runner, err := NewTaskRunner(task, config)
 			maybe(err)
-			server, err := NewServer(config.SocketPath, runner)
+			server, err := NewServer(runner, config)
 			maybe(err)
 			server.Start()
 			defer server.Stop()
@@ -110,9 +110,9 @@ func begin(config *Config) func(*cli.Cmd) {
 				task.Pomodoros = []*Pomodoro{}
 				return nil
 			}))
-			runner, err := NewTaskRunner(task, db, NewXnotifier(config.IconPath))
+			runner, err := NewTaskRunner(task, config)
 			maybe(err)
-			server, err := NewServer(config.SocketPath, runner)
+			server, err := NewServer(runner, config)
 			maybe(err)
 			server.Start()
 			defer server.Stop()
