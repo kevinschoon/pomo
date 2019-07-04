@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"path"
 	"testing"
 	"time"
 )
 
 func TestTaskRunner(t *testing.T) {
-	path, _ := ioutil.TempDir("/tmp", "")
-	store, err := NewStore(path)
+	baseDir, _ := ioutil.TempDir("/tmp", "")
+	store, err := NewStore(path.Join(baseDir, "pomo.db"))
 	if err != nil {
 		t.Error(err)
 	}

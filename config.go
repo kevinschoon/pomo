@@ -17,7 +17,10 @@ const (
 type Config struct {
 	Colors      *ColorMap `json:"colors"`
 	DateTimeFmt string    `json:"dateTimeFmt"`
+	BasePath    string    `json:"basePath"`
 	DBPath      string    `json:"dbPath"`
+	SocketPath  string    `json:"socketPath"`
+	IconPath    string    `json:"iconPath"`
 }
 
 type ColorMap struct {
@@ -72,31 +75,40 @@ func (c *ColorMap) UnmarshalJSON(raw []byte) error {
 	return nil
 }
 
-func NewConfig(configPath string) (*Config, error) {
+func LoadConfig(configPath string, config *Config) error {
 	raw, err := ioutil.ReadFile(configPath)
 	if err != nil {
+		os.MkdirAll(path.Dir(configPath), 0755)
 		// Create an empty config file
 		// if it does not already exist.
 		if os.IsNotExist(err) {
 			raw, _ := json.Marshal(map[string]string{})
 			err := ioutil.WriteFile(configPath, raw, 0644)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			return NewConfig(configPath)
+			return LoadConfig(configPath, config)
 		}
-		return nil, err
+		return err
 	}
-	config := &Config{}
 	err = json.Unmarshal(raw, config)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if config.DateTimeFmt == "" {
 		config.DateTimeFmt = defaultDateTimeFmt
 	}
-	if config.DBPath == "" {
-		config.DBPath = path.Dir(configPath) + "/pomo.db"
+	if config.BasePath == "" {
+		config.BasePath = path.Dir(configPath)
 	}
-	return config, nil
+	if config.DBPath == "" {
+		config.DBPath = path.Join(config.BasePath, "/pomo.db")
+	}
+	if config.SocketPath == "" {
+		config.SocketPath = path.Join(config.BasePath, "/pomo.sock")
+	}
+	if config.IconPath == "" {
+		config.IconPath = path.Join(config.BasePath, "/icon.png")
+	}
+	return nil
 }

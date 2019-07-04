@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path"
 	"time"
 
 	"github.com/fatih/color"
@@ -19,7 +20,7 @@ func maybe(err error) {
 func defaultConfigPath() string {
 	u, err := user.Current()
 	maybe(err)
-	return u.HomeDir + "/.pomo"
+	return path.Join(u.HomeDir, "/.pomo/config.json")
 }
 
 func summerizeTasks(config *Config, tasks []*Task) {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"os"
 	"strings"
 	"time"
 
@@ -19,8 +18,7 @@ type Store struct {
 }
 
 func NewStore(path string) (*Store, error) {
-	os.Mkdir(path, 0755)
-	db, err := sql.Open("sqlite3", path+"/pomo.db")
+	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
