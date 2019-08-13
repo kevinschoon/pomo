@@ -2,31 +2,29 @@ package main
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/gizak/termui"
+	termui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 )
 
-func render(wheel *Wheel, status *Status) termui.GridBufferer {
+func render(width, height int, wheel *Wheel, status *Status) termui.Drawable {
 	var text string
 	switch status.State {
 	case RUNNING:
-		text = fmt.Sprintf(
-			`[%d/%d] Pomodoros completed
+		text = `[%d/%d] Pomodoros completed
 
 			%s %s remaining
 
 
 			[q] - quit [p] - pause
-			`,
-			status.Count,
-			status.NPomodoros,
-			wheel,
-			status.Remaining,
-		)
+		`
+		text = fmt.Sprintf(text, status.Count, status.NPomodoros, wheel, status.Remaining)
 	case BREAKING:
-		text = `It is time to take a break!
+		text = `
+        It is time to take a break!
 
-		Once you are ready, press [enter] 
+		Once you are ready, press [enter]
 		to begin the next Pomodoro.
 
 		[q] - quit [p] - pause
@@ -40,84 +38,75 @@ func render(wheel *Wheel, status *Status) termui.GridBufferer {
 		[q] - quit [p] - unpause
 		`
 	case COMPLETE:
-		text = `This session has concluded. 
-		
-		Press [q] to exit.
+		text = `This session has concluded.
 
+		Press [q] to exit.
 
 		[q] - quit
 		`
 	}
-	par := termui.NewPar(text)
-	par.Height = 8
-	par.BorderLabel = fmt.Sprintf("Pomo - %s", status.State)
-	par.BorderLabelFg = termui.ColorWhite
-	par.BorderFg = termui.ColorRed
+	par := widgets.NewParagraph()
+	par.Title = fmt.Sprintf("Pomo - %s", status.State)
+	par.TitleStyle.Modifier = termui.ModifierBold | termui.ModifierUnderline
+	par.Text = text
+	x := 40
+	y := 8
+	x1, y1, x2, y2 := width/2-x/2, height/2-y/2, width/2+x/2, height/2+y/2
+	// par.Text = fmt.Sprintf("%d - %d\n x1: %d y1: %d x2: %d y2: %d", width, height, x1, y1, x2, y2)
+	par.SetRect(x1, y1, x2, y2)
+	par.Border = true
+	par.BorderStyle.Fg = termui.ColorWhite
 	if status.State == RUNNING {
-		par.BorderFg = termui.ColorGreen
+		par.BorderStyle.Fg = termui.ColorGreen
 	}
 	return par
 }
 
-func newBlk() termui.GridBufferer {
-	blk := termui.NewBlock()
-	blk.Height = termui.TermHeight() / 3
-	blk.Border = false
-	return blk
-}
-
-func centered(part termui.GridBufferer) *termui.Grid {
-	grid := termui.NewGrid(
-		termui.NewRow(
-			termui.NewCol(12, 0, newBlk()),
-		),
-		termui.NewRow(
-			termui.NewCol(3, 0, newBlk()),
-			termui.NewCol(6, 0, part),
-			termui.NewCol(3, 0, newBlk()),
-		),
-		termui.NewRow(
-			termui.NewCol(12, 0, newBlk()),
-		),
-	)
-	grid.BgColor = termui.ThemeAttr("bg")
-	grid.Width = termui.TermWidth()
-	grid.Align()
-	return grid
-}
-
 func startUI(runner *TaskRunner) {
+
 	err := termui.Init()
 	if err != nil {
 		panic(err)
 	}
+
 	wheel := Wheel(0)
 
 	defer termui.Close()
 
-	termui.Render(centered(render(&wheel, runner.Status())))
+	width, height := termui.TerminalDimensions()
 
-	termui.Handle("/timer/1s", func(termui.Event) {
-		termui.Render(centered(render(&wheel, runner.Status())))
-	})
+	termui.Render(render(width, height, &wheel, runner.Status()))
 
-	termui.Handle("/sys/wnd/resize", func(termui.Event) {
-		termui.Render(centered(render(&wheel, runner.Status())))
-	})
+	events := termui.PollEvents()
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
 
-	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
-		runner.Toggle()
-		termui.Render(centered(render(&wheel, runner.Status())))
-	})
-
-	termui.Handle("/sys/kbd/p", func(termui.Event) {
-		runner.Pause()
-		termui.Render(centered(render(&wheel, runner.Status())))
-	})
-
-	termui.Handle("/sys/kbd/q", func(termui.Event) {
-		termui.StopLoop()
-	})
-
-	termui.Loop()
+loop:
+	for {
+		select {
+		case e := <-events:
+			if e.Type == termui.ResizeEvent {
+				newWidth, newHeight := termui.TerminalDimensions()
+				width = newWidth
+				height = newHeight
+				termui.Clear()
+				termui.Render(render(width, height, &wheel, runner.Status()))
+			}
+			if e.Type == termui.KeyboardEvent {
+				if e.ID == "<Enter>" {
+					runner.Toggle()
+					termui.Render(render(width, height, &wheel, runner.Status()))
+				}
+				if e.ID == "p" {
+					runner.Pause()
+					termui.Render(render(width, height, &wheel, runner.Status()))
+				}
+				if e.ID == "q" {
+					break loop
+				}
+			}
+		case <-ticker.C:
+			termui.Render(render(width, height, &wheel, runner.Status()))
+		}
+	}
 }
