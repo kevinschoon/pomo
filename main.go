@@ -23,31 +23,28 @@ func start(config *Config) func(*cli.Cmd) {
 		cmd.Action = func() {
 			parsed, err := time.ParseDuration(*duration)
 			maybe(err)
-			db, err := NewStore(config.DBPath)
+			db, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
-			task := &Task{
-				Message:    *message,
-				Tags:       *tags,
-				NPomodoros: *pomodoros,
-				Duration:   parsed,
-			}
-			maybe(db.With(func(tx *sql.Tx) error {
-				id, err := db.CreateTask(tx, *task)
-				if err != nil {
-					return err
-				}
-				task.ID = id
-				return nil
-			}))
-			runner, err := NewTaskRunner(task, config)
+			taskID, err := CreateOne(db, &Task{
+				Message:   *message,
+				Tags:      *tags,
+				Pomodoros: NewPomodoros(*pomodoros),
+				Duration:  parsed,
+			})
 			maybe(err)
-			server, err := NewServer(runner, config)
+			_, err = ReadOne(db, taskID)
 			maybe(err)
-			server.Start()
-			defer server.Stop()
-			runner.Start()
-			startUI(runner)
+			runner := NewTaskRunner()
+			server, err := NewSocketServer(runner, config)
+			maybe(err)
+			// TODO catch error
+			// runner.Start(task)
+			go server.Serve()
+			// defer server.Stop()
+			client, err := NewSocketClient(config.SocketPath)
+			maybe(err)
+			maybe(startUI(client))
 		}
 	}
 }
@@ -64,23 +61,18 @@ func create(config *Config) func(*cli.Cmd) {
 		cmd.Action = func() {
 			parsed, err := time.ParseDuration(*duration)
 			maybe(err)
-			db, err := NewStore(config.DBPath)
+			db, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
-			task := &Task{
-				Message:    *message,
-				Tags:       *tags,
-				NPomodoros: *pomodoros,
-				Duration:   parsed,
-			}
-			maybe(db.With(func(tx *sql.Tx) error {
-				taskId, err := db.CreateTask(tx, *task)
-				if err != nil {
-					return err
-				}
-				fmt.Println(taskId)
-				return nil
-			}))
+			taskID, err := CreateOne(db,
+				&Task{
+					Message:   *message,
+					Tags:      *tags,
+					Pomodoros: NewPomodoros(*pomodoros),
+					Duration:  parsed,
+				})
+			maybe(err)
+			fmt.Printf("%d", taskID)
 		}
 	}
 }
@@ -93,31 +85,34 @@ func begin(config *Config) func(*cli.Cmd) {
 		)
 
 		cmd.Action = func() {
-			db, err := NewStore(config.DBPath)
+			db, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
-			var task *Task
-			maybe(db.With(func(tx *sql.Tx) error {
-				read, err := db.ReadTask(tx, *taskId)
-				if err != nil {
-					return err
-				}
-				task = read
-				err = db.DeletePomodoros(tx, *taskId)
-				if err != nil {
-					return err
-				}
-				task.Pomodoros = []*Pomodoro{}
-				return nil
-			}))
-			runner, err := NewTaskRunner(task, config)
+			_, err = ReadOne(db, int64(*taskId))
 			maybe(err)
-			server, err := NewServer(runner, config)
+			/*
+				maybe(db.With(func(tx *sql.Tx) error {
+					err := db.ReadTask(tx, task)
+					if err != nil {
+						return err
+					}
+					// TODO
+					err = db.DeletePomodoros(tx, int64(*taskId), int64(-1))
+					if err != nil {
+						return err
+					}
+					task.Pomodoros = []*Pomodoro{}
+					return nil
+				}))
+			*/
+			runner := NewTaskRunner()
 			maybe(err)
-			server.Start()
-			defer server.Stop()
-			runner.Start()
-			startUI(runner)
+			server, err := NewSocketServer(runner, config)
+			maybe(err)
+			go server.Serve()
+			client, err := NewSocketClient(config.SocketPath)
+			maybe(err)
+			maybe(startUI(client))
 		}
 	}
 }
@@ -126,7 +121,7 @@ func initialize(config *Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS]"
 		cmd.Action = func() {
-			db, err := NewStore(config.DBPath)
+			db, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
 			maybe(initDB(db))
@@ -147,7 +142,7 @@ func list(config *Config) func(*cli.Cmd) {
 		cmd.Action = func() {
 			duration, err := time.ParseDuration(*duration)
 			maybe(err)
-			db, err := NewStore(config.DBPath)
+			db, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(tx *sql.Tx) error {
@@ -179,11 +174,11 @@ func _delete(config *Config) func(*cli.Cmd) {
 		cmd.Spec = "[OPTIONS] TASK_ID"
 		var taskID = cmd.IntArg("TASK_ID", -1, "task to delete")
 		cmd.Action = func() {
-			db, err := NewStore(config.DBPath)
+			db, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(tx *sql.Tx) error {
-				return db.DeleteTask(tx, *taskID)
+				return db.DeleteTask(tx, int64(*taskID))
 			}))
 		}
 	}
@@ -193,7 +188,7 @@ func _status(config *Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS]"
 		cmd.Action = func() {
-			client, err := NewClient(config.SocketPath)
+			client, err := NewSocketClient(config.SocketPath)
 			if err != nil {
 				outputStatus(Status{})
 				return

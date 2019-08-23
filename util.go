@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
 	"os"
 	"os/user"
@@ -23,6 +24,16 @@ func defaultConfigPath() string {
 	return path.Join(u.HomeDir, "/.pomo/config.json")
 }
 
+func makeUUID() string {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+}
+
+// TODO: Make more configurable / possibly remove all together
 func summerizeTasks(config *Config, tasks []*Task) {
 	for _, task := range tasks {
 		var start string
@@ -39,8 +50,8 @@ func summerizeTasks(config *Config, tasks []*Task) {
 			if i > 0 {
 				fmt.Printf(" ")
 			}
-			// pomodoro exceeded it's expected duration by more than 5m
-			if pomodoro.Duration() > task.Duration+5*time.Minute {
+			// pomdoro was paused more than 5m
+			if pomodoro.PauseTime > task.Duration+5*time.Minute {
 				color.New(color.FgYellow).Printf("X")
 			} else {
 				// pomodoro completed normally
@@ -48,12 +59,14 @@ func summerizeTasks(config *Config, tasks []*Task) {
 			}
 		}
 		// each missed pomodoro
-		for i := 0; i < task.NPomodoros-len(task.Pomodoros); i++ {
-			if i > 0 || i == 0 && len(task.Pomodoros) > 0 {
-				fmt.Printf(" ")
+		/*
+			for i := 0; i < task.NPomodoros-len(task.Pomodoros); i++ {
+				if i > 0 || i == 0 && len(task.Pomodoros) > 0 {
+					fmt.Printf(" ")
+				}
+				color.New(color.FgRed).Printf("X")
 			}
-			color.New(color.FgRed).Printf("X")
-		}
+		*/
 		fmt.Printf("]")
 		// Tags
 		if len(task.Tags) > 0 {
@@ -83,7 +96,7 @@ func outputStatus(status Status) {
 		state = string(status.State.String()[0])
 	}
 	if status.State == RUNNING {
-		fmt.Printf("%s [%d/%d] %s", state, status.Count, status.NPomodoros, status.Remaining)
+		fmt.Printf("%s [%d/%d]", state, status.Count, status.NPomodoros)
 	} else {
 		fmt.Printf("%s [%d/%d] -", state, status.Count, status.NPomodoros)
 	}

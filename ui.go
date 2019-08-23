@@ -8,9 +8,42 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 )
 
-func render(width, height int, wheel *Wheel, status *Status) termui.Drawable {
+// Wheel keeps track of an ASCII spinner
+type Wheel int
+
+func (w *Wheel) String() string {
+	switch int(*w) {
+	case 0:
+		*w++
+		return "|"
+	case 1:
+		*w++
+		return "/"
+	case 2:
+		*w++
+		return "-"
+	case 3:
+		*w = 0
+		return "\\"
+	}
+	return ""
+}
+
+type RenderOptions struct {
+	Wheel  *Wheel
+	Width  int
+	Height int
+}
+
+func render(client Client, opts *RenderOptions) termui.Drawable {
+	status, err := client.Status()
+	if err != nil {
+		panic(err)
+	}
 	var text string
 	switch status.State {
+	case INITIALIZED:
+		text = `TODO`
 	case RUNNING:
 		text = `[%d/%d] Pomodoros completed
 
@@ -19,7 +52,7 @@ func render(width, height int, wheel *Wheel, status *Status) termui.Drawable {
 
 			[q] - quit [p] - pause
 		`
-		text = fmt.Sprintf(text, status.Count, status.NPomodoros, wheel, status.Remaining)
+		text = fmt.Sprintf(text, status.Count, status.NPomodoros, opts.Wheel, status.NPomodoros-status.Count)
 	case BREAKING:
 		text = `
         It is time to take a break!
@@ -29,7 +62,7 @@ func render(width, height int, wheel *Wheel, status *Status) termui.Drawable {
 
 		[q] - quit [p] - pause
 		`
-	case PAUSED:
+	case SUSPENDED:
 		text = `Pomo is suspended.
 
 		Press [p] to continue.
@@ -51,7 +84,7 @@ func render(width, height int, wheel *Wheel, status *Status) termui.Drawable {
 	par.Text = text
 	x := 40
 	y := 8
-	x1, y1, x2, y2 := width/2-x/2, height/2-y/2, width/2+x/2, height/2+y/2
+	x1, y1, x2, y2 := opts.Width/2-x/2, opts.Height/2-y/2, opts.Width/2+x/2, opts.Height/2+y/2
 	// par.Text = fmt.Sprintf("%d - %d\n x1: %d y1: %d x2: %d y2: %d", width, height, x1, y1, x2, y2)
 	par.SetRect(x1, y1, x2, y2)
 	par.Border = true
@@ -62,7 +95,7 @@ func render(width, height int, wheel *Wheel, status *Status) termui.Drawable {
 	return par
 }
 
-func startUI(runner *TaskRunner) {
+func startUI(client Client) error {
 
 	err := termui.Init()
 	if err != nil {
@@ -71,42 +104,47 @@ func startUI(runner *TaskRunner) {
 
 	wheel := Wheel(0)
 
-	defer termui.Close()
-
 	width, height := termui.TerminalDimensions()
 
-	termui.Render(render(width, height, &wheel, runner.Status()))
+	renderOpts := &RenderOptions{
+		Wheel:  &wheel,
+		Width:  width,
+		Height: height,
+	}
+
+	termui.Render(render(client, renderOpts))
+
+	defer termui.Close()
 
 	events := termui.PollEvents()
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(tickTime * 2)
 	defer ticker.Stop()
 
-loop:
 	for {
 		select {
 		case e := <-events:
 			if e.Type == termui.ResizeEvent {
-				newWidth, newHeight := termui.TerminalDimensions()
-				width = newWidth
-				height = newHeight
+				width, height = termui.TerminalDimensions()
+				renderOpts.Width = width
+				renderOpts.Height = height
 				termui.Clear()
-				termui.Render(render(width, height, &wheel, runner.Status()))
+				termui.Render(render(client, renderOpts))
 			}
 			if e.Type == termui.KeyboardEvent {
 				if e.ID == "<Enter>" {
-					runner.Toggle()
-					termui.Render(render(width, height, &wheel, runner.Status()))
+					client.Toggle()
+					termui.Render(render(client, renderOpts))
 				}
 				if e.ID == "p" {
-					runner.Pause()
-					termui.Render(render(width, height, &wheel, runner.Status()))
+					client.Suspend()
+					termui.Render(render(client, renderOpts))
 				}
 				if e.ID == "q" {
-					break loop
+					return nil
 				}
 			}
 		case <-ticker.C:
-			termui.Render(render(width, height, &wheel, runner.Status()))
+			termui.Render(render(client, renderOpts))
 		}
 	}
 }
