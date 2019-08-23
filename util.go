@@ -33,6 +33,16 @@ func makeUUID() string {
 	return fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
+func makeTimers(task Task) []*Timer {
+	timers := make([]*Timer, len(task.Pomodoros))
+	for i := 0; i < len(task.Pomodoros); i++ {
+		runtime := task.Pomodoros[i].RunTime
+		pauseTime := task.Pomodoros[i].PauseTime
+		timers[i] = NewTimer(task.Duration, runtime, pauseTime)
+	}
+	return timers
+}
+
 // TODO: Make more configurable / possibly remove all together
 func summerizeTasks(config *Config, tasks []*Task) {
 	for _, task := range tasks {

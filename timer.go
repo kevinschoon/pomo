@@ -14,6 +14,7 @@ type Timer struct {
 	mu            sync.RWMutex
 	timer         *time.Timer
 	now           time.Time
+	started       time.Time
 	suspended     bool
 	duration      time.Duration
 	timeRunning   time.Duration
@@ -45,6 +46,7 @@ func (t *Timer) add(duration time.Duration) {
 
 func (t *Timer) Start() chan struct{} {
 	done := make(chan struct{})
+	t.started = time.Now()
 	go func() {
 		for t.timeRunning < t.duration {
 			t.mu.Lock()
@@ -57,6 +59,11 @@ func (t *Timer) Start() chan struct{} {
 		done <- struct{}{}
 	}()
 	return done
+}
+
+// TimeStarted returns the time the timer was started.
+func (t *Timer) TimeStarted() time.Time {
+	return t.started
 }
 
 // TimeSuspended returns the total time the timer

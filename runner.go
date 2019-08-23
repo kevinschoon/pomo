@@ -49,22 +49,27 @@ type TaskRunner struct {
 	count   int
 	suspend chan bool
 	toggle  chan struct{}
+	task    *Task
+	timers  []*Timer
 }
 
-func NewTaskRunner() *TaskRunner {
+func NewTaskRunner(task *Task) *TaskRunner {
 	return &TaskRunner{
 		state:   INITIALIZED,
 		suspend: make(chan bool),
 		toggle:  make(chan struct{}),
+		task:    task,
+		timers:  makeTimers(*task),
 	}
 }
 
-func (t *TaskRunner) Start(timers []*Timer) {
+func (t *TaskRunner) Start() chan struct{} {
+	done := make(chan struct{})
 	go func() {
 		// start as initialized and wait for first
 		// toggle before timers are started
 		<-t.toggle
-		for count, timer := range timers {
+		for count, timer := range t.timers {
 			t.count = count
 			done := timer.Start()
 			t.state = RUNNING
@@ -73,10 +78,13 @@ func (t *TaskRunner) Start(timers []*Timer) {
 			for {
 				select {
 				case <-done:
-					if count+1 == len(timers) {
+					t.state = BREAKING
+					t.task.Pomodoros[t.count].Start = timer.TimeStarted()
+					t.task.Pomodoros[t.count].RunTime = timer.TimeRunning()
+					t.task.Pomodoros[t.count].PauseTime = timer.TimeSuspended()
+					if count+1 == len(t.timers) {
 						break inner
 					}
-					t.state = BREAKING
 					<-t.toggle
 					break inner
 				case <-t.toggle:
@@ -97,7 +105,9 @@ func (t *TaskRunner) Start(timers []*Timer) {
 		t.toggle <- struct{}{}
 		close(t.toggle)
 		close(t.suspend)
+		done <- struct{}{}
 	}()
+	return done
 }
 
 func (t *TaskRunner) Count() int {

@@ -13,14 +13,13 @@ func checkState(t *testing.T, state, expected State) {
 }
 
 func TestTaskRunner(t *testing.T) {
-	runner := NewTaskRunner()
-	timers := []*Timer{
-		NewTimer(time.Second, 0, 0),
-		NewTimer(time.Second, 0, 0),
-		NewTimer(time.Second, 0, 0),
-		NewTimer(time.Second, 0, 0),
+	task := &Task{
+		Duration:  time.Second,
+		Message:   "TestTask",
+		Pomodoros: NewPomodoros(4),
 	}
-	runner.Start(timers)
+	runner := NewTaskRunner(task)
+	runner.Start()
 	checkState(t, runner.State(), INITIALIZED)
 	runner.Toggle() // start first timer
 	checkState(t, runner.State(), RUNNING)
@@ -46,26 +45,26 @@ func TestTaskRunner(t *testing.T) {
 	checkState(t, runner.State(), COMPLETE) // finished
 	runner.Toggle()                         // shutdown
 
-	for n, timer := range timers {
+	for n, pomodoro := range task.Pomodoros {
 		t.Logf(
 			"Timer %d: start=?,runTime=%s,suspendTime=%s",
 			n,
-			timer.TimeRunning(),
-			timer.TimeSuspended(),
+			pomodoro.RunTime,
+			pomodoro.PauseTime,
 		)
-		if timer.TimeRunning().Truncate(time.Second) != time.Second {
+		if pomodoro.RunTime.Truncate(time.Second) != time.Second {
 			t.Fatalf(
 				"timer %d should have ran for 1s, got %s",
 				n,
-				timer.TimeRunning(),
+				pomodoro.RunTime,
 			)
 		}
 	}
 
-	if timers[1].TimeSuspended().Truncate(time.Second) != time.Second {
+	if task.Pomodoros[1].PauseTime.Truncate(time.Second) != time.Second {
 		t.Fatalf(
 			"second timer should have been suspended 1s, got %s",
-			timers[1].TimeSuspended(),
+			task.Pomodoros[1].PauseTime,
 		)
 	}
 }

@@ -33,9 +33,9 @@ func start(config *Config) func(*cli.Cmd) {
 				Duration:  parsed,
 			})
 			maybe(err)
-			_, err = ReadOne(db, taskID)
+			task, err := ReadOne(db, taskID)
 			maybe(err)
-			runner := NewTaskRunner()
+			runner := NewTaskRunner(task)
 			server, err := NewSocketServer(runner, config)
 			maybe(err)
 			// TODO catch error
@@ -88,7 +88,7 @@ func begin(config *Config) func(*cli.Cmd) {
 			db, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
-			_, err = ReadOne(db, int64(*taskId))
+			task, err := ReadOne(db, int64(*taskId))
 			maybe(err)
 			/*
 				maybe(db.With(func(tx *sql.Tx) error {
@@ -105,7 +105,7 @@ func begin(config *Config) func(*cli.Cmd) {
 					return nil
 				}))
 			*/
-			runner := NewTaskRunner()
+			runner := NewTaskRunner(task)
 			maybe(err)
 			server, err := NewSocketServer(runner, config)
 			maybe(err)
