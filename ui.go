@@ -40,50 +40,79 @@ func render(client Client, opts *RenderOptions) termui.Drawable {
 	if err != nil {
 		panic(err)
 	}
-	var text string
-	switch status.State {
-	case INITIALIZED:
-		text = `TODO`
-	case RUNNING:
-		text = `[%d/%d] Pomodoros completed
+	/*
+			var text string
+			switch status.State {
+			case INITIALIZED:
+				text = `
+		 Initialized.
 
-			%s %s remaining
+		 Press [enter] to begin!
 
-
-			[q] - quit [p] - pause
+		 [q] - quit
 		`
-		text = fmt.Sprintf(text, status.Count, status.NPomodoros, opts.Wheel, status.NPomodoros-status.Count)
-	case BREAKING:
-		text = `
-        It is time to take a break!
+			case RUNNING:
+				text = `
+		 [%d/%d] Pomodoros completed
 
-		Once you are ready, press [enter]
-		to begin the next Pomodoro.
+		 (%s) Time Running: %s
+		    Time Suspended: %s
+		 Task: %s
 
 		[q] - quit [p] - pause
 		`
-	case SUSPENDED:
-		text = `Pomo is suspended.
+				text = fmt.Sprintf(
+					text,
+					status.Count,
+					status.NPomodoros,
+					opts.Wheel,
+					status.TimeRunning,
+					status.TimeSuspended,
+					status.Message,
+				)
+			case BREAKING:
+				text = `
+		        It is time to take a break!
 
-		Press [p] to continue.
+				Once you are ready, press [enter]
+				to begin the next Pomodoro.
 
+				[q] - quit [p] - pause
+				`
+			case SUSPENDED:
+				text = `
+		 [%d/%d] Pomodoros completed
 
-		[q] - quit [p] - unpause
+		  Time Running: %s
+		 (%s)   Time Suspended: %s
+		 Task: %s
+
+		[q] - quit [p] - pause
 		`
-	case COMPLETE:
-		text = `This session has concluded.
+				text = fmt.Sprintf(
+					text,
+					status.Count,
+					status.NPomodoros,
+					opts.Wheel,
+					status.TimeRunning,
+					status.TimeSuspended,
+					status.Message,
+				)
+			case COMPLETE:
+				text = `This session has concluded.
 
-		Press [q] to exit.
+				Press [q] to exit.
 
-		[q] - quit
-		`
-	}
+				[q] - quit
+				`
+			}
+	*/
 	par := widgets.NewParagraph()
 	par.Title = fmt.Sprintf("Pomo - %s", status.State)
 	par.TitleStyle.Modifier = termui.ModifierBold | termui.ModifierUnderline
-	par.Text = text
-	x := 40
-	y := 8
+	par.Text = Template(status, opts)
+	x := 60
+	y := 10
 	x1, y1, x2, y2 := opts.Width/2-x/2, opts.Height/2-y/2, opts.Width/2+x/2, opts.Height/2+y/2
 	// par.Text = fmt.Sprintf("%d - %d\n x1: %d y1: %d x2: %d y2: %d", width, height, x1, y1, x2, y2)
 	par.SetRect(x1, y1, x2, y2)

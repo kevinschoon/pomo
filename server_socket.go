@@ -63,6 +63,8 @@ func (s *SocketServer) Status() (*Status, error) {
 	return &Status{
 		State:         state,
 		Count:         count,
+		Duration:      s.task.Duration,
+		Message:       s.task.Message,
 		NPomodoros:    len(s.task.Pomodoros),
 		TimeStarted:   timer.TimeStarted(),
 		TimeRunning:   timer.TimeRunning(),
