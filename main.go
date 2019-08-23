@@ -23,28 +23,28 @@ func start(config *Config) func(*cli.Cmd) {
 		cmd.Action = func() {
 			parsed, err := time.ParseDuration(*duration)
 			maybe(err)
-			db, err := NewSQLiteStore(config.DBPath)
+			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
-			defer db.Close()
-			taskID, err := CreateOne(db, &Task{
+			defer store.Close()
+			taskID, err := CreateOne(store, &Task{
 				Message:   *message,
 				Tags:      *tags,
 				Pomodoros: NewPomodoros(*pomodoros),
 				Duration:  parsed,
 			})
 			maybe(err)
-			task, err := ReadOne(db, taskID)
+			task, err := ReadOne(store, taskID)
 			maybe(err)
-			runner := NewTaskRunner(task)
-			server, err := NewSocketServer(runner, config)
+			server, err := NewSocketServer(task, store, config)
 			maybe(err)
-			// TODO catch error
+			shutdown := make(chan error)
+			go func() {
+				shutdown <- server.Serve()
+			}()
 			// runner.Start(task)
-			go server.Serve()
 			// defer server.Stop()
-			client, err := NewSocketClient(config.SocketPath)
-			maybe(err)
-			maybe(startUI(client))
+			maybe(startUI(server))
+			maybe(<-shutdown)
 		}
 	}
 }
@@ -85,29 +85,12 @@ func begin(config *Config) func(*cli.Cmd) {
 		)
 
 		cmd.Action = func() {
-			db, err := NewSQLiteStore(config.DBPath)
+			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
-			defer db.Close()
-			task, err := ReadOne(db, int64(*taskId))
+			defer store.Close()
+			task, err := ReadOne(store, int64(*taskId))
 			maybe(err)
-			/*
-				maybe(db.With(func(tx *sql.Tx) error {
-					err := db.ReadTask(tx, task)
-					if err != nil {
-						return err
-					}
-					// TODO
-					err = db.DeletePomodoros(tx, int64(*taskId), int64(-1))
-					if err != nil {
-						return err
-					}
-					task.Pomodoros = []*Pomodoro{}
-					return nil
-				}))
-			*/
-			runner := NewTaskRunner(task)
-			maybe(err)
-			server, err := NewSocketServer(runner, config)
+			server, err := NewSocketServer(task, store, config)
 			maybe(err)
 			go server.Serve()
 			client, err := NewSocketClient(config.SocketPath)

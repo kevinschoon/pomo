@@ -140,6 +140,7 @@ func startUI(client Client) error {
 					termui.Render(render(client, renderOpts))
 				}
 				if e.ID == "q" {
+					client.Stop()
 					return nil
 				}
 			}

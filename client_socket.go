@@ -37,6 +37,10 @@ func (c SocketClient) Toggle() {
 	panic("not implemented")
 }
 
+func (c SocketClient) Stop() {
+	panic("not implemented")
+}
+
 func (c SocketClient) Close() error { return c.conn.Close() }
 
 func NewSocketClient(path string) (*SocketClient, error) {

@@ -1,9 +1,5 @@
 package main
 
-import (
-	"time"
-)
-
 type State int
 
 const (
@@ -28,17 +24,6 @@ func (s State) String() string {
 		return "SUSPENDED"
 	}
 	return ""
-}
-
-// Status is used to communicate the state
-// of a running Pomodoro session
-type Status struct {
-	State         State         `json:"state"`
-	Count         int           `json:"count"`
-	NPomodoros    int           `json:"n_pomodoros"`
-	TimeStarted   time.Time     `json:"time_started"`
-	TimeRunning   time.Duration `json:"time_running"`
-	TimeSuspended time.Duration `json:"time_suspended"`
 }
 
 // TaskRunner launches a timer for each Pomodoro
@@ -118,12 +103,8 @@ func (t *TaskRunner) State() State {
 	return t.state
 }
 
-func (t *TaskRunner) Status() (*Status, error) {
-	status := &Status{
-		State: t.State(),
-		Count: t.count,
-	}
-	return status, nil
+func (t *TaskRunner) Timer(n int) *Timer {
+	return t.timers[n]
 }
 
 func (t *TaskRunner) Toggle() {
