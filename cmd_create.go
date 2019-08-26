@@ -1,0 +1,36 @@
+package main
+
+import (
+	"fmt"
+	"time"
+
+	cli "github.com/jawher/mow.cli"
+)
+
+func create(config *Config) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		cmd.Spec = "[OPTIONS] MESSAGE"
+		var (
+			duration  = cmd.StringOpt("d duration", "25m", "duration of each stent")
+			pomodoros = cmd.IntOpt("p pomodoros", 4, "number of pomodoros")
+			message   = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
+			tags      = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
+		)
+		cmd.Action = func() {
+			parsed, err := time.ParseDuration(*duration)
+			maybe(err)
+			store, err := NewSQLiteStore(config.DBPath)
+			maybe(err)
+			defer store.Close()
+			taskID, err := CreateOne(store,
+				&Task{
+					Message:   *message,
+					Tags:      *tags,
+					Pomodoros: NewPomodoros(*pomodoros),
+					Duration:  parsed,
+				})
+			maybe(err)
+			fmt.Printf("%d", taskID)
+		}
+	}
+}
