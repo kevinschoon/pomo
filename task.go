@@ -7,8 +7,9 @@ import (
 // Task represents a goal to accomplished with
 // the Pomodoro technique.
 type Task struct {
-	ID      int64  `json:"id"`
-	Message string `json:"message"`
+	ID        int64  `json:"id"`
+	ProjectID int64  `json:"project_id"`
+	Message   string `json:"message"`
 	// Array of completed pomodoros
 	Pomodoros []*Pomodoro `json:"pomodoros"`
 	// Free-form tags associated with this task

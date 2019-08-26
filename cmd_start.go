@@ -21,15 +21,19 @@ func start(config *Config) func(*cli.Cmd) {
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer store.Close()
-			taskID, err := CreateOne(store, &Task{
+			task := &Task{
 				Message:   *message,
 				Tags:      *tags,
 				Pomodoros: NewPomodoros(*pomodoros),
 				Duration:  parsed,
-			})
-			maybe(err)
-			task, err := ReadOne(store, taskID)
-			maybe(err)
+			}
+			maybe(store.With(func(s Store) error {
+				err = store.CreateTask(task)
+				if err != nil {
+					return err
+				}
+				return store.ReadTask(task)
+			}))
 			server, err := NewSocketServer(task, store, config)
 			maybe(err)
 			shutdown := make(chan error)

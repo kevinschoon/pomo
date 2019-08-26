@@ -15,8 +15,12 @@ func begin(config *Config) func(*cli.Cmd) {
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer store.Close()
-			task, err := ReadOne(store, int64(*taskId))
-			maybe(err)
+			task := &Task{
+				ID: int64(*taskId),
+			}
+			maybe(store.With(func(s Store) error {
+				return s.ReadTask(task)
+			}))
 			server, err := NewSocketServer(task, store, config)
 			maybe(err)
 			go server.Serve()

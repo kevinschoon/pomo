@@ -50,7 +50,10 @@ loop:
 			break loop
 		}
 	}
-	if err := UpdateOne(s.store, s.task); err != nil {
+	err := s.store.With(func(st Store) error {
+		return st.UpdateTask(s.task)
+	})
+	if err != nil {
 		return err
 	}
 	return s.listener.Close()

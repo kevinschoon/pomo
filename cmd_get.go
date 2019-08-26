@@ -19,8 +19,16 @@ func get(config *Config) func(*cli.Cmd) {
 		cmd.Action = func() {
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
-			tasks, err := ReadAll(store)
-			maybe(err)
+			defer store.Close()
+			var tasks []*Task
+			maybe(store.With(func(s Store) error {
+				t, err := s.ReadTasks(-1)
+				if err != nil {
+					return err
+				}
+				tasks = t
+				return nil
+			}))
 			if *ascend {
 				sort.Sort(sort.Reverse(ByID(tasks)))
 			}

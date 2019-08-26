@@ -1,193 +1,126 @@
 package main
 
 import (
-	"database/sql"
 	"io/ioutil"
 	"path"
 	"testing"
 	"time"
 )
 
-func TestStore(t *testing.T) {
+func makeStore(t *testing.T) *SQLiteStore {
 	baseDir, _ := ioutil.TempDir("/tmp", "pomo-test-")
 	store, err := NewSQLiteStore(path.Join(baseDir, "pomo.db"))
 	if err != nil {
 		t.Error(err)
 	}
-	err = initDB(store)
+	err = store.Init()
 	if err != nil {
 		t.Error(err)
 	}
+	return store
+}
+
+func TestTaskStore(t *testing.T) {
+	store := makeStore(t)
 	task := &Task{
-		Duration: 10 * time.Minute,
-		Message:  "Test Task",
-		Pomodoros: []*Pomodoro{
-			&Pomodoro{
-				Start:   time.Date(2019, 7, 21, 13, 37, 1, 0, time.UTC),
-				RunTime: 10 * time.Minute},
-			&Pomodoro{
-				Start:   time.Date(2019, 7, 21, 13, 37, 1, 0, time.UTC),
-				RunTime: 10 * time.Minute},
-		},
-		Tags: []string{"fuu", "bar"},
+		Duration:  5 * time.Second,
+		Pomodoros: NewPomodoros(20),
 	}
-	err = store.With(func(tx *sql.Tx) error {
-		taskId, err := store.CreateTask(tx, *task)
-		if err != nil {
-			return err
-		}
-		for _, pomodoro := range task.Pomodoros {
-			pomodoro.TaskID = taskId
-			_, err = store.CreatePomodoro(tx, *pomodoro)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+	err := store.With(func(s Store) error {
+		return s.CreateTask(task)
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	var tasks []*Task
-	err = store.With(func(tx *sql.Tx) error {
-		result, err := store.ReadTasks(tx)
-		if err != nil {
-			return err
-		}
-		tasks = result
-		for _, task := range tasks {
-			task.Pomodoros, err = store.ReadPomodoros(tx, tasks[0].ID, -1)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+	err = store.With(func(s Store) error {
+		return s.ReadTask(task)
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(tasks) != 1 {
-		t.Fatalf("should return one task, got %d", len(tasks))
-	}
-	if tasks[0].Duration != 10*time.Minute {
-		t.Fatalf("task should have 10 min duration, got %d", tasks[0].Duration)
-	}
-	if len(tasks[0].Tags) != 2 {
-		t.Fatalf("task should have two tags, got %d", len(tasks[0].Tags))
-	}
-	if len(tasks[0].Pomodoros) != 2 {
-		t.Fatalf("task should have two pomodoros, got %d", len(tasks[0].Pomodoros))
-	}
-	task = tasks[0]
-	task.Duration = 5 * time.Minute
-	task.Pomodoros[0].RunTime = 5 * time.Minute
-	task.Pomodoros[1].RunTime = 5 * time.Minute
-	err = store.With(func(tx *sql.Tx) error {
-		err := store.UpdateTask(tx, *task)
-		if err != nil {
-			return err
-		}
-		for _, pomodoro := range task.Pomodoros {
-			err = store.UpdatePomodoro(tx, *pomodoro)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	task = &Task{ID: task.ID}
-	err = store.With(func(tx *sql.Tx) error {
-		err := store.ReadTask(tx, task)
-		if err != nil {
-			return err
-		}
-		task.Pomodoros, err = store.ReadPomodoros(tx, task.ID, -1)
-		return err
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if task.Duration != 5*time.Minute {
-		t.Fatalf("task should have 5 min duration, got %d", task.Duration)
-	}
-	if task.Pomodoros[0].RunTime != 5*time.Minute {
-		t.Fatalf("pomodoro should have 5 min RunTime, got %d", task.Pomodoros[0].RunTime)
-	}
-	if task.Pomodoros[1].RunTime != 5*time.Minute {
-		t.Fatalf("pomodoro should have 5 min RunTime, got %d", task.Pomodoros[1].RunTime)
-	}
-	err = store.With(func(tx *sql.Tx) error {
-		err := store.DeletePomodoros(tx, task.ID, -1)
-		if err != nil {
-			return err
-		}
-		return store.DeleteTask(tx, task.ID)
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = store.With(func(tx *sql.Tx) error {
-		tasks, err = store.ReadTasks(tx)
-		return err
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(tasks) != 0 {
-		t.Fatalf("should have zero tasks, got %d", len(tasks))
-	}
-	var pomodoros []*Pomodoro
-	err = store.With(func(tx *sql.Tx) error {
-		pomodoros, err = store.ReadPomodoros(tx, -1, -1)
-		return err
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(pomodoros) != 0 {
-		t.Fatalf("should have zero pomodoros, got %d", len(pomodoros))
+	if len(task.Pomodoros) != 20 {
+		t.Fatalf("task should have 20 pomodoros, got %d", len(task.Pomodoros))
 	}
 }
 
-func TestStoreClosures(t *testing.T) {
-	baseDir, _ := ioutil.TempDir("/tmp", "pomo-test-")
-	store, err := NewSQLiteStore(path.Join(baseDir, "pomo.db"))
-	if err != nil {
-		t.Error(err)
-	}
-	err = initDB(store)
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = CreateOne(store, &Task{
-		Message:  "Test Task",
-		Duration: 10 * time.Minute,
-		Pomodoros: []*Pomodoro{
-			&Pomodoro{},
-			&Pomodoro{},
+func TestProjectStore(t *testing.T) {
+	store := makeStore(t)
+	project := &Project{
+		Title: "Grocery App",
+		Children: []*Project{
+			&Project{
+				Title: "Frontend",
+				Tasks: []*Task{
+					&Task{
+						Duration:  5 * time.Minute,
+						Message:   "Initialize project with CreateReactApp",
+						Pomodoros: NewPomodoros(2),
+					},
+					&Task{
+						Message:   "Define Typescript base types",
+						Pomodoros: NewPomodoros(4),
+					},
+					&Task{
+						Message:   "Write stateless components",
+						Pomodoros: NewPomodoros(8),
+					},
+					&Task{
+						Message:   "Setup React Hooks / Redux",
+						Pomodoros: NewPomodoros(8),
+					},
+					&Task{
+						Message:   "Integrate Backend API server",
+						Pomodoros: NewPomodoros(4),
+					},
+					&Task{
+						Message:   "Write Unit Tests",
+						Pomodoros: NewPomodoros(4),
+					},
+				},
+			},
+			&Project{
+				Title: "Backend",
+				Tasks: []*Task{
+					&Task{
+						Message:   "Boilerplate API server",
+						Pomodoros: NewPomodoros(4),
+					},
+					&Task{
+						Message:   "DBO / CRUD Operations",
+						Pomodoros: NewPomodoros(4),
+					},
+					&Task{
+						Message:   "Document API",
+						Pomodoros: NewPomodoros(4),
+					},
+				},
+			},
+			&Project{
+				Title: "Operations",
+				Tasks: []*Task{
+					&Task{
+						Message:   "Deploy RDS",
+						Pomodoros: NewPomodoros(2),
+					},
+					&Task{
+						Message:   "Deploy to EC2",
+						Pomodoros: NewPomodoros(2),
+					},
+				},
+			},
 		},
+	}
+	err := store.With(func(s Store) error {
+		return s.CreateProject(project)
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	tasks, err := ReadAll(store)
-	if err != nil {
-		t.Fatal(err)
+	t.Log(project.ID, project.ParentID)
+	err = store.With(func(s Store) error {
+		return s.ReadProject(project)
+	})
+	if len(project.Children) != 3 {
+		t.Fatalf("project should have 3 subtasks, got %d", len(project.Children))
 	}
-	if len(tasks) != 1 {
-		t.Fatalf("should have 1 task, got %d", len(tasks))
-	}
-	task, err := ReadOne(store, int64(1))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(task.Pomodoros) != 2 {
-		t.Fatalf("should have 2 pomodoros, got %d", len(task.Pomodoros))
-	}
-	task.Duration = 5 * time.Second
-	task.Pomodoros[0].RunTime = 100 * time.Second
-	task.Pomodoros[1].RunTime = 1000 * time.Second
 }
