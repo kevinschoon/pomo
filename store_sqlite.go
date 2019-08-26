@@ -225,8 +225,10 @@ func initDB(db *SQLiteStore) error {
 	task_id INTEGER,
 	start DATETTIME,
 	run_time INTEGER,
-    pause_time INTEGER
+    pause_time INTEGER,
+    FOREIGN KEY(task_id) REFERENCES task(task_id)
     );
+    PRAGMA foreign_keys = ON;
     `
 	_, err := db.db.Exec(stmt)
 	return err
