@@ -226,7 +226,7 @@ func initDB(db *SQLiteStore) error {
 	start DATETTIME,
 	run_time INTEGER,
     pause_time INTEGER,
-    FOREIGN KEY(task_id) REFERENCES task(task_id)
+    FOREIGN KEY(task_id) REFERENCES task(task_id) ON DELETE CASCADE
     );
     PRAGMA foreign_keys = ON;
     `

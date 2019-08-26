@@ -108,10 +108,6 @@ func UpdateOne(store Store, task *Task) error {
 
 func DeleteOne(store Store, taskID int64) error {
 	return store.With(func(tx *sql.Tx) error {
-		err := store.DeleteTask(tx, taskID)
-		if err != nil {
-			return err
-		}
-		return store.DeletePomodoros(tx, taskID, -1)
+		return store.DeleteTask(tx, taskID)
 	})
 }
