@@ -257,7 +257,7 @@ func (s *SQLiteStore) ReadTasks(projectID int64) ([]*Task, error) {
 	query := sq.
 		Select("task_id", "project_id", "message", "duration", "tags").
 		From("task")
-	if projectID > 0 {
+	if projectID >= 0 {
 		query = query.
 			Where(sq.Eq{"project_id": projectID})
 	}
