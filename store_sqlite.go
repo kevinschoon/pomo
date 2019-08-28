@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -43,7 +42,6 @@ func (s *SQLiteStore) Init() error {
     project_id INTEGER,
 	message TEXT,
 	duration INTEGER,
-	tags TEXT,
     FOREIGN KEY(project_id) REFERENCES project(project_id) ON DELETE CASCADE
     );
     CREATE TABLE pomodoro (
@@ -52,6 +50,14 @@ func (s *SQLiteStore) Init() error {
 	start DATETTIME,
 	run_time INTEGER,
     pause_time INTEGER,
+    FOREIGN KEY(task_id) REFERENCES task(task_id) ON DELETE CASCADE
+    );
+    CREATE TABLE tag (
+    project_id INTEGER,
+    task_id INTEGER,
+    key TEXT,
+    value TEXT,
+    FOREIGN KEY(project_id) REFERENCES project(project_id) ON DELETE CASCADE,
     FOREIGN KEY(task_id) REFERENCES task(task_id) ON DELETE CASCADE
     );
     PRAGMA foreign_keys = ON;
@@ -210,8 +216,8 @@ func (s *SQLiteStore) DeleteProject(projectID int64) error {
 func (s *SQLiteStore) CreateTask(task *Task) error {
 	result, err := sq.
 		Insert("task").
-		Columns("project_id", "message", "duration", "tags").
-		Values(task.ProjectID, task.Message, task.Duration, strings.Join(task.Tags, ",")).
+		Columns("project_id", "message", "duration").
+		Values(task.ProjectID, task.Message, task.Duration).
 		RunWith(s.tx).Exec()
 	if err != nil {
 		return err
@@ -232,15 +238,12 @@ func (s *SQLiteStore) CreateTask(task *Task) error {
 }
 
 func (s *SQLiteStore) ReadTask(task *Task) error {
-	var (
-		tags string
-	)
-	err := sq.Select("task_id", "project_id", "message", "duration", "tags").
+	err := sq.Select("task_id", "project_id", "message", "duration").
 		From("task").
 		Where(sq.Eq{"task_id": task.ID}).
 		RunWith(s.tx).
 		QueryRow().
-		Scan(&task.ID, &task.ProjectID, &task.Message, &task.Duration, &tags)
+		Scan(&task.ID, &task.ProjectID, &task.Message, &task.Duration)
 
 	if err != nil {
 		return err
@@ -253,17 +256,13 @@ func (s *SQLiteStore) ReadTask(task *Task) error {
 
 	task.Pomodoros = pomodoros
 
-	// TODO: JSONB
-	if tags != "" {
-		task.Tags = strings.Split(tags, ",")
-	}
 	return nil
 }
 
 func (s *SQLiteStore) ReadTasks(projectID int64) ([]*Task, error) {
 	var tasks []*Task
 	query := sq.
-		Select("task_id", "project_id", "message", "duration", "tags").
+		Select("task_id", "project_id", "message", "duration").
 		From("task")
 	if projectID >= 0 {
 		query = query.
@@ -276,16 +275,10 @@ func (s *SQLiteStore) ReadTasks(projectID int64) ([]*Task, error) {
 		return nil, err
 	}
 	for rows.Next() {
-		var (
-			tags string
-		)
 		task := &Task{Pomodoros: []*Pomodoro{}}
-		err = rows.Scan(&task.ID, &task.ProjectID, &task.Message, &task.Duration, &tags)
+		err = rows.Scan(&task.ID, &task.ProjectID, &task.Message, &task.Duration)
 		if err != nil {
 			return nil, err
-		}
-		if tags != "" {
-			task.Tags = strings.Split(tags, ",")
 		}
 		tasks = append(tasks, task)
 	}
@@ -302,9 +295,9 @@ func (s *SQLiteStore) ReadTasks(projectID int64) ([]*Task, error) {
 func (s *SQLiteStore) UpdateTask(task *Task) error {
 	_, err := sq.
 		Update("task").
+		Set("project_id", task.ProjectID).
 		Set("duration", task.Duration).
 		Set("message", task.Message).
-		Set("tags", strings.Join(task.Tags, ",")).
 		RunWith(s.tx).Exec()
 	return err
 }

@@ -34,7 +34,7 @@ func deleteProject(config *Config) func(*cli.Cmd) {
 	}
 }
 
-func delete(config *Config) func(*cli.Cmd) {
+func _delete(config *Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Command("task", "delete a task", deleteTask(config))
 		cmd.Command("project", "delete a project", deleteProject(config))

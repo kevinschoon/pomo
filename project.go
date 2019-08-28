@@ -11,11 +11,55 @@ import (
 
 // Project is a logical container for tasks
 type Project struct {
-	ID       int64      `json:"id"`
-	ParentID int64      `json:"parent_id"`
-	Title    string     `json:"title"`
-	Children []*Project `json:"children"`
-	Tasks    []*Task    `json:"tasks"`
+	ID       int64             `json:"id"`
+	ParentID int64             `json:"parent_id"`
+	Title    string            `json:"title"`
+	Children []*Project        `json:"children"`
+	Tasks    []*Task           `json:"tasks"`
+	Tags     map[string]string `json:"tags"`
+}
+
+func (t *Project) GetTag(key string) string {
+	if t.Tags == nil {
+		t.Tags = map[string]string{}
+	}
+	if value, ok := t.Tags[key]; ok {
+		return value
+	}
+	return ""
+}
+
+func (t *Project) SetTag(key, value string) {
+	if t.Tags == nil {
+		t.Tags = map[string]string{}
+	}
+	if value, ok := t.Tags[key]; ok {
+		if value == "" {
+			delete(t.Tags, key)
+			return
+		}
+		t.Tags[key] = value
+	}
+}
+
+func (p Project) Info() string {
+	buf := bytes.NewBuffer(nil)
+	pc := PercentComplete(p)
+	fmt.Fprintf(buf, "[P%d]", p.ID)
+	fmt.Fprintf(buf, "[")
+	if pc == 100 {
+		color.New(color.FgHiGreen).Fprintf(buf, "%d%%", pc)
+	} else if pc > 50 && pc < 100 {
+		color.New(color.FgHiYellow).Fprintf(buf, "%d%%", pc)
+	} else {
+		color.New(color.FgHiMagenta).Fprintf(buf, "%d%%", pc)
+	}
+	fmt.Fprintf(buf, "]")
+	fmt.Fprintf(buf, "[%s]", truncDuration(Duration(p).String()))
+	if p.Title != "" {
+		fmt.Fprintf(buf, " %s", p.Title)
+	}
+	return buf.String()
 }
 
 type ProjectFn func(Project)
@@ -49,26 +93,6 @@ func PercentComplete(p Project) int {
 		return 0
 	}
 	return int((j / i) * 100)
-}
-
-func (p Project) Info() string {
-	buf := bytes.NewBuffer(nil)
-	pc := PercentComplete(p)
-	fmt.Fprintf(buf, "[P%d]", p.ID)
-	fmt.Fprintf(buf, "[")
-	if pc == 100 {
-		color.New(color.FgHiGreen).Fprintf(buf, "%d%%", pc)
-	} else if pc > 50 && pc < 100 {
-		color.New(color.FgHiYellow).Fprintf(buf, "%d%%", pc)
-	} else {
-		color.New(color.FgHiMagenta).Fprintf(buf, "%d%%", pc)
-	}
-	fmt.Fprintf(buf, "]")
-	fmt.Fprintf(buf, "[%s]", truncDuration(Duration(p).String()))
-	if p.Title != "" {
-		fmt.Fprintf(buf, " %s", p.Title)
-	}
-	return buf.String()
 }
 
 const (

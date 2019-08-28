@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"strings"
 )
 
 func maybe(err error) {
@@ -19,6 +20,19 @@ func defaultConfigPath() string {
 	u, err := user.Current()
 	maybe(err)
 	return path.Join(u.HomeDir, "/.pomo/config.json")
+}
+
+func parseTags(kvs []string) (map[string]string, error) {
+	tags := map[string]string{}
+	for _, kv := range kvs {
+		split := strings.Split(kv, "=")
+		if len(split) == 2 {
+			tags[split[0]] = split[1]
+		} else {
+			return nil, fmt.Errorf("bad tag: %s", kv)
+		}
+	}
+	return tags, nil
 }
 
 func makeUUID() string {

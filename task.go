@@ -18,11 +18,34 @@ type Task struct {
 	// Array of completed pomodoros
 	Pomodoros []*Pomodoro `json:"pomodoros"`
 	// Free-form tags associated with this task
-	Tags []string `json:"tags"`
+	Tags map[string]string `json:"tags"`
 	// Number of pomodoros for this task
 	// NPomodoros int `json:"n_pomodoros"`
 	// Duration of each pomodoro
 	Duration time.Duration `json:"duration"`
+}
+
+func (t *Task) GetTag(key string) string {
+	if t.Tags == nil {
+		t.Tags = map[string]string{}
+	}
+	if value, ok := t.Tags[key]; ok {
+		return value
+	}
+	return ""
+}
+
+func (t *Task) SetTag(key, value string) {
+	if t.Tags == nil {
+		t.Tags = map[string]string{}
+	}
+	if value, ok := t.Tags[key]; ok {
+		if value == "" {
+			delete(t.Tags, key)
+			return
+		}
+		t.Tags[key] = value
+	}
 }
 
 func (t Task) TimeRunning() time.Duration {

@@ -12,10 +12,15 @@ import (
 
 func createProject(config *Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS]"
+		cmd.Spec = "[--path | --parent] [TITLE]"
+		cmd.LongDesc = `
+Create a new project by specifying a title or path to a JSON file
+containing a configuration. If - is specified as an argument to --path
+configuration will be read from stdin.
+        `
 		var (
+			title  = cmd.StringArg("TITLE", "", "project title")
 			path   = cmd.StringOpt("path", "", "path to a project file")
-			title  = cmd.StringOpt("t title", "", "project title")
 			parent = cmd.IntOpt("p parent", 0, "parent project id")
 		)
 		cmd.Action = func() {
@@ -27,6 +32,10 @@ func createProject(config *Config) func(*cli.Cmd) {
 					raw, err := ioutil.ReadFile(*path)
 					maybe(err)
 					maybe(json.Unmarshal(raw, project))
+				}
+			} else {
+				if *title == "" {
+					maybe(fmt.Errorf("need to specify a title or project file"))
 				}
 			}
 			if *title != "" {
@@ -61,12 +70,14 @@ func createTask(config *Config) func(*cli.Cmd) {
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer store.Close()
+			kvs, err := parseTags(*tags)
+			maybe(err)
 			task := &Task{
 				ProjectID: int64(*projectId),
 				Message:   *message,
 				Duration:  parsed,
 				Pomodoros: NewPomodoros(*pomodoros),
-				Tags:      *tags,
+				Tags:      kvs,
 			}
 			maybe(store.With(func(s Store) error {
 				return store.CreateTask(task)
@@ -78,7 +89,7 @@ func createTask(config *Config) func(*cli.Cmd) {
 
 func create(config *Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
-		cmd.Command("task", "create a new task", createTask(config))
-		cmd.Command("project", "create a new project", createProject(config))
+		cmd.Command("t task", "create a new task", createTask(config))
+		cmd.Command("p project", "create a new project", createProject(config))
 	}
 }

@@ -21,9 +21,11 @@ func start(config *Config) func(*cli.Cmd) {
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer store.Close()
+			kvs, err := parseTags(*tags)
+			maybe(err)
 			task := &Task{
 				Message:   *message,
-				Tags:      *tags,
+				Tags:      kvs,
 				Pomodoros: NewPomodoros(*pomodoros),
 				Duration:  parsed,
 			}
