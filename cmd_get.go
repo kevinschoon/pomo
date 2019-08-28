@@ -33,27 +33,17 @@ func get(config *Config) func(*cli.Cmd) {
 			defer store.Close()
 			switch *kind {
 			case PROJECT:
-				var project *Project
+				project := &Project{
+					ID: int64(*id),
+				}
 				maybe(store.With(func(s Store) error {
-					root := &Project{ID: int64(0)}
-					rootTasks, err := s.ReadTasks(int64(0))
-					if err != nil {
-						return err
-					}
-					root.Tasks = rootTasks
-					projects, err := s.ReadProjects(int64(*id))
-					if err != nil {
-						return err
-					}
-					root.Children = projects
-					project = root
-					return nil
+					return s.ReadProject(project)
 				}))
 				if *asJson {
 					maybe(json.NewEncoder(os.Stdout).Encode(project))
 					return
 				}
-				Tree(*project).Write(os.Stdout, 0, len(project.Children) == 0)
+				Tree(*project).Write(os.Stdout, 0, Tree(*project).MaxDepth() == 0)
 			case TASK:
 				var tasks []*Task
 				maybe(store.With(func(s Store) error {

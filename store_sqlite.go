@@ -111,16 +111,24 @@ func (s *SQLiteStore) CreateProject(project *Project) error {
 // ReadProject returns the associated project, child projects,
 // tasks, and pomodoros recursively.
 func (s *SQLiteStore) ReadProject(project *Project) error {
+
+	// special case when requesting the root project which
+	// has no parentID and returns null, otherwise there are
+	// no orphans.
+	parentID := sql.NullInt64{}
 	err := sq.
 		Select("project_id", "parent_id", "title").
 		From("project").
 		Where(sq.Eq{"project_id": project.ID}).
 		RunWith(s.tx).
 		QueryRow().
-		Scan(&project.ID, &project.ParentID, &project.Title)
+		Scan(&project.ID, &parentID, &project.Title)
+
 	if err != nil {
 		return err
 	}
+
+	project.ParentID = parentID.Int64
 	tasks, err := s.ReadTasks(project.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
