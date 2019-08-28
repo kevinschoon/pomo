@@ -19,26 +19,26 @@ type Project struct {
 	Tags     map[string]string `json:"tags"`
 }
 
-func (t *Project) GetTag(key string) string {
-	if t.Tags == nil {
-		t.Tags = map[string]string{}
+func (p *Project) GetTag(key string) string {
+	if p.Tags == nil {
+		p.Tags = map[string]string{}
 	}
-	if value, ok := t.Tags[key]; ok {
+	if value, ok := p.Tags[key]; ok {
 		return value
 	}
 	return ""
 }
 
-func (t *Project) SetTag(key, value string) {
-	if t.Tags == nil {
-		t.Tags = map[string]string{}
+func (p *Project) SetTag(key, value string) {
+	if p.Tags == nil {
+		p.Tags = map[string]string{}
 	}
-	if value, ok := t.Tags[key]; ok {
+	if value, ok := p.Tags[key]; ok {
 		if value == "" {
-			delete(t.Tags, key)
+			delete(p.Tags, key)
 			return
 		}
-		t.Tags[key] = value
+		p.Tags[key] = value
 	}
 }
 
