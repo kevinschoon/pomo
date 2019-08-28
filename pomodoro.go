@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 // Pomodoro represents a single unit of time
@@ -23,4 +27,16 @@ func NewPomodoros(n int) []*Pomodoro {
 		pomodoros[i] = new(Pomodoro)
 	}
 	return pomodoros
+}
+
+func (p Pomodoro) Info(duration time.Duration) string {
+	buf := bytes.NewBuffer(nil)
+	fmt.Fprintf(buf, "[")
+	if p.RunTime >= duration {
+		color.New(color.FgHiGreen).Fprintf(buf, "%s", p.RunTime.String())
+	} else {
+		color.New(color.FgHiMagenta).Fprintf(buf, "%s", p.RunTime.String())
+	}
+	fmt.Fprintf(buf, "]")
+	return buf.String()
 }

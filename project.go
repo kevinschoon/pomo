@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 // Project is a logical container for tasks
@@ -15,17 +18,57 @@ type Project struct {
 	Tasks    []*Task    `json:"tasks"`
 }
 
-// Duration returns the total length of the project
-// including all sub-projects
-func (p Project) Duration() time.Duration {
-	var duration time.Duration
+type ProjectFn func(Project)
+
+func ForEach(p Project, fn ProjectFn) {
+	fn(p)
 	for _, child := range p.Children {
-		duration += child.Duration()
+		ForEach(*child, fn)
 	}
-	for _, task := range p.Tasks {
-		duration += task.Duration * time.Duration(int64(len(task.Pomodoros)))
-	}
+}
+
+func Duration(p Project) time.Duration {
+	var duration time.Duration
+	ForEach(p, func(p Project) {
+		for _, task := range p.Tasks {
+			duration += task.Duration * time.Duration(int64(len(task.Pomodoros)))
+		}
+	})
 	return duration
+}
+
+func PercentComplete(p Project) int {
+	var i, j int
+	ForEach(p, func(p Project) {
+		for _, task := range p.Tasks {
+			i += len(task.Pomodoros)
+			j += task.NCompleted()
+		}
+	})
+	if i == 0 || j == 0 {
+		return 0
+	}
+	return int((j / i) * 100)
+}
+
+func (p Project) Info() string {
+	buf := bytes.NewBuffer(nil)
+	pc := PercentComplete(p)
+	fmt.Fprintf(buf, "[P%d]", p.ID)
+	fmt.Fprintf(buf, "[")
+	if pc == 100 {
+		color.New(color.FgHiGreen).Fprintf(buf, "%d%%", pc)
+	} else if pc > 50 && pc < 100 {
+		color.New(color.FgHiYellow).Fprintf(buf, "%d%%", pc)
+	} else {
+		color.New(color.FgHiMagenta).Fprintf(buf, "%d%%", pc)
+	}
+	fmt.Fprintf(buf, "]")
+	fmt.Fprintf(buf, "[%s]", truncDuration(Duration(p).String()))
+	if p.Title != "" {
+		fmt.Fprintf(buf, " %s", p.Title)
+	}
+	return buf.String()
 }
 
 const (
@@ -37,11 +80,21 @@ const (
 
 type Tree Project
 
+func (t Tree) MaxDepth() int {
+	depth := len(t.Children)
+	for _, child := range t.Children {
+		depth += Tree(*child).MaxDepth()
+	}
+	return depth
+}
+
 func (t Tree) Write(w io.Writer, depth int, last bool) {
 	if depth == 0 { // root
-		fmt.Fprintf(w, ".\n")
+		// fmt.Fprintf(w, ".\n")
+		fmt.Fprintf(w, "%s\n", Project(t).Info())
 	}
 	spaces := depth
+	// task list
 	for i, task := range t.Tasks {
 		for j := 0; j < spaces; j++ {
 			if j == 0 && !last {
@@ -50,14 +103,34 @@ func (t Tree) Write(w io.Writer, depth int, last bool) {
 			}
 			fmt.Fprintf(w, emptySpace)
 		}
-		if i+1 == len(t.Tasks) && len(t.Children) == 0 {
+		if i+1 == len(t.Tasks) && t.MaxDepth() == 0 {
 			fmt.Fprintf(w, lastItem)
 		} else {
 			fmt.Fprintf(w, middleItem)
 		}
-		fmt.Fprintf(w, "[T][%d] %s \n", task.ID, task.Message)
+		fmt.Fprintf(w, "%s\n", task.Info())
+		// pomodoro list
+		if len(task.Pomodoros) > 0 {
+			for j := 0; j < spaces+1; j++ {
+				if j == 0 && !last {
+					fmt.Fprintf(w, continueItem)
+					continue
+				}
+				if j == spaces && (i != len(t.Tasks)-1 || t.MaxDepth() > 0) {
+					fmt.Fprintf(w, continueItem)
+				}
+				fmt.Fprintf(w, emptySpace)
+			}
+			fmt.Fprintf(w, lastItem)
+			for _, p := range task.Pomodoros {
+				// fmt.Fprintf(w, "[PM%d]", k)
+				fmt.Fprintf(w, "%s", p.Info(task.Duration))
+			}
+			fmt.Fprintf(w, "\n")
+		}
 	}
 
+	// sub projects
 	for n, child := range t.Children {
 		for j := 0; j < spaces; j++ {
 			if j == 0 && !last {
@@ -71,7 +144,7 @@ func (t Tree) Write(w io.Writer, depth int, last bool) {
 		} else {
 			fmt.Fprintf(w, middleItem)
 		}
-		fmt.Fprintf(w, "[P][%d] %s\n", child.ID, child.Title)
+		fmt.Fprintf(w, "%s\n", child.Info())
 		Tree(*child).Write(w, depth+1, n+1 == len(t.Children) && depth == 0)
 	}
 }

@@ -35,7 +35,7 @@ func get(config *Config) func(*cli.Cmd) {
 			case PROJECT:
 				var project *Project
 				maybe(store.With(func(s Store) error {
-					root := &Project{Title: "root"}
+					root := &Project{ID: int64(0)}
 					rootTasks, err := s.ReadTasks(int64(0))
 					if err != nil {
 						return err
