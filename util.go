@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/rand"
 	"fmt"
 	"os"
@@ -11,7 +12,7 @@ import (
 
 func maybe(err error) {
 	if err != nil {
-		fmt.Printf("Error:\n%s\n", err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }
@@ -64,4 +65,13 @@ func outputStatus(status Status) {
 	} else {
 		fmt.Printf("%s [%d/%d] -", state, status.Count, status.NPomodoros)
 	}
+}
+
+func promptConfirm(question string) error {
+	reader := bufio.NewReader(os.Stdin)
+	result, _ := reader.ReadString('\n')
+	if result != question {
+		return fmt.Errorf("cancelled")
+	}
+	return nil
 }
