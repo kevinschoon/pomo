@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -15,36 +14,18 @@ type Task struct {
 	ID        int64  `json:"id"`
 	ProjectID int64  `json:"project_id"`
 	Message   string `json:"message"`
+	Tags      *Tags  `json:"tags"`
 	// Array of completed pomodoros
 	Pomodoros []*Pomodoro `json:"pomodoros"`
-	// Free-form tags associated with this task
-	Tags map[string]string `json:"tags"`
 	// Number of pomodoros for this task
 	// NPomodoros int `json:"n_pomodoros"`
 	// Duration of each pomodoro
 	Duration time.Duration `json:"duration"`
 }
 
-func (t *Task) GetTag(key string) string {
-	if t.Tags == nil {
-		t.Tags = map[string]string{}
-	}
-	if value, ok := t.Tags[key]; ok {
-		return value
-	}
-	return ""
-}
-
-func (t *Task) SetTag(key, value string) {
-	if t.Tags == nil {
-		t.Tags = map[string]string{}
-	}
-	if value, ok := t.Tags[key]; ok {
-		if value == "" {
-			delete(t.Tags, key)
-			return
-		}
-		t.Tags[key] = value
+func NewTask() *Task {
+	return &Task{
+		Tags: NewTags(),
 	}
 }
 
@@ -96,12 +77,11 @@ func (t Task) Info() string {
 	}
 	fmt.Fprintf(buf, "]")
 	fmt.Fprintf(buf, "[%d*%s]", len(t.Pomodoros), truncDuration(t.Duration.String()))
+	for _, key := range t.Tags.Keys() {
+		fmt.Fprintf(buf, "[%s=%s]", key, t.Tags.Get(key))
+	}
 	fmt.Fprintf(buf, " %s", t.Message)
 	return buf.String()
-}
-
-func truncDuration(s string) string {
-	return strings.Replace(strings.Replace(s, "0s", "", -1), "0m", "", -1)
 }
 
 // ByID is a sortable array of tasks

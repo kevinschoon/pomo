@@ -11,34 +11,17 @@ import (
 
 // Project is a logical container for tasks
 type Project struct {
-	ID       int64             `json:"id"`
-	ParentID int64             `json:"parent_id"`
-	Title    string            `json:"title"`
-	Children []*Project        `json:"children"`
-	Tasks    []*Task           `json:"tasks"`
-	Tags     map[string]string `json:"tags"`
+	ID       int64      `json:"id"`
+	ParentID int64      `json:"parent_id"`
+	Title    string     `json:"title"`
+	Children []*Project `json:"children"`
+	Tasks    []*Task    `json:"tasks"`
+	Tags     *Tags      `json:"tags"`
 }
 
-func (p *Project) GetTag(key string) string {
-	if p.Tags == nil {
-		p.Tags = map[string]string{}
-	}
-	if value, ok := p.Tags[key]; ok {
-		return value
-	}
-	return ""
-}
-
-func (p *Project) SetTag(key, value string) {
-	if p.Tags == nil {
-		p.Tags = map[string]string{}
-	}
-	if value, ok := p.Tags[key]; ok {
-		if value == "" {
-			delete(p.Tags, key)
-			return
-		}
-		p.Tags[key] = value
+func NewProject() *Project {
+	return &Project{
+		Tags: NewTags(),
 	}
 }
 
@@ -56,6 +39,9 @@ func (p Project) Info() string {
 	}
 	fmt.Fprintf(buf, "]")
 	fmt.Fprintf(buf, "[%s]", truncDuration(Duration(p).String()))
+	for _, key := range p.Tags.Keys() {
+		fmt.Fprintf(buf, "[%s=%s]", key, p.Tags.Get(key))
+	}
 	if p.Title != "" {
 		fmt.Fprintf(buf, " %s", p.Title)
 	}

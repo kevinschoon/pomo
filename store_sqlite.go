@@ -104,6 +104,16 @@ func (s *SQLiteStore) CreateProject(project *Project) error {
 			return err
 		}
 	}
+	for _, key := range project.Tags.Keys() {
+		_, err := sq.
+			Insert("tag").
+			Columns("project_id", "key", "value").
+			Values(project.ID, key, project.Tags.Get(key)).
+			RunWith(s.tx).Exec()
+		if err != nil {
+			return err
+		}
+	}
 	for _, child := range project.Children {
 		child.ParentID = project.ID
 		err = s.CreateProject(child)
@@ -135,6 +145,7 @@ func (s *SQLiteStore) ReadProject(project *Project) error {
 	}
 
 	project.ParentID = parentID.Int64
+
 	tasks, err := s.ReadTasks(project.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -143,6 +154,31 @@ func (s *SQLiteStore) ReadProject(project *Project) error {
 			return err
 		}
 	}
+
+	rows, err := sq.
+		Select("key", "value").
+		From("tag").
+		Where(sq.Eq{"project_id": project.ID}).
+		RunWith(s.tx).
+		Query()
+
+	if err != nil {
+		return err
+	}
+
+	project.Tags = NewTags()
+
+	for rows.Next() {
+		var (
+			key, value string
+		)
+		err = rows.Scan(&key, &value)
+		if err != nil {
+			return err
+		}
+		project.Tags.Set(key, value)
+	}
+
 	project.Tasks = tasks
 	children, err := s.ReadProjects(project.ID)
 	if err != nil {
@@ -177,6 +213,30 @@ func (s *SQLiteStore) ReadProjects(parentID int64) ([]*Project, error) {
 			return nil, err
 		}
 		project.Tasks = tasks
+
+		rows, err := sq.
+			Select("key", "value").
+			From("tag").
+			Where(sq.Eq{"project_id": project.ID}).
+			RunWith(s.tx).
+			Query()
+
+		if err != nil {
+			return nil, err
+		}
+
+		project.Tags = NewTags()
+
+		for rows.Next() {
+			var (
+				key, value string
+			)
+			err = rows.Scan(&key, &value)
+			if err != nil {
+				return nil, err
+			}
+			project.Tags.Set(key, value)
+		}
 		projects = append(projects, project)
 	}
 	for _, project := range projects {
@@ -199,7 +259,27 @@ func (s *SQLiteStore) UpdateProject(project *Project) error {
 		Update("project").
 		Set("title", project.Title).
 		Set("parent_id", project.ParentID).
+		Where(sq.Eq{"project_id": project.ID}).
 		RunWith(s.tx).Exec()
+	// TODO generalize tags
+	_, err = sq.
+		Delete("tag").
+		Where(sq.Eq{"project_id": project.ID}).
+		RunWith(s.tx).
+		Exec()
+	if err != nil {
+		return err
+	}
+	for _, key := range project.Tags.Keys() {
+		_, err := sq.
+			Insert("tag").
+			Columns("project_id", "key", "value").
+			Values(project.ID, key, project.Tags.Get(key)).
+			RunWith(s.tx).Exec()
+		if err != nil {
+			return err
+		}
+	}
 	return err
 }
 
@@ -226,6 +306,16 @@ func (s *SQLiteStore) CreateTask(task *Task) error {
 	if err != nil {
 		return err
 	}
+	for _, key := range task.Tags.Keys() {
+		_, err := sq.
+			Insert("tag").
+			Columns("task_id", "key", "value").
+			Values(task.ID, key, task.Tags.Get(key)).
+			RunWith(s.tx).Exec()
+		if err != nil {
+			return err
+		}
+	}
 	for _, pomodoro := range task.Pomodoros {
 		pomodoro.TaskID = taskId
 		err = s.CreatePomodoro(pomodoro)
@@ -247,6 +337,30 @@ func (s *SQLiteStore) ReadTask(task *Task) error {
 
 	if err != nil {
 		return err
+	}
+
+	task.Tags = NewTags()
+
+	rows, err := sq.
+		Select("key", "value").
+		From("tag").
+		Where(sq.Eq{"task_id": task.ID}).
+		RunWith(s.tx).
+		Query()
+
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		var (
+			key, value string
+		)
+		err = rows.Scan(&key, &value)
+		if err != nil {
+			return err
+		}
+		task.Tags.Set(key, value)
 	}
 
 	pomodoros, err := s.ReadPomodoros(task.ID, -1)
@@ -280,6 +394,29 @@ func (s *SQLiteStore) ReadTasks(projectID int64) ([]*Task, error) {
 		if err != nil {
 			return nil, err
 		}
+		rows, err := sq.
+			Select("key", "value").
+			From("tag").
+			Where(sq.Eq{"task_id": task.ID}).
+			RunWith(s.tx).
+			Query()
+
+		if err != nil {
+			return nil, err
+		}
+
+		task.Tags = NewTags()
+
+		for rows.Next() {
+			var (
+				key, value string
+			)
+			err = rows.Scan(&key, &value)
+			if err != nil {
+				return nil, err
+			}
+			task.Tags.Set(key, value)
+		}
 		tasks = append(tasks, task)
 	}
 	for _, task := range tasks {
@@ -295,10 +432,30 @@ func (s *SQLiteStore) ReadTasks(projectID int64) ([]*Task, error) {
 func (s *SQLiteStore) UpdateTask(task *Task) error {
 	_, err := sq.
 		Update("task").
+		Where(sq.Eq{"task_id": task.ID}).
 		Set("project_id", task.ProjectID).
 		Set("duration", task.Duration).
 		Set("message", task.Message).
 		RunWith(s.tx).Exec()
+	// TODO generalize tags
+	_, err = sq.
+		Delete("tag").
+		Where(sq.Eq{"task_id": task.ID}).
+		RunWith(s.tx).
+		Exec()
+	if err != nil {
+		return err
+	}
+	for _, key := range task.Tags.Keys() {
+		_, err := sq.
+			Insert("tag").
+			Columns("task_id", "key", "value").
+			Values(task.ID, key, task.Tags.Get(key)).
+			RunWith(s.tx).Exec()
+		if err != nil {
+			return err
+		}
+	}
 	return err
 }
 

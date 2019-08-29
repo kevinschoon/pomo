@@ -14,7 +14,7 @@ func editProject(config *Config) func(*cli.Cmd) {
 			projectID = cmd.IntArg("ID", -1, "project identifier")
 			parentID  = cmd.IntOpt("p parent", -1, "parent identifier")
 			title     = cmd.StringOpt("t title", "", "title")
-			tags      = cmd.StringsOpt("t tag", []string{}, "project tags")
+			kvs       = cmd.StringsOpt("t tag", []string{}, "project tags")
 		)
 		cmd.Action = func() {
 			if *projectID == 0 {
@@ -23,7 +23,7 @@ func editProject(config *Config) func(*cli.Cmd) {
 			project := &Project{
 				ID: int64(*projectID),
 			}
-			kvs, err := parseTags(*tags)
+			tags, err := NewTagsFromKVs(*kvs)
 			maybe(err)
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
@@ -39,10 +39,7 @@ func editProject(config *Config) func(*cli.Cmd) {
 				if *title != "" {
 					project.Title = *title
 				}
-				for key, value := range kvs {
-					project.SetTag(key, value)
-				}
-
+				MergeTags(project.Tags, tags)
 				return s.UpdateProject(project)
 			}))
 		}
@@ -62,10 +59,10 @@ Update an existing task
 			addPomodoros = cmd.IntOpt("a add", 0, "add n pomodoros")
 			delPomodoro  = cmd.IntOpt("d del", -1, "delete pomodoro")
 			message      = cmd.StringOpt("m message", "", "message")
-			tags         = cmd.StringsOpt("t tag", []string{}, "project tags")
+			kvs          = cmd.StringsOpt("t tag", []string{}, "project tags")
 		)
 		cmd.Action = func() {
-			kvs, err := parseTags(*tags)
+			tags, err := NewTagsFromKVs(*kvs)
 			maybe(err)
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
@@ -92,9 +89,7 @@ Update an existing task
 					maybe(err)
 					task.Duration = parsed
 				}
-				for key, value := range kvs {
-					task.SetTag(key, value)
-				}
+				MergeTags(task.Tags, tags)
 				if *addPomodoros > 0 {
 					for _, pomodoro := range NewPomodoros(*addPomodoros) {
 						pomodoro.TaskID = task.ID

@@ -22,10 +22,9 @@ func makeStore(t *testing.T) *SQLiteStore {
 
 func TestTaskStore(t *testing.T) {
 	store := makeStore(t)
-	task := &Task{
-		Duration:  5 * time.Second,
-		Pomodoros: NewPomodoros(20),
-	}
+	task := NewTask()
+	task.Duration = 5 * time.Second
+	task.Pomodoros = NewPomodoros(20)
 	err := store.With(func(s Store) error {
 		return s.CreateTask(task)
 	})
@@ -55,28 +54,35 @@ func TestProjectStore(t *testing.T) {
 						Duration:  5 * time.Minute,
 						Message:   "Initialize project with CreateReactApp",
 						Pomodoros: NewPomodoros(2),
+						Tags:      NewTags(),
 					},
 					&Task{
 						Message:   "Define Typescript base types",
 						Pomodoros: NewPomodoros(4),
+						Tags:      NewTags(),
 					},
 					&Task{
 						Message:   "Write stateless components",
 						Pomodoros: NewPomodoros(8),
+						Tags:      NewTags(),
 					},
 					&Task{
 						Message:   "Setup React Hooks / Redux",
 						Pomodoros: NewPomodoros(8),
+						Tags:      NewTags(),
 					},
 					&Task{
 						Message:   "Integrate Backend API server",
 						Pomodoros: NewPomodoros(4),
+						Tags:      NewTags(),
 					},
 					&Task{
 						Message:   "Write Unit Tests",
 						Pomodoros: NewPomodoros(4),
+						Tags:      NewTags(),
 					},
 				},
+				Tags: NewTags(),
 			},
 			&Project{
 				Title: "Backend",
@@ -84,16 +90,20 @@ func TestProjectStore(t *testing.T) {
 					&Task{
 						Message:   "Boilerplate API server",
 						Pomodoros: NewPomodoros(4),
+						Tags:      NewTags(),
 					},
 					&Task{
 						Message:   "DBO / CRUD Operations",
 						Pomodoros: NewPomodoros(4),
+						Tags:      NewTags(),
 					},
 					&Task{
 						Message:   "Document API",
 						Pomodoros: NewPomodoros(4),
+						Tags:      NewTags(),
 					},
 				},
+				Tags: NewTags(),
 			},
 			&Project{
 				Title: "Operations",
@@ -101,14 +111,18 @@ func TestProjectStore(t *testing.T) {
 					&Task{
 						Message:   "Deploy RDS",
 						Pomodoros: NewPomodoros(2),
+						Tags:      NewTags(),
 					},
 					&Task{
 						Message:   "Deploy to EC2",
 						Pomodoros: NewPomodoros(2),
+						Tags:      NewTags(),
 					},
 				},
+				Tags: NewTags(),
 			},
 		},
+		Tags: NewTags(),
 	}
 	err := store.With(func(s Store) error {
 		return s.CreateProject(project)

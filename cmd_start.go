@@ -13,7 +13,7 @@ func start(config *Config) func(*cli.Cmd) {
 			duration  = cmd.StringOpt("d duration", "25m", "duration of each stent")
 			pomodoros = cmd.IntOpt("p pomodoros", 4, "number of pomodoros")
 			message   = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
-			tags      = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
+			kvs       = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
 		)
 		cmd.Action = func() {
 			parsed, err := time.ParseDuration(*duration)
@@ -21,7 +21,7 @@ func start(config *Config) func(*cli.Cmd) {
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer store.Close()
-			kvs, err := parseTags(*tags)
+			kvs, err := NewTagsFromKVs(*kvs)
 			maybe(err)
 			task := &Task{
 				Message:   *message,
