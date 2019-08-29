@@ -70,6 +70,7 @@ func outputStatus(status Status) {
 func promptConfirm(question string) error {
 	reader := bufio.NewReader(os.Stdin)
 	result, _ := reader.ReadString('\n')
+	result = strings.Replace(result, "\n", "", -1)
 	if result != question {
 		return fmt.Errorf("cancelled")
 	}
