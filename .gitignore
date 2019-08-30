@@ -31,5 +31,6 @@ bin/*
 www/public/
 www/data/
 www/static/install.sh
+www/resources
 
 docs/demo.gif
