@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"net/url"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -19,7 +20,14 @@ type SQLiteStore struct {
 }
 
 func NewSQLiteStore(path string) (*SQLiteStore, error) {
-	db, err := sql.Open("sqlite3", path)
+	u, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+	qs := &url.Values{}
+	qs.Add("_fk", "yes")
+	u.RawQuery = qs.Encode()
+	db, err := sql.Open("sqlite3", u.String())
 	if err != nil {
 		return nil, err
 	}
