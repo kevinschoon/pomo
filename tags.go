@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const deletePattern = "||DELETE||"
+
 type Tags struct {
 	keys []string
 	kvs  map[string]string
@@ -21,17 +23,26 @@ func NewTagsFromKVs(kvs []string) (*Tags, error) {
 	tags := NewTags()
 	for _, pair := range kvs {
 		split := strings.Split(pair, "=")
-		if len(split) != 2 {
+		if len(split) == 1 {
+			tags.Set(split[0], "")
+		} else if len(split) == 2 {
+			if split[1] == "" {
+				split[1] = deletePattern
+			}
+			tags.Set(split[0], split[1])
+		} else {
 			return nil, fmt.Errorf("bad key pair: %s", pair)
 		}
-		tags.keys = append(tags.keys, split[0])
-		tags.kvs[split[0]] = split[1]
 	}
 	return tags, nil
 }
 
 func (t Tags) Keys() []string {
 	return t.keys
+}
+
+func (t Tags) Len() int {
+	return len(t.kvs)
 }
 
 func (t Tags) Get(key string) string {
@@ -67,9 +78,18 @@ func (t *Tags) Delete(key string) {
 	delete(t.kvs, key)
 }
 
+func (t *Tags) Contains(other *Tags) bool {
+	for _, key := range other.Keys() {
+		if !(t.Get(key) == other.Get(key)) {
+			return false
+		}
+	}
+	return true
+}
+
 func MergeTags(first, second *Tags) *Tags {
 	for _, key := range second.Keys() {
-		if second.Get(key) == "" {
+		if second.Get(key) == deletePattern {
 			first.Delete(key)
 		} else {
 			first.Set(key, second.Get(key))
