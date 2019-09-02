@@ -45,6 +45,11 @@ func (t Tags) Len() int {
 	return len(t.kvs)
 }
 
+func (t Tags) HasTag(key string) bool {
+	_, ok := t.kvs[key]
+	return ok
+}
+
 func (t Tags) Get(key string) string {
 	if value, ok := t.kvs[key]; ok {
 		return value

@@ -78,18 +78,22 @@ func (t Task) Info() string {
 	fmt.Fprintf(buf, "]")
 	fmt.Fprintf(buf, "[%d*%s]", len(t.Pomodoros), truncDuration(t.Duration.String()))
 	for _, key := range t.Tags.Keys() {
-		fmt.Fprintf(buf, "[%s=%s]", key, t.Tags.Get(key))
+		if t.Tags.Get(key) == "" {
+			fmt.Fprintf(buf, "[%s]", key)
+		} else {
+			fmt.Fprintf(buf, "[%s=%s]", key, t.Tags.Get(key))
+		}
 	}
 	fmt.Fprintf(buf, " %s", t.Message)
 	return buf.String()
 }
 
-// ByID is a sortable array of tasks
-type ByID []*Task
+// TasksByID is a sortable array of tasks
+type TasksByID []*Task
 
-func (b ByID) Len() int           { return len(b) }
-func (b ByID) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
-func (b ByID) Less(i, j int) bool { return b[i].ID < b[j].ID }
+func (b TasksByID) Len() int           { return len(b) }
+func (b TasksByID) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b TasksByID) Less(i, j int) bool { return b[i].ID < b[j].ID }
 
 // After returns tasks that were started after the
 // provided start time.

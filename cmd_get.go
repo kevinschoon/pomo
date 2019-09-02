@@ -1,94 +1,74 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	// "sort"
 	"encoding/json"
+	"fmt"
 
 	cli "github.com/jawher/mow.cli"
 )
 
-type Kind string
-
-const (
-	PROJECT  = "projects"
-	TASK     = "tasks"
-	POMODORO = "pomodoros"
-)
-
-func getProject(config *Config) func(*cli.Cmd) {
-	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS] ID"
-		var (
-			id = cmd.IntArg("ID", 0, "project identifier")
-		)
-		cmd.Action = func() {
-			project := &Project{
-				ID: int64(*id),
-			}
-			store, err := NewSQLiteStore(config.DBPath)
-			maybe(err)
-			defer store.Close()
-			maybe(store.With(func(s Store) error {
-				return s.ReadProject(project)
-			}))
-			if config.JSON {
-				maybe(json.NewEncoder(os.Stdout).Encode(project))
-				return
-			}
-			Tree(*project).Write(os.Stdout, 0, Tree(*project).MaxDepth() == 0)
-		}
-	}
-}
-
-func getTask(config *Config) func(*cli.Cmd) {
-	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS] ID"
-		var (
-			id = cmd.IntArg("ID", 0, "project identifier")
-		)
-		cmd.Action = func() {
-
-			store, err := NewSQLiteStore(config.DBPath)
-			maybe(err)
-			defer store.Close()
-			var tasks []*Task
-			maybe(store.With(func(s Store) error {
-				result, err := s.ReadTasks(int64(*id))
-				if err != nil {
-					return err
-				}
-				tasks = result
-				return nil
-			}))
-			for _, task := range tasks {
-				fmt.Printf("%s\n", task.Info())
-			}
-		}
-	}
-}
-
 func get(config *Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS]"
-		cmd.Command("project", "get a project", getProject(config))
-		cmd.Command("task", "get a task", getTask(config))
+		cmd.LongDesc = `
+Examples:
+
+# output all tasks across all projects
+pomo get
+# output all tasks across all projects as a tree
+pomo get --tree
+# output tasks from a particular project filtered by name
+pomo get --project "my project name"
+# output tasks from a particular project filtered by tag
+pomo get --project key=value
+# output tasks matching the filter for a particular project
+pomo get --project "another project" --task "some task name"
+# complex task matching for a particular project
+pomo get --project "another project" --task "key=value" --task "fuu=bar"
+        `
+		var (
+			asTree = cmd.BoolOpt("t tree", false, "write projects and tasks as a tree")
+			// otherArgs = cmd.StringsArg("ARG", []string{}, "filters")
+			projectFilterArgs = cmd.StringsOpt("p project", []string{}, "project filters")
+			taskFilterArgs    = cmd.StringsOpt("t task", []string{}, "task filters")
+			// taskFilters    = cmd.StringsOpt("t task", []string{}, "task filters")
+		)
 		cmd.Action = func() {
-			project := &Project{
+			root := &Project{
 				ID: int64(0),
 			}
+			projects := []*Project{root}
 			store, err := NewSQLiteStore(config.DBPath)
 			maybe(err)
 			defer store.Close()
 			maybe(store.With(func(s Store) error {
-				return s.ReadProject(project)
+				return s.ReadProject(root)
 			}))
+			projects = FilterProjects(projects, ProjectFiltersFromStrings(*projectFilterArgs)...)
+			for _, project := range projects {
+				ForEachMutate(project, func(p *Project) {
+					p.Tasks = FilterTasks(p.Tasks, TaskFiltersFromStrings(*taskFilterArgs)...)
+				})
+			}
+			projects = FilterProjects(projects, ProjectFilterSomeTasks())
 			if config.JSON {
-				maybe(json.NewEncoder(os.Stdout).Encode(project))
+				maybe(json.NewEncoder(os.Stdout).Encode(projects))
 				return
 			}
-			Tree(*project).Write(os.Stdout, 0, Tree(*project).MaxDepth() == 0)
+			for _, project := range projects {
+				if *asTree {
+					Tree(*project).Write(os.Stdout, 0, Tree(*project).MaxDepth() == 0)
+				} else {
+					ForEach(*project, func(p Project) {
+						fmt.Fprintln(os.Stdout, p.Info())
+						for _, task := range p.Tasks {
+							fmt.Fprintf(os.Stdout, " %s\n", task.Info())
+						}
+					})
+				}
+			}
 		}
 	}
 }
