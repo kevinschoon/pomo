@@ -314,6 +314,7 @@ func (s *SQLiteStore) CreateTask(task *Task) error {
 	if err != nil {
 		return err
 	}
+	task.ID = taskId
 	for _, key := range task.Tags.Keys() {
 		_, err := sq.
 			Insert("tag").
