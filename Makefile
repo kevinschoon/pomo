@@ -5,7 +5,10 @@ ifeq "$(VERSION)" ""
 	VERSION := UNKNOWN
 endif
 
+LDFLAGS="-X github.com/kevinschoon/pomo/pkg/version.Version=$(VERSION)"
+
 .PHONY: \
+	install \
 	test \
 	docs \
 	pomo-build \
@@ -15,14 +18,16 @@ endif
 	release-darwin
 
 bin/pomo: test
-	go build -o $@
+	cd cmd/pomo && go build -ldflags $(LDFLAGS) -o ../../$@
 
-bindata.go: tomato-icon.png
-	go-bindata -pkg main -o $@ $^
+pkg/notify/bindata.go: pkg/notify/tomato-icon.png
+	go-bindata -pkg notify -o $@ $^
+
+install:
+	cd cmd/pomo && go install -v -ldflags $(LDFLAGS)
 
 test:
-	go test -v ./...
-	go vet ./...
+	go test ./...
 
 pomo-build:
 	docker build -t $(DOCKER_IMAGE) .
@@ -32,7 +37,7 @@ bin/pomo-linux: bin/pomo-$(VERSION)-linux-amd64
 bin/pomo-darwin: bin/pomo-$(VERSION)-darwin-amd64
 
 bin/pomo-$(VERSION)-linux-amd64: bin bindata.go
-	$(DOCKER_CMD) --env GOOS=linux --env GOARCH=amd64 $(DOCKER_IMAGE) go build -ldflags "-X main.Version=$(VERSION)" -o $@
+	$(DOCKER_CMD) --env GOOS=linux --env GOARCH=amd64 $(DOCKER_IMAGE) go build -ldflags $(LDFLAGS) -o $@
 
 bin/pomo-$(VERSION)-linux-amd64.md5:
 	md5sum bin/pomo-$(VERSION)-linux-amd64 | sed -e 's/bin\///' > $@
@@ -40,8 +45,7 @@ bin/pomo-$(VERSION)-linux-amd64.md5:
 bin/pomo-$(VERSION)-darwin-amd64: bin bindata.go
 	# This is used to cross-compile a Darwin compatible Mach-O executable
 	# on Linux for OSX, you need to install https://github.com/tpoechtrager/osxcross
-	$(DOCKER_CMD) --env GOOS=darwin --env GOARCH=amd64 --env CC=x86_64-apple-darwin15-cc --env CGO_ENABLED=1 $(DOCKER_IMAGE) go build -ldflags "-X main.Version=$(VERSION)" -o $@
-
+	$(DOCKER_CMD) --env GOOS=darwin --env GOARCH=amd64 --env CC=x86_64-apple-darwin15-cc --env CGO_ENABLED=1 $(DOCKER_IMAGE) go build -ldflags $(LDFLAGS) -o $@
 
 bin/pomo-$(VERSION)-darwin-amd64.md5:
 	md5sum bin/pomo-$(VERSION)-darwin-amd64 | sed -e 's/bin\///' > $@
