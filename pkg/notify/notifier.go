@@ -45,7 +45,7 @@ func (n Xnotifier) Notify(title, body string) error {
 	return n.Push(title, body, n.iconPath, notificator.UR_NORMAL)
 }
 
-func StatusFunc(notifier Notifier) runner.StatusFunc {
+func StatusFunc(notifier Notifier) runner.Hook {
 	return func(s runner.Status) error {
 		if s.Previous != s.State {
 			switch s.State {

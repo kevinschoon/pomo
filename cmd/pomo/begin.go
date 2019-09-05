@@ -33,12 +33,12 @@ func begin(cfg *config.Config) func(*cli.Cmd) {
 			notifier := notify.NewXNotifier(cfg.IconPath)
 			statusCh := make(chan runner.Status, 20)
 			socketServer := server.NewSocketServer(cfg.SocketPath)
-			taskRunner := runner.NewTaskRunner(task, runner.JoinStatusFuncs(
+			taskRunner := runner.NewTaskRunner(task,
 				socketServer.SetStatus,
 				runner.StatusTicker(statusCh),
 				runner.StatusUpdater(task, db),
 				notify.StatusFunc(notifier),
-			))
+			)
 			termUI := ui.New(taskRunner.Toggle, taskRunner.Suspend, statusCh)
 			maybe(harness.Harness{
 				UI:     termUI,

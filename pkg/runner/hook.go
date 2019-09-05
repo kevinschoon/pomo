@@ -5,9 +5,9 @@ import (
 	"github.com/kevinschoon/pomo/pkg/store"
 )
 
-type StatusFunc func(Status) error
+type Hook func(Status) error
 
-func JoinStatusFuncs(fns ...StatusFunc) StatusFunc {
+func Hooks(fns ...Hook) Hook {
 	return func(status Status) error {
 		for _, fn := range fns {
 			if err := fn(status); err != nil {
@@ -18,7 +18,7 @@ func JoinStatusFuncs(fns ...StatusFunc) StatusFunc {
 	}
 }
 
-func StatusTicker(ch chan Status) StatusFunc {
+func StatusTicker(ch chan Status) Hook {
 	return func(status Status) error {
 		select {
 		case ch <- status:
@@ -28,7 +28,7 @@ func StatusTicker(ch chan Status) StatusFunc {
 	}
 }
 
-func StatusUpdater(task *pomo.Task, db store.Store) StatusFunc {
+func StatusUpdater(task *pomo.Task, db store.Store) Hook {
 	return func(status Status) error {
 		if status.Count <= len(task.Pomodoros) {
 			return db.With(func(db store.Store) error {

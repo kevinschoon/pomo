@@ -19,17 +19,17 @@ type Runner interface {
 var _ Runner = (*TaskRunner)(nil)
 
 type TaskRunner struct {
-	status     Status
-	suspend    chan *toggle.Toggle
-	toggle     chan *toggle.Toggle
-	stop       chan *toggle.Toggle
-	timers     []*timer.Timer
-	task       *pomo.Task
-	running    bool
-	statusFunc StatusFunc
+	status  Status
+	suspend chan *toggle.Toggle
+	toggle  chan *toggle.Toggle
+	stop    chan *toggle.Toggle
+	timers  []*timer.Timer
+	task    *pomo.Task
+	running bool
+	hook    Hook
 }
 
-func NewTaskRunner(task *pomo.Task, statusFunc StatusFunc) *TaskRunner {
+func NewTaskRunner(task *pomo.Task, hooks ...Hook) *TaskRunner {
 	timers := make([]*timer.Timer, len(task.Pomodoros))
 	for i := 0; i < len(task.Pomodoros); i++ {
 		runtime := task.Pomodoros[i].RunTime
@@ -37,12 +37,12 @@ func NewTaskRunner(task *pomo.Task, statusFunc StatusFunc) *TaskRunner {
 		timers[i] = timer.New(task.Duration, runtime, pauseTime)
 	}
 	return &TaskRunner{
-		suspend:    make(chan *toggle.Toggle),
-		toggle:     make(chan *toggle.Toggle),
-		stop:       make(chan *toggle.Toggle),
-		timers:     timers,
-		task:       task,
-		statusFunc: statusFunc,
+		suspend: make(chan *toggle.Toggle),
+		toggle:  make(chan *toggle.Toggle),
+		stop:    make(chan *toggle.Toggle),
+		timers:  timers,
+		task:    task,
+		hook:    Hooks(hooks...),
 	}
 }
 
@@ -69,7 +69,7 @@ func (t *TaskRunner) set(count int, state State) error {
 			TimeSuspended: t.timers[count].TimeSuspended(),
 		}
 	}
-	return t.statusFunc(t.status)
+	return t.hook(t.status)
 }
 
 func (t *TaskRunner) Start() error {
