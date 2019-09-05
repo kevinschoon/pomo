@@ -9,6 +9,7 @@ import (
 // Status is used to communicate the state
 // of a running Pomodoro session
 type Status struct {
+	Previous      State         `json:"previous"`
 	State         State         `json:"state"`
 	Count         int           `json:"count"`
 	Message       string        `json:"message"`

@@ -6,6 +6,7 @@ import (
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
 	"github.com/kevinschoon/pomo/pkg/harness"
+	"github.com/kevinschoon/pomo/pkg/notify"
 	"github.com/kevinschoon/pomo/pkg/runner"
 	"github.com/kevinschoon/pomo/pkg/runner/server"
 	"github.com/kevinschoon/pomo/pkg/store"
@@ -29,12 +30,14 @@ func begin(cfg *config.Config) func(*cli.Cmd) {
 			maybe(db.With(func(db store.Store) error {
 				return db.ReadTask(task)
 			}))
+			notifier := notify.NewXNotifier(cfg.IconPath)
 			statusCh := make(chan runner.Status, 20)
 			socketServer := server.NewSocketServer(cfg.SocketPath)
 			taskRunner := runner.NewTaskRunner(task, runner.JoinStatusFuncs(
 				socketServer.SetStatus,
 				runner.StatusTicker(statusCh),
 				runner.StatusUpdater(task, db),
+				notify.StatusFunc(notifier),
 			))
 			termUI := ui.New(taskRunner.Toggle, taskRunner.Suspend, statusCh)
 			maybe(harness.Harness{

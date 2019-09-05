@@ -49,6 +49,7 @@ func NewTaskRunner(task *pomo.Task, statusFunc StatusFunc) *TaskRunner {
 func (t *TaskRunner) set(count int, state State) error {
 	if count == -1 {
 		t.status = Status{
+			Previous:   t.status.State,
 			Count:      0,
 			State:      state,
 			Message:    t.task.Message,
@@ -57,6 +58,7 @@ func (t *TaskRunner) set(count int, state State) error {
 		}
 	} else {
 		t.status = Status{
+			Previous:      t.status.State,
 			State:         state,
 			Count:         count,
 			Message:       t.task.Message,
