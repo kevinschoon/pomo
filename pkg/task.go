@@ -33,42 +33,30 @@ func NewTask() *Task {
 }
 
 func (t Task) TimeRunning() time.Duration {
-	var d time.Duration
+	var running time.Duration
 	for _, pomodoro := range t.Pomodoros {
-		d += pomodoro.RunTime
+		running += pomodoro.RunTime
 	}
-	return d
+	return running
 }
 
 func (t Task) TimePaused() time.Duration {
-	var d time.Duration
+	var paused time.Duration
 	for _, pomodoro := range t.Pomodoros {
-		d += pomodoro.PauseTime
+		paused += pomodoro.PauseTime
 	}
-	return d
+	return paused
 }
 
-func (t Task) PercentComplete() int {
-	completed := t.NCompleted()
-	if len(t.Pomodoros) == 0 || completed == 0 {
-		return 0
-	}
-	return (completed / len(t.Pomodoros)) * 100
-}
-
-func (t Task) NCompleted() int {
-	var n int
-	for _, pomodoro := range t.Pomodoros {
-		if pomodoro.RunTime >= t.Duration {
-			n++
-		}
-	}
-	return n
+func (t Task) PercentComplete() float64 {
+	duration := int(t.Duration) * len(t.Pomodoros)
+	timeRunning := t.TimeRunning()
+	return (float64(timeRunning) / float64(duration)) * 100
 }
 
 func (t Task) Info() string {
 	buf := bytes.NewBuffer(nil)
-	pc := t.PercentComplete()
+	pc := int(t.PercentComplete())
 	fmt.Fprintf(buf, "[T%d]", t.ID)
 	fmt.Fprintf(buf, "[")
 	if pc == 100 {

@@ -27,9 +27,37 @@ func NewProject() *Project {
 	}
 }
 
+func (p Project) Duration() time.Duration {
+	var duration time.Duration
+	for _, task := range p.Tasks {
+		duration += task.Duration * time.Duration(int64(len(task.Pomodoros)))
+	}
+	for _, child := range p.Children {
+		duration += child.Duration()
+	}
+	return duration
+}
+
+func (p Project) TimeRunning() time.Duration {
+	var running time.Duration
+	for _, task := range p.Tasks {
+		running += task.TimeRunning()
+	}
+	for _, child := range p.Children {
+		running += child.TimeRunning()
+	}
+	return running
+}
+
+func (p Project) PercentComplete() float64 {
+	duration := p.Duration()
+	timeRunning := p.TimeRunning()
+	return (float64(timeRunning) / float64(duration)) * 100
+}
+
 func (p Project) Info() string {
 	buf := bytes.NewBuffer(nil)
-	pc := PercentComplete(p)
+	pc := int(p.PercentComplete())
 	fmt.Fprintf(buf, "[P%d]", p.ID)
 	fmt.Fprintf(buf, "[")
 	if pc == 100 {
@@ -40,7 +68,7 @@ func (p Project) Info() string {
 		color.New(color.FgHiMagenta).Fprintf(buf, "%d%%", pc)
 	}
 	fmt.Fprintf(buf, "]")
-	fmt.Fprintf(buf, "[%s]", format.TruncDuration(Duration(p).String()))
+	fmt.Fprintf(buf, "[%s]", format.TruncDuration(p.Duration().String()))
 	for _, key := range p.Tags.Keys() {
 		if p.Tags.Get(key) == "" {
 			fmt.Fprintf(buf, "[%s]", key)
@@ -52,19 +80,6 @@ func (p Project) Info() string {
 		fmt.Fprintf(buf, " %s", p.Title)
 	}
 	return buf.String()
-}
-
-func (p Project) FlattenTasks() []*Task {
-	var tasks []*Task
-	for _, task := range p.Tasks {
-		tasks = append(tasks, task)
-	}
-	for _, child := range p.Children {
-		for _, task := range child.FlattenTasks() {
-			tasks = append(tasks, task)
-		}
-	}
-	return tasks
 }
 
 type ProjectFn func(Project)
@@ -81,28 +96,4 @@ func ForEachMutate(p *Project, fn func(*Project)) {
 	for _, child := range p.Children {
 		ForEachMutate(child, fn)
 	}
-}
-
-func Duration(p Project) time.Duration {
-	var duration time.Duration
-	ForEach(p, func(p Project) {
-		for _, task := range p.Tasks {
-			duration += task.Duration * time.Duration(int64(len(task.Pomodoros)))
-		}
-	})
-	return duration
-}
-
-func PercentComplete(p Project) int {
-	var i, j int
-	ForEach(p, func(p Project) {
-		for _, task := range p.Tasks {
-			i += len(task.Pomodoros)
-			j += task.NCompleted()
-		}
-	})
-	if i == 0 || j == 0 {
-		return 0
-	}
-	return int((j / i) * 100)
 }
