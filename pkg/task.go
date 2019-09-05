@@ -67,7 +67,7 @@ func (t Task) Info() string {
 		color.New(color.FgHiMagenta).Fprintf(buf, "%d%%", pc)
 	}
 	fmt.Fprintf(buf, "]")
-	fmt.Fprintf(buf, "[%d*%s]", len(t.Pomodoros), format.TruncDuration(t.Duration.String()))
+	fmt.Fprintf(buf, "[%d*%s]", len(t.Pomodoros), format.TruncDuration(t.Duration))
 	for _, key := range t.Tags.Keys() {
 		if t.Tags.Get(key) == "" {
 			fmt.Fprintf(buf, "[%s]", key)

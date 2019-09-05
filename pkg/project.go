@@ -68,7 +68,7 @@ func (p Project) Info() string {
 		color.New(color.FgHiMagenta).Fprintf(buf, "%d%%", pc)
 	}
 	fmt.Fprintf(buf, "]")
-	fmt.Fprintf(buf, "[%s]", format.TruncDuration(p.Duration().String()))
+	fmt.Fprintf(buf, "[%s]", format.TruncDuration(p.Duration()))
 	for _, key := range p.Tags.Keys() {
 		if p.Tags.Get(key) == "" {
 			fmt.Fprintf(buf, "[%s]", key)

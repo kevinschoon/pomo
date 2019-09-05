@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+
+	"github.com/kevinschoon/pomo/pkg/internal/format"
 )
 
 // Pomodoro represents a single unit of time
@@ -33,9 +35,9 @@ func (p Pomodoro) Info(duration time.Duration) string {
 	buf := bytes.NewBuffer(nil)
 	fmt.Fprintf(buf, "[")
 	if p.RunTime >= duration {
-		color.New(color.FgHiGreen).Fprintf(buf, "%s", p.RunTime.String())
+		color.New(color.FgHiGreen).Fprintf(buf, "%s", format.TruncDuration(p.RunTime))
 	} else {
-		color.New(color.FgHiMagenta).Fprintf(buf, "%s", p.RunTime.String())
+		color.New(color.FgHiMagenta).Fprintf(buf, "%s", format.TruncDuration(p.RunTime))
 	}
 	fmt.Fprintf(buf, "]")
 	return buf.String()
