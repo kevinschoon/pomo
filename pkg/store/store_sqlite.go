@@ -502,6 +502,7 @@ func (s *SQLiteStore) UpdatePomodoro(pomodoro *pomo.Pomodoro) error {
 		Set("start", pomodoro.Start).
 		Set("run_time", pomodoro.RunTime).
 		Set("pause_time", pomodoro.PauseTime).
+		Where(sq.Eq{"pomodoro_id": pomodoro.ID}).
 		RunWith(s.tx).Exec()
 	return err
 }
