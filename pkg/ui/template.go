@@ -46,7 +46,7 @@ const rawTemplate = `
 {{- if eq .State "COMPLETE" }}
     This Pomo session has completed!
 
-    Press [enter] to exit
+    Press [q] to exit
 {{ end -}}
 `
 
@@ -64,7 +64,7 @@ type TemplateOptions struct {
 
 // Template returns a string for rendering the terminal UI.
 // TODO: This consumes too much CPU at 200ms refresh rate.
-func Template(status *runner.Status, renderOpts *RenderOptions) string {
+func Template(status runner.Status, renderOpts *RenderOptions) string {
 	buf := bytes.NewBuffer(nil)
 	tmpl, err := template.New("").Parse(rawTemplate)
 	if err != nil {

@@ -29,13 +29,13 @@ func TestTemplater(t *testing.T) {
 		NPomodoros:    4,
 	}
 	wheel := ui.Wheel(0)
-	t.Log(surround(ui.Template(&status, &ui.RenderOptions{Wheel: &wheel})))
+	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
 	status.State = runner.RUNNING
-	t.Log(surround(ui.Template(&status, &ui.RenderOptions{Wheel: &wheel})))
+	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
 	status.State = runner.SUSPENDED
-	t.Log(surround(ui.Template(&status, &ui.RenderOptions{Wheel: &wheel})))
+	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
 	status.State = runner.BREAKING
-	t.Log(surround(ui.Template(&status, &ui.RenderOptions{Wheel: &wheel})))
+	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
 	status.State = runner.COMPLETE
-	t.Log(surround(ui.Template(&status, &ui.RenderOptions{Wheel: &wheel})))
+	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
 }

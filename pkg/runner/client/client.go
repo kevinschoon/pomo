@@ -6,7 +6,5 @@ import (
 
 type Client interface {
 	Status() (*runner.Status, error)
-	Suspend() bool
-	Toggle()
-	Stop()
+	Close() error
 }

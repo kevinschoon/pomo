@@ -1,23 +1,35 @@
 package runner
 
 import (
+	"time"
+
 	pomo "github.com/kevinschoon/pomo/pkg"
+	"github.com/kevinschoon/pomo/pkg/config"
+	"github.com/kevinschoon/pomo/pkg/internal/toggle"
 	"github.com/kevinschoon/pomo/pkg/timer"
 )
 
-// TaskRunner launches a timer for each Pomodoro
-// configured in a task and periodically sends
-// status updates.
-type TaskRunner struct {
-	state   State
-	count   int
-	suspend chan bool
-	toggle  chan struct{}
-	task    *pomo.Task
-	timers  []*timer.Timer
+type Runner interface {
+	Start() error
+	Suspend()
+	Toggle()
+	Stop()
 }
 
-func New(task *pomo.Task) *TaskRunner {
+var _ Runner = (*TaskRunner)(nil)
+
+type TaskRunner struct {
+	status     Status
+	suspend    chan *toggle.Toggle
+	toggle     chan *toggle.Toggle
+	stop       chan *toggle.Toggle
+	timers     []*timer.Timer
+	task       *pomo.Task
+	running    bool
+	statusFunc StatusFunc
+}
+
+func NewTaskRunner(task *pomo.Task, statusFunc StatusFunc) *TaskRunner {
 	timers := make([]*timer.Timer, len(task.Pomodoros))
 	for i := 0; i < len(task.Pomodoros); i++ {
 		runtime := task.Pomodoros[i].RunTime
@@ -25,79 +37,110 @@ func New(task *pomo.Task) *TaskRunner {
 		timers[i] = timer.New(task.Duration, runtime, pauseTime)
 	}
 	return &TaskRunner{
-		state:   INITIALIZED,
-		suspend: make(chan bool),
-		toggle:  make(chan struct{}),
-		task:    task,
-		timers:  timers,
+		suspend:    make(chan *toggle.Toggle),
+		toggle:     make(chan *toggle.Toggle),
+		stop:       make(chan *toggle.Toggle),
+		timers:     timers,
+		task:       task,
+		statusFunc: statusFunc,
 	}
 }
 
-func (t *TaskRunner) Start() chan struct{} {
-	done := make(chan struct{})
-	go func() {
-		// start as initialized and wait for first
-		// toggle before timers are started
-		<-t.toggle
-		for count, timer := range t.timers {
-			t.count = count
-			done := timer.Start()
-			t.state = RUNNING
-			t.toggle <- struct{}{}
-		inner:
-			for {
-				select {
-				case <-done:
-					t.state = BREAKING
-					t.task.Pomodoros[t.count].Start = timer.TimeStarted()
-					t.task.Pomodoros[t.count].RunTime = timer.TimeRunning()
-					t.task.Pomodoros[t.count].PauseTime = timer.TimeSuspended()
-					if count+1 == len(t.timers) {
-						break inner
-					}
-					<-t.toggle
-					break inner
-				case <-t.toggle:
-					t.toggle <- struct{}{}
-				case <-t.suspend:
-					suspended := timer.Suspend()
-					if suspended {
-						t.state = SUSPENDED
-					} else {
-						t.state = RUNNING
-					}
-					t.suspend <- suspended
+func (t *TaskRunner) set(count int, state State) error {
+	if count == -1 {
+		t.status = Status{
+			Count:      0,
+			State:      state,
+			Message:    t.task.Message,
+			NPomodoros: len(t.task.Pomodoros),
+			Duration:   t.task.Duration,
+		}
+	} else {
+		t.status = Status{
+			State:         state,
+			Count:         count,
+			Message:       t.task.Message,
+			NPomodoros:    len(t.task.Pomodoros),
+			Duration:      t.task.Duration,
+			TimeStarted:   t.timers[count].TimeStarted(),
+			TimeRunning:   t.timers[count].TimeRunning(),
+			TimeSuspended: t.timers[count].TimeSuspended(),
+		}
+	}
+	return t.statusFunc(t.status)
+}
+
+func (t *TaskRunner) Start() error {
+	t.running = true
+	ticker := time.NewTicker(config.TickTime * 2)
+	// start as initialized and wait for first
+	// toggle before timers are started
+	t.set(-1, INITIALIZED)
+	// start as initialized and wait for first
+	// toggle before timers are started
+	(<-t.toggle).Toggle()
+	for count, timer := range t.timers {
+		done := timer.Start()
+		if err := t.set(count, RUNNING); err != nil {
+			return err
+		}
+	inner:
+		for {
+			select {
+			case <-ticker.C:
+				if err := t.set(count, t.status.State); err != nil {
+					return err
 				}
+			case <-done:
+				if err := t.set(count, BREAKING); err != nil {
+					return err
+				}
+				// reached the end of all timers
+				if count+1 == len(t.timers) {
+					t.set(count, COMPLETE)
+					ticker.Stop()
+					continue inner
+					// break inner
+				}
+				(<-t.toggle).Toggle()
+				break inner
+			case toggle := <-t.toggle:
+				toggle.Toggle()
+			case suspend := <-t.suspend:
+				suspended := timer.Suspend()
+				if suspended {
+					if err := t.set(count, SUSPENDED); err != nil {
+						return err
+					}
+				} else {
+					if err := t.set(count, RUNNING); err != nil {
+						return err
+					}
+				}
+				suspend.Toggle()
+			case stop := <-t.stop:
+				t.running = false
+				stop.Toggle()
+				return nil
 			}
 		}
-		t.state = COMPLETE
-		<-t.toggle
-		t.toggle <- struct{}{}
-		close(t.toggle)
-		close(t.suspend)
-		done <- struct{}{}
-	}()
-	return done
+	}
+	return nil
 }
 
-func (t *TaskRunner) Count() int {
-	return t.count
-}
-
-func (t *TaskRunner) State() State {
-	return t.state
-}
-
-func (t *TaskRunner) Timer(n int) *timer.Timer {
-	return t.timers[n]
+func (t *TaskRunner) Suspend() {
+	if t.running {
+		toggle.New(t.suspend).Wait()
+	}
 }
 
 func (t *TaskRunner) Toggle() {
-	t.toggle <- struct{}{}
-	<-t.toggle
+	if t.running {
+		toggle.New(t.toggle).Wait()
+	}
 }
-
-func (t *TaskRunner) Suspend() bool {
-	t.suspend <- false
-	return <-t.suspend
+func (t *TaskRunner) Stop() {
+	if t.running {
+		toggle.New(t.stop).Wait()
+	}
 }

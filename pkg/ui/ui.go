@@ -2,14 +2,11 @@ package ui
 
 import (
 	"fmt"
-	"time"
 
 	termui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 
-	"github.com/kevinschoon/pomo/pkg/config"
 	"github.com/kevinschoon/pomo/pkg/runner"
-	"github.com/kevinschoon/pomo/pkg/runner/client"
 )
 
 // Wheel keeps track of an ASCII spinner
@@ -33,84 +30,28 @@ func (w *Wheel) String() string {
 	return ""
 }
 
+type UI struct {
+	running bool
+	status  chan runner.Status
+	toggle  func()
+	suspend func()
+}
+
+func New(toggle, suspend func(), statusCh chan runner.Status) *UI {
+	return &UI{
+		status:  statusCh,
+		toggle:  toggle,
+		suspend: suspend,
+	}
+}
+
 type RenderOptions struct {
 	Wheel  *Wheel
 	Width  int
 	Height int
 }
 
-func render(client client.Client, opts *RenderOptions) termui.Drawable {
-	status, err := client.Status()
-	if err != nil {
-		panic(err)
-	}
-	/*
-			var text string
-			switch status.State {
-			case INITIALIZED:
-				text = `
-		 Initialized.
-
-		 Press [enter] to begin!
-
-		 [q] - quit
-		`
-			case RUNNING:
-				text = `
-		 [%d/%d] Pomodoros completed
-
-		 (%s) Time Running: %s
-		    Time Suspended: %s
-		 Task: %s
-
-		[q] - quit [p] - pause
-		`
-				text = fmt.Sprintf(
-					text,
-					status.Count,
-					status.NPomodoros,
-					opts.Wheel,
-					status.TimeRunning,
-					status.TimeSuspended,
-					status.Message,
-				)
-			case BREAKING:
-				text = `
-		        It is time to take a break!
-
-				Once you are ready, press [enter]
-				to begin the next Pomodoro.
-
-				[q] - quit [p] - pause
-				`
-			case SUSPENDED:
-				text = `
-		 [%d/%d] Pomodoros completed
-
-		  Time Running: %s
-		 (%s)   Time Suspended: %s
-		 Task: %s
-
-		[q] - quit [p] - pause
-		`
-				text = fmt.Sprintf(
-					text,
-					status.Count,
-					status.NPomodoros,
-					opts.Wheel,
-					status.TimeRunning,
-					status.TimeSuspended,
-					status.Message,
-				)
-			case COMPLETE:
-				text = `This session has concluded.
-
-				Press [q] to exit.
-
-				[q] - quit
-				`
-			}
-	*/
+func (ui *UI) render(status runner.Status, opts *RenderOptions) termui.Drawable {
 	par := widgets.NewParagraph()
 	par.Title = fmt.Sprintf("Pomo - %s", status.State)
 	par.TitleStyle.Modifier = termui.ModifierBold | termui.ModifierUnderline
@@ -128,11 +69,13 @@ func render(client client.Client, opts *RenderOptions) termui.Drawable {
 	return par
 }
 
-func Start(client client.Client) error {
+func (ui *UI) Start() error {
+
+	ui.running = true
 
 	err := termui.Init()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	wheel := Wheel(0)
@@ -145,15 +88,15 @@ func Start(client client.Client) error {
 		Height: height,
 	}
 
-	termui.Render(render(client, renderOpts))
+	status := <-ui.status
+
+	termui.Render(ui.render(status, renderOpts))
 
 	defer termui.Close()
 
 	events := termui.PollEvents()
-	ticker := time.NewTicker(config.TickTime * 2)
-	defer ticker.Stop()
 
-	for {
+	for ui.running {
 		select {
 		case e := <-events:
 			if e.Type == termui.ResizeEvent {
@@ -161,24 +104,27 @@ func Start(client client.Client) error {
 				renderOpts.Width = width
 				renderOpts.Height = height
 				termui.Clear()
-				termui.Render(render(client, renderOpts))
+				termui.Render(ui.render(status, renderOpts))
 			}
 			if e.Type == termui.KeyboardEvent {
 				if e.ID == "<Enter>" {
-					client.Toggle()
-					termui.Render(render(client, renderOpts))
+					ui.toggle()
 				}
 				if e.ID == "p" {
-					client.Suspend()
-					termui.Render(render(client, renderOpts))
+					ui.suspend()
 				}
 				if e.ID == "q" {
-					client.Stop()
-					return nil
+					ui.Stop()
 				}
 			}
-		case <-ticker.C:
-			termui.Render(render(client, renderOpts))
+		case s := <-ui.status:
+			status = s
+			termui.Render(ui.render(status, renderOpts))
 		}
 	}
+	return nil
+}
+
+func (ui *UI) Stop() {
+	ui.running = false
 }

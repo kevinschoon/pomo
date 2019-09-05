@@ -7,6 +7,8 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
+	"github.com/kevinschoon/pomo/pkg/harness"
+	"github.com/kevinschoon/pomo/pkg/runner"
 	"github.com/kevinschoon/pomo/pkg/runner/server"
 	"github.com/kevinschoon/pomo/pkg/store"
 	"github.com/kevinschoon/pomo/pkg/tags"
@@ -36,23 +38,19 @@ func start(cfg *config.Config) func(*cli.Cmd) {
 				Pomodoros: pomo.NewPomodoros(*pomodoros),
 				Duration:  parsed,
 			}
-			maybe(db.With(func(db store.Store) error {
-				err = db.CreateTask(task)
-				if err != nil {
-					return err
-				}
-				return db.ReadTask(task)
-			}))
-			server, err := server.NewSocketServer(task, db, cfg)
-			maybe(err)
-			shutdown := make(chan error)
-			go func() {
-				shutdown <- server.Serve()
-			}()
-			// runner.Start(task)
-			// defer server.Stop()
-			maybe(ui.Start(server))
-			maybe(<-shutdown)
+			statusCh := make(chan runner.Status, 20)
+			socketServer := server.NewSocketServer(cfg.SocketPath)
+			taskRunner := runner.NewTaskRunner(task, runner.JoinStatusFuncs(
+				socketServer.SetStatus,
+				runner.StatusTicker(statusCh),
+				runner.StatusUpdater(task, db),
+			))
+			termUI := ui.New(taskRunner.Toggle, taskRunner.Suspend, statusCh)
+			maybe(harness.Harness{
+				UI:     termUI,
+				Server: socketServer,
+				Runner: taskRunner,
+			}.Launch())
 		}
 	}
 

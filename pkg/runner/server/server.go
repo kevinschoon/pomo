@@ -1,5 +1,11 @@
 package server
 
+import (
+	"github.com/kevinschoon/pomo/pkg/runner"
+)
+
 type Server interface {
-	Serve() error
+	SetStatus(runner.Status) error
+	Start() error
+	Stop() error
 }
