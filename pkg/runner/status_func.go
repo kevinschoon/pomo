@@ -30,7 +30,7 @@ func StatusTicker(ch chan Status) StatusFunc {
 
 func StatusUpdater(task *pomo.Task, db store.Store) StatusFunc {
 	return func(status Status) error {
-		if status.Count <= len(task.Pomodoros)+1 {
+		if status.Count <= len(task.Pomodoros) {
 			return db.With(func(db store.Store) error {
 				pomodoro := task.Pomodoros[status.Count]
 				pomodoro.Start = status.TimeStarted
