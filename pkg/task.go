@@ -79,6 +79,30 @@ func (t Task) Info() string {
 	return buf.String()
 }
 
+// Fill allocates the remaining time across all
+// pomodoros.
+func (t *Task) Fill() {
+	for _, pomodoro := range t.Pomodoros {
+		if pomodoro.Start.IsZero() {
+			pomodoro.Start = time.Now()
+		}
+		pomodoro.RunTime += (t.Duration - pomodoro.RunTime)
+	}
+}
+
+// Truncate modifies the task so the currently
+// allocated time is equal to the duration. Useful
+// when a task is completed sooner than expected.
+func (t *Task) Truncate() {
+	runtime := t.TimeRunning().Round(time.Second)
+	t.Duration = time.Duration(int64(runtime) / int64(len(t.Pomodoros)))
+	for _, pomodoro := range t.Pomodoros {
+		pomodoro.Start = time.Time{}
+		pomodoro.RunTime = t.Duration
+		pomodoro.PauseTime = time.Duration(0)
+	}
+}
+
 // TasksByID is a sortable array of tasks
 type TasksByID []*Task
 

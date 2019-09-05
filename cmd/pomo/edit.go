@@ -64,6 +64,8 @@ Update an existing task
 			addPomodoros = cmd.IntOpt("a add", 0, "add n pomodoros")
 			delPomodoro  = cmd.IntOpt("d del", -1, "delete pomodoro")
 			message      = cmd.StringOpt("m message", "", "message")
+			truncate     = cmd.BoolOpt("truncate", false, "truncate the task to it's current runtime")
+			fill         = cmd.BoolOpt("fill", false, "fill the current task with fake values")
 			kvs          = cmd.StringsOpt("t tag", []string{}, "project tags")
 		)
 		cmd.Action = func() {
@@ -112,6 +114,24 @@ Update an existing task
 					err = db.DeletePomodoros(task.ID, targetID)
 					if err != nil {
 						return err
+					}
+				}
+				if *truncate {
+					task.Truncate()
+					for _, pomodoro := range task.Pomodoros {
+						err = db.UpdatePomodoro(pomodoro)
+						if err != nil {
+							return err
+						}
+					}
+				}
+				if *fill {
+					task.Fill()
+					for _, pomodoro := range task.Pomodoros {
+						err = db.UpdatePomodoro(pomodoro)
+						if err != nil {
+							return err
+						}
 					}
 				}
 				return db.UpdateTask(task)
