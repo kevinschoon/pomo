@@ -14,8 +14,8 @@ func main() {
 	app.LongDesc = "Pomo helps you track what you did, how long it took you to do it, and how much effort you expect it to take."
 	app.Spec = "[OPTIONS]"
 	var (
-		cfg    = &config.Config{}
-		path   = app.StringOpt("p path", defaultConfigPath(), "path to the pomo config directory")
+		cfg    = config.DefaultConfig()
+		path   = app.StringOpt("p path", config.DefaultConfigPath(), "path to the pomo config directory")
 		asJSON = app.BoolOpt("json", false, "output as json")
 	)
 	app.Before = func() {

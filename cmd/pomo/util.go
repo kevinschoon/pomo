@@ -5,8 +5,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"os"
-	"os/user"
-	"path"
 	"strings"
 )
 
@@ -15,12 +13,6 @@ func maybe(err error) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func defaultConfigPath() string {
-	u, err := user.Current()
-	maybe(err)
-	return path.Join(u.HomeDir, "/.pomo/config.json")
 }
 
 func parseTags(kvs []string) (map[string]string, error) {
