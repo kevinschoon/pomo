@@ -12,46 +12,7 @@ import (
 	"github.com/kevinschoon/pomo/pkg/tags"
 )
 
-func editProject(cfg *config.Config) func(*cli.Cmd) {
-	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS] ID"
-		var (
-			projectID = cmd.IntArg("ID", -1, "project identifier")
-			parentID  = cmd.IntOpt("p parent", -1, "parent identifier")
-			title     = cmd.StringOpt("t title", "", "title")
-			kvs       = cmd.StringsOpt("t tag", []string{}, "project tags")
-		)
-		cmd.Action = func() {
-			if *projectID == 0 {
-				maybe(fmt.Errorf("root project may not be modified"))
-			}
-			project := &pomo.Project{
-				ID: int64(*projectID),
-			}
-			tgs, err := tags.FromKVs(*kvs)
-			maybe(err)
-			db, err := store.NewSQLiteStore(cfg.DBPath)
-			maybe(err)
-			defer db.Close()
-			maybe(db.With(func(db store.Store) error {
-				err := db.ReadProject(project)
-				if err != nil {
-					return err
-				}
-				if *parentID != -1 {
-					project.ParentID = int64(*parentID)
-				}
-				if *title != "" {
-					project.Title = *title
-				}
-				tags.Merge(project.Tags, tgs)
-				return db.UpdateProject(project)
-			}))
-		}
-	}
-}
-
-func editTask(cfg *config.Config) func(*cli.Cmd) {
+func edit(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS] ID"
 		cmd.LongDesc = `
@@ -59,7 +20,7 @@ Update an existing task
         `
 		var (
 			taskID       = cmd.IntArg("ID", -1, "task identifier")
-			projectID    = cmd.IntOpt("project-id", -1, "project identifier")
+			parentID     = cmd.IntOpt("parent", -1, "parent id")
 			duration     = cmd.StringOpt("duration", "", "pomodoro duration")
 			addPomodoros = cmd.IntOpt("a add", 0, "add n pomodoros")
 			delPomodoro  = cmd.IntOpt("d del", -1, "delete pomodoro")
@@ -88,8 +49,8 @@ Update an existing task
 				if *message != "" {
 					task.Message = *message
 				}
-				if *projectID != -1 {
-					task.ProjectID = int64(*projectID)
+				if *parentID != -1 {
+					task.ParentID = int64(*parentID)
 				}
 				if *duration != "" {
 					parsed, err := time.ParseDuration(*duration)
@@ -138,12 +99,5 @@ Update an existing task
 			}))
 
 		}
-	}
-}
-
-func edit(cfg *config.Config) func(*cli.Cmd) {
-	return func(cmd *cli.Cmd) {
-		cmd.Command("p project", "edit an existing project", editProject(cfg))
-		cmd.Command("t task", "edit an existing task", editTask(cfg))
 	}
 }

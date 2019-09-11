@@ -1,5 +1,6 @@
 package store_test
 
+/*
 import (
 	"io/ioutil"
 	"path"
@@ -142,3 +143,4 @@ func TestProjectStore(t *testing.T) {
 		t.Fatalf("project should have 3 subtasks, got %d", len(project.Children))
 	}
 }
+*/

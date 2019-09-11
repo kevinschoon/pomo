@@ -42,18 +42,12 @@ func (s *SQLiteStore) Close() error { return s.db.Close() }
 func (s *SQLiteStore) Init() error {
 	// TODO Migrate
 	stmt := `
-    CREATE TABLE project (
-    project_id INTEGER PRIMARY KEY,
-    parent_id INTEGER,
-    title TEXT,
-    FOREIGN KEY(parent_id) REFERENCES project(project_id) ON DELETE CASCADE
-    );
     CREATE TABLE task (
     task_id INTEGER PRIMARY KEY,
-    project_id INTEGER,
+    parent_id INTEGER,
 	message TEXT,
 	duration INTEGER,
-    FOREIGN KEY(project_id) REFERENCES project(project_id) ON DELETE CASCADE
+    FOREIGN KEY(parent_id) REFERENCES task(task_id) ON DELETE CASCADE
     );
     CREATE TABLE pomodoro (
     pomodoro_id INTEGER PRIMARY KEY,
@@ -68,11 +62,10 @@ func (s *SQLiteStore) Init() error {
     task_id INTEGER,
     key TEXT,
     value TEXT,
-    FOREIGN KEY(project_id) REFERENCES project(project_id) ON DELETE CASCADE,
     FOREIGN KEY(task_id) REFERENCES task(task_id) ON DELETE CASCADE
     );
     PRAGMA foreign_keys = ON;
-    INSERT INTO project (project_id, title) VALUES (0, "root") ON CONFLICT(project_id) DO UPDATE SET project_id = project_id;
+    INSERT INTO task (task_id, message, duration) VALUES (0, "root", 0) ON CONFLICT(task_id) DO UPDATE SET task_id = task_id;
     `
 	_, err := s.db.Exec(stmt)
 	return err
@@ -92,223 +85,11 @@ func (s *SQLiteStore) With(fn func(Store) error) error {
 	return tx.Commit()
 }
 
-// CreateProject creates all projects and child projects recursively, each task
-// and pomodoro are also created.
-func (s *SQLiteStore) CreateProject(project *pomo.Project) error {
-	result, err := sq.
-		Insert("project").
-		Columns("parent_id", "title").
-		Values(project.ParentID, project.Title).
-		RunWith(s.tx).Exec()
-	if err != nil {
-		return err
-	}
-	projectID, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-	project.ID = projectID
-	for _, task := range project.Tasks {
-		task.ProjectID = project.ID
-		err = s.CreateTask(task)
-		if err != nil {
-			return err
-		}
-	}
-	for _, key := range project.Tags.Keys() {
-		_, err := sq.
-			Insert("tag").
-			Columns("project_id", "key", "value").
-			Values(project.ID, key, project.Tags.Get(key)).
-			RunWith(s.tx).Exec()
-		if err != nil {
-			return err
-		}
-	}
-	for _, child := range project.Children {
-		child.ParentID = project.ID
-		err = s.CreateProject(child)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// ReadProject returns the associated project, child projects,
-// tasks, and pomodoros recursively.
-func (s *SQLiteStore) ReadProject(project *pomo.Project) error {
-
-	// special case when requesting the root project which
-	// has no parentID and returns null, otherwise there are
-	// no orphans.
-	parentID := sql.NullInt64{}
-	err := sq.
-		Select("project_id", "parent_id", "title").
-		From("project").
-		Where(sq.Eq{"project_id": project.ID}).
-		RunWith(s.tx).
-		QueryRow().
-		Scan(&project.ID, &parentID, &project.Title)
-
-	if err != nil {
-		return err
-	}
-
-	project.ParentID = parentID.Int64
-
-	tasks, err := s.ReadTasks(project.ID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			tasks = []*pomo.Task{}
-		} else {
-			return err
-		}
-	}
-
-	rows, err := sq.
-		Select("key", "value").
-		From("tag").
-		Where(sq.Eq{"project_id": project.ID}).
-		RunWith(s.tx).
-		Query()
-
-	if err != nil {
-		return err
-	}
-
-	project.Tags = tags.New()
-
-	for rows.Next() {
-		var (
-			key, value string
-		)
-		err = rows.Scan(&key, &value)
-		if err != nil {
-			return err
-		}
-		project.Tags.Set(key, value)
-	}
-
-	project.Tasks = tasks
-	children, err := s.ReadProjects(project.ID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			children = []*pomo.Project{}
-		} else {
-			return err
-		}
-	}
-	project.Children = children
-	return nil
-}
-
-func (s *SQLiteStore) ReadProjects(parentID int64) ([]*pomo.Project, error) {
-	var projects []*pomo.Project
-	rows, err := sq.
-		Select("project_id", "parent_id", "title").
-		From("project").
-		Where(sq.Eq{"parent_id": parentID}).
-		RunWith(s.tx).Query()
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		project := &pomo.Project{}
-		err = rows.Scan(&project.ID, &project.ParentID, &project.Title)
-		if err != nil {
-			return nil, err
-		}
-		tasks, err := s.ReadTasks(project.ID)
-		if err != nil {
-			return nil, err
-		}
-		project.Tasks = tasks
-
-		rows, err := sq.
-			Select("key", "value").
-			From("tag").
-			Where(sq.Eq{"project_id": project.ID}).
-			RunWith(s.tx).
-			Query()
-
-		if err != nil {
-			return nil, err
-		}
-
-		project.Tags = tags.New()
-
-		for rows.Next() {
-			var (
-				key, value string
-			)
-			err = rows.Scan(&key, &value)
-			if err != nil {
-				return nil, err
-			}
-			project.Tags.Set(key, value)
-		}
-		projects = append(projects, project)
-	}
-	for _, project := range projects {
-		children, err := s.ReadProjects(project.ID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				continue
-			}
-			return nil, err
-		}
-		project.Children = children
-	}
-	return projects, nil
-}
-
-// UpdateProject updates the title and parent association of the project
-// it does not modify tasks, pomodoros, or child projects.
-func (s *SQLiteStore) UpdateProject(project *pomo.Project) error {
-	_, err := sq.
-		Update("project").
-		Set("title", project.Title).
-		Set("parent_id", project.ParentID).
-		Where(sq.Eq{"project_id": project.ID}).
-		RunWith(s.tx).Exec()
-	// TODO generalize tags
-	_, err = sq.
-		Delete("tag").
-		Where(sq.Eq{"project_id": project.ID}).
-		RunWith(s.tx).
-		Exec()
-	if err != nil {
-		return err
-	}
-	for _, key := range project.Tags.Keys() {
-		_, err := sq.
-			Insert("tag").
-			Columns("project_id", "key", "value").
-			Values(project.ID, key, project.Tags.Get(key)).
-			RunWith(s.tx).Exec()
-		if err != nil {
-			return err
-		}
-	}
-	return err
-}
-
-// DeleteProject deletes the given project ID which causes all
-// decendant projects, tasks, and pomodoros to be deleted.
-func (s *SQLiteStore) DeleteProject(projectID int64) error {
-	_, err := sq.
-		Delete("project").
-		Where(sq.Eq{"project_id": projectID}).
-		RunWith(s.tx).Exec()
-	return err
-}
-
 func (s *SQLiteStore) CreateTask(task *pomo.Task) error {
 	result, err := sq.
 		Insert("task").
-		Columns("project_id", "message", "duration").
-		Values(task.ProjectID, task.Message, task.Duration).
+		Columns("parent_id", "message", "duration").
+		Values(task.ParentID, task.Message, task.Duration).
 		RunWith(s.tx).Exec()
 	if err != nil {
 		return err
@@ -340,16 +121,24 @@ func (s *SQLiteStore) CreateTask(task *pomo.Task) error {
 }
 
 func (s *SQLiteStore) ReadTask(task *pomo.Task) error {
-	err := sq.Select("task_id", "project_id", "message", "duration").
+	// special case when requesting the root task which
+	// has no parentID and returns null, otherwise there are
+	// no orphans.
+
+	parentID := sql.NullInt64{}
+
+	err := sq.Select("task_id", "parent_id", "message", "duration").
 		From("task").
 		Where(sq.Eq{"task_id": task.ID}).
 		RunWith(s.tx).
 		QueryRow().
-		Scan(&task.ID, &task.ProjectID, &task.Message, &task.Duration)
+		Scan(&task.ID, &parentID, &task.Message, &task.Duration)
 
 	if err != nil {
 		return err
 	}
+
+	task.ParentID = parentID.Int64
 
 	task.Tags = tags.New()
 
@@ -382,18 +171,26 @@ func (s *SQLiteStore) ReadTask(task *pomo.Task) error {
 
 	task.Pomodoros = pomodoros
 
+	subTasks, err := s.ReadTasks(task.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			subTasks = []*pomo.Task{}
+		} else {
+			return err
+		}
+	}
+
+	task.Tasks = subTasks
+
 	return nil
 }
 
-func (s *SQLiteStore) ReadTasks(projectID int64) ([]*pomo.Task, error) {
+func (s *SQLiteStore) ReadTasks(parentID int64) ([]*pomo.Task, error) {
 	var tasks []*pomo.Task
 	query := sq.
-		Select("task_id", "project_id", "message", "duration").
-		From("task")
-	if projectID >= 0 {
-		query = query.
-			Where(sq.Eq{"project_id": projectID})
-	}
+		Select("task_id", "parent_id", "message", "duration").
+		From("task").
+		Where(sq.Eq{"parent_id": parentID})
 	rows, err := query.
 		RunWith(s.tx).
 		Query()
@@ -402,7 +199,7 @@ func (s *SQLiteStore) ReadTasks(projectID int64) ([]*pomo.Task, error) {
 	}
 	for rows.Next() {
 		task := &pomo.Task{Pomodoros: []*pomo.Pomodoro{}}
-		err = rows.Scan(&task.ID, &task.ProjectID, &task.Message, &task.Duration)
+		err = rows.Scan(&task.ID, &task.ParentID, &task.Message, &task.Duration)
 		if err != nil {
 			return nil, err
 		}
@@ -438,6 +235,16 @@ func (s *SQLiteStore) ReadTasks(projectID int64) ([]*pomo.Task, error) {
 		}
 		task.Pomodoros = pomodoros
 	}
+	for _, task := range tasks {
+		subTasks, err := s.ReadTasks(task.ID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				continue
+			}
+			return nil, err
+		}
+		task.Tasks = subTasks
+	}
 	return tasks, nil
 }
 
@@ -445,7 +252,7 @@ func (s *SQLiteStore) UpdateTask(task *pomo.Task) error {
 	_, err := sq.
 		Update("task").
 		Where(sq.Eq{"task_id": task.ID}).
-		Set("project_id", task.ProjectID).
+		Set("parent_id", task.ParentID).
 		Set("duration", task.Duration).
 		Set("message", task.Message).
 		RunWith(s.tx).Exec()

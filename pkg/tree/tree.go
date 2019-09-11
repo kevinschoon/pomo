@@ -14,11 +14,11 @@ const (
 	lastItem     = "└── "
 )
 
-type Tree pomo.Project
+type Tree pomo.Task
 
 func (t Tree) MaxDepth() int {
-	depth := len(t.Children)
-	for _, child := range t.Children {
+	depth := len(t.Tasks)
+	for _, child := range t.Tasks {
 		depth += Tree(*child).MaxDepth()
 	}
 	return depth
@@ -27,7 +27,7 @@ func (t Tree) MaxDepth() int {
 func (t Tree) Write(w io.Writer, depth int, last bool) {
 	if depth == 0 { // root
 		// fmt.Fprintf(w, ".\n")
-		fmt.Fprintf(w, "%s\n", pomo.Project(t).Info())
+		fmt.Fprintf(w, "%s\n", pomo.Task(t).Info())
 	}
 	spaces := depth
 	// task list
@@ -67,7 +67,7 @@ func (t Tree) Write(w io.Writer, depth int, last bool) {
 	}
 
 	// sub projects
-	for n, child := range t.Children {
+	for n, child := range t.Tasks {
 		for j := 0; j < spaces; j++ {
 			if j == 0 && !last {
 				fmt.Fprintf(w, continueItem)
@@ -75,12 +75,12 @@ func (t Tree) Write(w io.Writer, depth int, last bool) {
 			}
 			fmt.Fprintf(w, emptySpace)
 		}
-		if n+1 == len(t.Children) {
+		if n+1 == len(t.Tasks) {
 			fmt.Fprintf(w, lastItem)
 		} else {
 			fmt.Fprintf(w, middleItem)
 		}
 		fmt.Fprintf(w, "%s\n", child.Info())
-		Tree(*child).Write(w, depth+1, n+1 == len(t.Children) && depth == 0)
+		Tree(*child).Write(w, depth+1, n+1 == len(t.Tasks) && depth == 0)
 	}
 }

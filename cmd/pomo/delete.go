@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	cli "github.com/jawher/mow.cli"
 
@@ -9,72 +10,15 @@ import (
 	"github.com/kevinschoon/pomo/pkg/config"
 	"github.com/kevinschoon/pomo/pkg/filter"
 	"github.com/kevinschoon/pomo/pkg/store"
+	"github.com/kevinschoon/pomo/pkg/tree"
 )
-
-func deleteProject(cfg *config.Config) func(*cli.Cmd) {
-	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS] [ID]"
-		cmd.LongDesc = `
-Delete a project by ID or when all tags are matched
-        `
-		var (
-			projectID  = cmd.IntArg("ID", -1, "project to delete")
-			filterArgs = cmd.StringsOpt("f filter", []string{}, "project filters")
-		)
-		cmd.Action = func() {
-
-			if *projectID == 0 {
-				maybe(fmt.Errorf("cannot delete root project"))
-			}
-			db, err := store.NewSQLiteStore(cfg.DBPath)
-			maybe(err)
-			defer db.Close()
-			maybe(db.With(func(db store.Store) error {
-				if *projectID > 0 {
-					project := &pomo.Project{ID: int64(*projectID)}
-					err := db.ReadProject(project)
-					if err != nil {
-						return err
-					}
-					return db.DeleteProject(int64(*projectID))
-				}
-				root := &pomo.Project{
-					ID: int64(0),
-				}
-				err := db.ReadProject(root)
-				if err != nil {
-					return err
-				}
-				filters := filter.Filters{
-					ProjectFilters: filter.ProjectFiltersFromStrings(*filterArgs),
-				}
-				root = filter.Reduce(root, filters)
-				projects := root.Children
-				if len(projects) == 1 {
-					fmt.Println("are you sure you want to delete the following project?")
-					fmt.Println(projects[0].Info())
-					for _, task := range projects[0].Tasks {
-						fmt.Println(task.Info())
-					}
-					fmt.Println("type YES to confirm")
-					maybe(promptConfirm("YES"))
-					return db.DeleteProject(projects[0].ID)
-				} else if len(projects) > 1 {
-					return fmt.Errorf("too ambiguous, got %d results", len(projects))
-				}
-				return fmt.Errorf("no results")
-			}))
-		}
-	}
-}
 
 func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS] [ID]"
 		var (
-			taskID            = cmd.IntArg("ID", -1, "task to delete")
-			projectFilterArgs = cmd.StringsOpt("p project", []string{}, "project filters")
-			taskFilterArgs    = cmd.StringsOpt("t task", []string{}, "task filters")
+			taskID  = cmd.IntArg("ID", -1, "task to delete")
+			filters = cmd.StringsOpt("f filter", []string{}, "filters")
 		)
 
 		cmd.Action = func() {
@@ -90,47 +34,32 @@ func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 					}
 					return db.DeleteTask(int64(*taskID))
 				}
-				root := &pomo.Project{
+				root := &pomo.Task{
 					ID: int64(0),
 				}
-				err := db.ReadProject(root)
+				err := db.ReadTask(root)
 				if err != nil {
 					return err
 				}
-				filters := filter.Filters{
-					ProjectFilters: filter.ProjectFiltersFromStrings(*projectFilterArgs),
-					TaskFilters:    filter.TaskFiltersFromStrings(*taskFilterArgs),
+				filters := filter.Filters(filter.TaskFiltersFromStrings(*filters))
+				root = filters.Reduce(root)
+				fmt.Println("are you sure you want to delete the following tasks:")
+				for _, subTask := range root.Tasks {
+					tree.Tree(*subTask).Write(os.Stdout, 0, tree.Tree(*subTask).MaxDepth() == 0)
 				}
-				root = filter.Reduce(root, filters)
-				projects := root.Children
-				if len(projects) == 1 {
-					if len(projects[0].Tasks) == 1 {
-						fmt.Println("are you sure you want to delete the following task: ")
-						fmt.Println(projects[0].Tasks[0].Info())
-						fmt.Println("type YES to confirm")
-						maybe(promptConfirm("YES"))
-						return db.DeleteTask(projects[0].Tasks[0].ID)
-					} else if len(projects[0].Tasks) > 1 {
-						return fmt.Errorf("too ambiguous, got %d tasks of project %s", len(projects[0].Tasks), projects[0].Title)
+				fmt.Println("type YES to confirm")
+				err = promptConfirm("YES")
+				if err != nil {
+					return err
+				}
+				for _, subTask := range root.Tasks {
+					err = db.DeleteTask(subTask.ID)
+					if err != nil {
+						return err
 					}
-				} else if len(projects) > 1 {
-					return fmt.Errorf("too ambiguous, got %d projects", len(projects))
 				}
-				return fmt.Errorf("no results")
+				return nil
 			}))
 		}
-	}
-}
-
-func deletePomodoro(cfg *config.Config) func(*cli.Cmd) {
-	return func(cmd *cli.Cmd) {
-	}
-}
-
-func _delete(cfg *config.Config) func(*cli.Cmd) {
-	return func(cmd *cli.Cmd) {
-		cmd.Command("project t", "delete a project", deleteProject(cfg))
-		cmd.Command("task t", "delete a task", deleteTask(cfg))
-		cmd.Command("pomodoro po", "delete a pomodoro", deletePomodoro(cfg))
 	}
 }

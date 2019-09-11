@@ -14,10 +14,11 @@ import (
 // Task represents a goal to accomplished with
 // the Pomodoro technique.
 type Task struct {
-	ID        int64      `json:"id"`
-	ProjectID int64      `json:"project_id"`
-	Message   string     `json:"message"`
-	Tags      *tags.Tags `json:"tags"`
+	ID       int64      `json:"id"`
+	ParentID int64      `json:"project_id"`
+	Message  string     `json:"message"`
+	Tags     *tags.Tags `json:"tags"`
+	Tasks    []*Task    `json:"tasks"`
 	// Array of completed pomodoros
 	Pomodoros []*Pomodoro `json:"pomodoros"`
 	// Number of pomodoros for this task
@@ -37,6 +38,9 @@ func (t Task) TimeRunning() time.Duration {
 	for _, pomodoro := range t.Pomodoros {
 		running += pomodoro.RunTime
 	}
+	for _, subTask := range t.Tasks {
+		running += subTask.TimeRunning()
+	}
 	return running
 }
 
@@ -44,6 +48,9 @@ func (t Task) TimePaused() time.Duration {
 	var paused time.Duration
 	for _, pomodoro := range t.Pomodoros {
 		paused += pomodoro.PauseTime
+	}
+	for _, subTask := range t.Tasks {
+		paused += subTask.TimePaused()
 	}
 	return paused
 }
@@ -122,4 +129,18 @@ func After(start time.Time, tasks []*Task) []*Task {
 		}
 	}
 	return filtered
+}
+
+func ForEach(t Task, fn func(Task)) {
+	fn(t)
+	for _, child := range t.Tasks {
+		ForEach(*child, fn)
+	}
+}
+
+func ForEachMutate(t *Task, fn func(*Task)) {
+	fn(t)
+	for _, child := range t.Tasks {
+		ForEachMutate(child, fn)
+	}
 }

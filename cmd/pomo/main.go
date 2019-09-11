@@ -30,7 +30,7 @@ func main() {
 	app.Command("edit e", "edit a resource", edit(cfg))
 	app.Command("begin b", "begin requested pomodoro", begin(cfg))
 	app.Command("get g", "get one or more tasks", get(cfg))
-	app.Command("delete d", "delete a resource", _delete(cfg))
+	app.Command("delete d", "delete a resource", deleteTask(cfg))
 	app.Command("status st", "output the current status", status(cfg))
 	app.Run(os.Args)
 }
