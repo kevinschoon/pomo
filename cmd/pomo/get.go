@@ -45,25 +45,25 @@ pomo get --project "another project" --task "key=value" --task "fuu=bar"
 			root := &pomo.Project{
 				ID: int64(0),
 			}
-			projects := []*pomo.Project{root}
 			db, err := store.NewSQLiteStore(cfg.DBPath)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(db store.Store) error {
 				return db.ReadProject(root)
 			}))
-			projects = filter.FilterProjects(projects, filter.ProjectFiltersFromStrings(*projectFilterArgs)...)
-			for _, project := range projects {
-				pomo.ForEachMutate(project, func(p *pomo.Project) {
-					p.Tasks = filter.FilterTasks(p.Tasks, filter.TaskFiltersFromStrings(*taskFilterArgs)...)
-				})
+
+			filters := filter.Filters{
+				ProjectFilters: filter.ProjectFiltersFromStrings(*projectFilterArgs),
+				TaskFilters:    filter.TaskFiltersFromStrings(*taskFilterArgs),
 			}
-			projects = filter.FilterProjects(projects, filter.ProjectFilterSomeTasks())
+
+			root = filter.Reduce(root, filters)
+
 			if cfg.JSON {
-				maybe(json.NewEncoder(os.Stdout).Encode(projects))
+				maybe(json.NewEncoder(os.Stdout).Encode(root.Children))
 				return
 			}
-			for _, project := range projects {
+			for _, project := range root.Children {
 				if *asTree {
 					tree.Tree(*project).Write(os.Stdout, 0, tree.Tree(*project).MaxDepth() == 0)
 				} else {

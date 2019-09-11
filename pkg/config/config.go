@@ -16,13 +16,14 @@ const (
 
 // Config represents user preferences
 type Config struct {
-	Colors      *ColorMap `json:"colors"`
-	JSON        bool      `json:"json"`
-	DateTimeFmt string    `json:"dateTimeFmt"`
-	BasePath    string    `json:"basePath"`
-	DBPath      string    `json:"dbPath"`
-	SocketPath  string    `json:"socketPath"`
-	IconPath    string    `json:"iconPath"`
+	Colors         *ColorMap `json:"colors"`
+	CurrentProject int64     `json:"currentProject"`
+	JSON           bool      `json:"json"`
+	DateTimeFmt    string    `json:"dateTimeFmt"`
+	BasePath       string    `json:"basePath"`
+	DBPath         string    `json:"dbPath"`
+	SocketPath     string    `json:"socketPath"`
+	IconPath       string    `json:"iconPath"`
 }
 
 func DefaultConfig() *Config {

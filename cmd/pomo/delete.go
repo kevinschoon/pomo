@@ -45,8 +45,11 @@ Delete a project by ID or when all tags are matched
 				if err != nil {
 					return err
 				}
+				filters := filter.Filters{
+					ProjectFilters: filter.ProjectFiltersFromStrings(*filterArgs),
+				}
+				root = filter.Reduce(root, filters)
 				projects := root.Children
-				projects = filter.FilterProjects(projects, filter.ProjectFiltersFromStrings(*filterArgs)...)
 				if len(projects) == 1 {
 					fmt.Println("are you sure you want to delete the following project?")
 					fmt.Println(projects[0].Info())
@@ -94,14 +97,12 @@ func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 				if err != nil {
 					return err
 				}
-				projects := root.Children
-				projects = filter.FilterProjects(projects, filter.ProjectFiltersFromStrings(*projectFilterArgs)...)
-				for _, project := range projects {
-					pomo.ForEachMutate(project, func(p *pomo.Project) {
-						p.Tasks = filter.FilterTasks(p.Tasks, filter.TaskFiltersFromStrings(*taskFilterArgs)...)
-					})
+				filters := filter.Filters{
+					ProjectFilters: filter.ProjectFiltersFromStrings(*projectFilterArgs),
+					TaskFilters:    filter.TaskFiltersFromStrings(*taskFilterArgs),
 				}
-				projects = filter.FilterProjects(projects, filter.ProjectFilterSomeTasks())
+				root = filter.Reduce(root, filters)
+				projects := root.Children
 				if len(projects) == 1 {
 					if len(projects[0].Tasks) == 1 {
 						fmt.Println("are you sure you want to delete the following task: ")

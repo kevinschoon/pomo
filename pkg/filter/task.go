@@ -6,21 +6,6 @@ import (
 	pomo "github.com/kevinschoon/pomo/pkg"
 )
 
-func FilterTasks(tasks []*pomo.Task, filters ...TaskFilter) []*pomo.Task {
-	if len(filters) == 0 {
-		return tasks
-	}
-	var filtered []*pomo.Task
-	for _, task := range tasks {
-		for _, filter := range filters {
-			if filter(*task) {
-				filtered = append(filtered, task)
-			}
-		}
-	}
-	return filtered
-}
-
 type TaskFilter func(pomo.Task) bool
 
 func TaskFiltersFromStrings(args []string) []TaskFilter {

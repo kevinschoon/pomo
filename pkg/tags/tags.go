@@ -19,6 +19,14 @@ func New() *Tags {
 	}
 }
 
+func FromMap(order []string, kvs map[string]string) *Tags {
+	tags := &Tags{
+		keys: order,
+		kvs:  kvs,
+	}
+	return tags
+}
+
 func FromKVs(kvs []string) (*Tags, error) {
 	tags := New()
 	for _, pair := range kvs {
