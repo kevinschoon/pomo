@@ -29,6 +29,9 @@ install:
 test:
 	go test ./...
 
+staticcheck:
+	staticcheck ./...
+
 pomo-build:
 	docker build -t $(DOCKER_IMAGE) .
 
