@@ -17,7 +17,7 @@ import (
 
 func get(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS]"
+		cmd.Spec = "[OPTIONS] [FILTER...]"
 		cmd.LongDesc = `
 Examples:
 
@@ -27,8 +27,9 @@ pomo get
 pomo get --tree
         `
 		var (
-			asTree  = cmd.BoolOpt("tree", false, "write projects and tasks as a tree")
-			filters = cmd.StringsOpt("f filter", []string{}, "filters")
+			asTree        = cmd.BoolOpt("tree", true, "write projects and tasks as a tree")
+			showPomodoros = cmd.BoolOpt("p pomodoros", true, "show status of each pomodoro")
+			filters       = cmd.StringsArg("FILTER", []string{}, "filters")
 		)
 		cmd.Action = func() {
 			root := &pomo.Task{
@@ -42,23 +43,19 @@ pomo get --tree
 			}))
 
 			filters := filter.Filters(filter.TaskFiltersFromStrings(*filters))
-			root = filters.Reduce(root)
+			root.Tasks = filters.Find(root.Tasks)
 
 			if cfg.JSON {
-				maybe(json.NewEncoder(os.Stdout).Encode(root.Tasks))
+				maybe(json.NewEncoder(os.Stdout).Encode(root))
 				return
 			}
-			for _, task := range root.Tasks {
-				if *asTree {
-					tree.Tree(*task).Write(os.Stdout, 0, tree.Tree(*task).MaxDepth() == 0)
-				} else {
-					pomo.ForEach(*task, func(t pomo.Task) {
-						fmt.Fprintln(os.Stdout, t.Info())
-						for _, task := range t.Tasks {
-							fmt.Fprintf(os.Stdout, " %s\n", task.Info())
-						}
-					})
-				}
+			if *asTree {
+				tree.Tree{Task: *root, ShowPomodoros: *showPomodoros}.Write(os.Stdout, nil)
+				// tree.Tree(*root).Write(os.Stdout, nil)
+			} else {
+				pomo.ForEach(*root, func(t pomo.Task) {
+					fmt.Fprintln(os.Stdout, t.Info())
+				})
 			}
 		}
 	}

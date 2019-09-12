@@ -13,8 +13,7 @@ func TaskFiltersFromStrings(args []string) []TaskFilter {
 	for _, arg := range args {
 		split := strings.Split(arg, "=")
 		if len(split) == 1 {
-			filters = append(filters, TaskFilterByTag(split[0], ""))
-			filters = append(filters, TaskFilterByName(split[0]))
+			filters = append(filters, TaskFilterByAny(TaskFilterByTag(split[0], ""), TaskFilterByName(split[0])))
 		} else if len(split) == 2 {
 			filters = append(filters, TaskFilterByTag(split[0], split[1]))
 		}
@@ -37,5 +36,16 @@ func TaskFilterByTag(key, value string) TaskFilter {
 func TaskFilterByID(id int64) TaskFilter {
 	return func(t pomo.Task) bool {
 		return t.ID == id
+	}
+}
+
+func TaskFilterByAny(filters ...TaskFilter) TaskFilter {
+	return func(t pomo.Task) bool {
+		for _, filter := range filters {
+			if filter(t) {
+				return true
+			}
+		}
+		return false
 	}
 }

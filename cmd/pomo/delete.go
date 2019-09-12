@@ -42,10 +42,10 @@ func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 					return err
 				}
 				filters := filter.Filters(filter.TaskFiltersFromStrings(*filters))
-				root = filters.Reduce(root)
+				tasks := filters.Find(root.Tasks)
 				fmt.Println("are you sure you want to delete the following tasks:")
-				for _, subTask := range root.Tasks {
-					tree.Tree(*subTask).Write(os.Stdout, 0, tree.Tree(*subTask).MaxDepth() == 0)
+				for _, subTask := range tasks {
+					tree.Tree{Task: *subTask}.Write(os.Stdout, nil)
 				}
 				fmt.Println("type YES to confirm")
 				err = promptConfirm("YES")
