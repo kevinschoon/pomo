@@ -1,18 +1,18 @@
 package store_test
 
-/*
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"testing"
 	"time"
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/store"
-	"github.com/kevinschoon/pomo/pkg/tags"
 )
 
-func makeStore(t *testing.T) *store.SQLiteStore {
+func makeStore(t *testing.T) (*store.SQLiteStore, func() error) {
 	baseDir, _ := ioutil.TempDir("/tmp", "pomo-test-")
 	store, err := store.NewSQLiteStore(path.Join(baseDir, "pomo.db"))
 	if err != nil {
@@ -22,11 +22,29 @@ func makeStore(t *testing.T) *store.SQLiteStore {
 	if err != nil {
 		t.Error(err)
 	}
-	return store
+	return store, func() error {
+		return os.RemoveAll(baseDir)
+	}
+}
+
+func makeTasks(prefix string, n, pomodoros, depth, count int) []*pomo.Task {
+	var tasks []*pomo.Task
+	for i := 0; i < n; i++ {
+		tasks = append(tasks, pomo.NewTask())
+		tasks[i].Duration = 30 * time.Minute
+		tasks[i].Message = fmt.Sprintf("%s-%d", prefix, i)
+		tasks[i].Pomodoros = pomo.NewPomodoros(pomodoros)
+		if count < depth {
+			for j := 0; j < n; j++ {
+				tasks[i].Tasks = makeTasks(fmt.Sprintf("%s-%d", prefix, count+1), n, pomodoros, depth, count+1)
+			}
+		}
+	}
+	return tasks
 }
 
 func TestTaskStore(t *testing.T) {
-	db := makeStore(t)
+	db, cleanup := makeStore(t)
 	task := pomo.NewTask()
 	task.Duration = 5 * time.Second
 	task.Pomodoros = pomo.NewPomodoros(20)
@@ -45,102 +63,40 @@ func TestTaskStore(t *testing.T) {
 	if len(task.Pomodoros) != 20 {
 		t.Fatalf("task should have 20 pomodoros, got %d", len(task.Pomodoros))
 	}
+	if err := cleanup(); err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestProjectStore(t *testing.T) {
-	db := makeStore(t)
-	project := &pomo.Project{
-		Title: "Grocery App",
-		Children: []*pomo.Project{
-			&pomo.Project{
-				Title: "Frontend",
-				Tasks: []*pomo.Task{
-					&pomo.Task{
-						Duration:  5 * time.Minute,
-						Message:   "Initialize project with CreateReactApp",
-						Pomodoros: pomo.NewPomodoros(2),
-						Tags:      tags.New(),
-					},
-					&pomo.Task{
-						Message:   "Define Typescript base types",
-						Pomodoros: pomo.NewPomodoros(4),
-						Tags:      tags.New(),
-					},
-					&pomo.Task{
-						Message:   "Write stateless components",
-						Pomodoros: pomo.NewPomodoros(8),
-						Tags:      tags.New(),
-					},
-					&pomo.Task{
-						Message:   "Setup React Hooks / Redux",
-						Pomodoros: pomo.NewPomodoros(8),
-						Tags:      tags.New(),
-					},
-					&pomo.Task{
-						Message:   "Integrate Backend API server",
-						Pomodoros: pomo.NewPomodoros(4),
-						Tags:      tags.New(),
-					},
-					&pomo.Task{
-						Message:   "Write Unit Tests",
-						Pomodoros: pomo.NewPomodoros(4),
-						Tags:      tags.New(),
-					},
-				},
-				Tags: tags.New(),
-			},
-			&pomo.Project{
-				Title: "Backend",
-				Tasks: []*pomo.Task{
-					&pomo.Task{
-						Message:   "Boilerplate API server",
-						Pomodoros: pomo.NewPomodoros(4),
-						Tags:      tags.New(),
-					},
-					&pomo.Task{
-						Message:   "DBO / CRUD Operations",
-						Pomodoros: pomo.NewPomodoros(4),
-						Tags:      tags.New(),
-					},
-					&pomo.Task{
-						Message:   "Document API",
-						Pomodoros: pomo.NewPomodoros(4),
-						Tags:      tags.New(),
-					},
-				},
-				Tags: tags.New(),
-			},
-			&pomo.Project{
-				Title: "Operations",
-				Tasks: []*pomo.Task{
-					&pomo.Task{
-						Message:   "Deploy RDS",
-						Pomodoros: pomo.NewPomodoros(2),
-						Tags:      tags.New(),
-					},
-					&pomo.Task{
-						Message:   "Deploy to EC2",
-						Pomodoros: pomo.NewPomodoros(2),
-						Tags:      tags.New(),
-					},
-				},
-				Tags: tags.New(),
-			},
-		},
-		Tags: tags.New(),
+func TestLargeStore(t *testing.T) {
+	db, cleanup := makeStore(t)
+	root := &pomo.Task{
+		ID:    int64(-1),
+		Tasks: makeTasks("test", 5, 50, 3, 0),
 	}
+	db.With(func(s store.Store) error {
+		pomo.ForEachMutate(root, func(task *pomo.Task) {
+			if task.ID == int64(-1) {
+				return
+			}
+			err := s.CreateTask(task)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, subTask := range task.Tasks {
+				subTask.ParentID = task.ID
+			}
+		})
+		return nil
+	})
+	root.ID = int64(0)
 	err := db.With(func(s store.Store) error {
-		return s.CreateProject(project)
+		return s.ReadTask(root)
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(project.ID, project.ParentID)
-	err = db.With(func(s store.Store) error {
-		return s.ReadProject(project)
-	})
-	if len(project.Children) != 3 {
-		t.Fatalf("project should have 3 subtasks, got %d", len(project.Children))
+	if err := cleanup(); err != nil {
+		t.Fatal(err)
 	}
 }
-*/
