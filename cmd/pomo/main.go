@@ -14,13 +14,17 @@ func main() {
 	app.LongDesc = "Pomo helps you track what you did, how long it took you to do it, and how much effort you expect it to take."
 	app.Spec = "[OPTIONS]"
 	var (
-		cfg    = config.DefaultConfig()
-		path   = app.StringOpt("p path", config.DefaultConfigPath(), "path to the pomo config directory")
-		asJSON = app.BoolOpt("json", false, "output as json")
+		cfg        = config.DefaultConfig()
+		asJSON     = app.BoolOpt("json", false, "output as json")
+		socketPath = app.StringOpt("s socket", cfg.SocketPath, "runtime socket path")
+		dbPath     = app.StringOpt("db database", cfg.DBPath, "path to a sqlite database")
 	)
 	app.Before = func() {
-		maybe(config.Load(*path, cfg))
+		maybe(config.Load(config.GetConfigPath(), cfg))
 		cfg.JSON = *asJSON
+		cfg.DBPath = *dbPath
+		cfg.SocketPath = *socketPath
+		maybe(config.EnsurePaths(cfg))
 	}
 	app.Version("v version", version.Version)
 	app.Command("start s", "start a new task", start(cfg))

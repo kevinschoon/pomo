@@ -20,7 +20,6 @@ type Config struct {
 	CurrentProject int64     `json:"currentProject"`
 	JSON           bool      `json:"json"`
 	DateTimeFmt    string    `json:"dateTimeFmt"`
-	BasePath       string    `json:"basePath"`
 	DBPath         string    `json:"dbPath"`
 	SocketPath     string    `json:"socketPath"`
 	IconPath       string    `json:"iconPath"`
@@ -29,15 +28,45 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		DateTimeFmt: defaultDateTimeFmt,
+		DBPath:      DefaultSharePath() + "/pomo.db",
+		SocketPath:  DefaultSharePath() + "/pomo.sock",
+		IconPath:    DefaultSharePath() + "/pomo.png",
 	}
 }
 
-func DefaultConfigPath() string {
+func GetConfigPath() string {
+	if os.Getenv("POMO_CONFIG_PATH") != "" {
+		return os.Getenv("POMO_CONFIG_PATH")
+	}
 	u, err := user.Current()
 	if err != nil {
 		panic(err)
 	}
-	return path.Join(u.HomeDir, "/.pomo/config.json")
+	return path.Join(u.HomeDir, "/.config/pomo/config.json")
+}
+
+func DefaultSharePath() string {
+	u, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	return path.Join(u.HomeDir, "/.local/share/pomo")
+}
+
+func EnsurePaths(cfg *Config) error {
+	_, err := os.Stat(path.Dir(cfg.DBPath))
+	if os.IsNotExist(err) {
+		return os.MkdirAll(path.Dir(cfg.DBPath), 0755)
+	}
+	_, err = os.Stat(path.Dir(cfg.IconPath))
+	if os.IsNotExist(err) {
+		return os.MkdirAll(path.Dir(cfg.IconPath), 0755)
+	}
+	_, err = os.Stat(path.Dir(cfg.SocketPath))
+	if os.IsNotExist(err) {
+		return os.MkdirAll(path.Dir(cfg.SocketPath), 0755)
+	}
+	return nil
 }
 
 func Load(configPath string, config *Config) error {
@@ -59,18 +88,6 @@ func Load(configPath string, config *Config) error {
 	err = json.Unmarshal(raw, config)
 	if err != nil {
 		return err
-	}
-	if config.BasePath == "" {
-		config.BasePath = path.Dir(configPath)
-	}
-	if config.DBPath == "" {
-		config.DBPath = path.Join(config.BasePath, "/pomo.db")
-	}
-	if config.SocketPath == "" {
-		config.SocketPath = path.Join(config.BasePath, "/pomo.sock")
-	}
-	if config.IconPath == "" {
-		config.IconPath = path.Join(config.BasePath, "/icon.png")
 	}
 	return nil
 }
