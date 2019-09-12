@@ -55,8 +55,16 @@ func (t Task) TimePaused() time.Duration {
 	return paused
 }
 
-func (t Task) PercentComplete() float64 {
+func (t Task) TotalDuration() time.Duration {
 	duration := int(t.Duration) * len(t.Pomodoros)
+	for _, subTask := range t.Tasks {
+		duration += int(subTask.TotalDuration())
+	}
+	return time.Duration(duration)
+}
+
+func (t Task) PercentComplete() float64 {
+	duration := t.TotalDuration()
 	timeRunning := t.TimeRunning()
 	return (float64(timeRunning) / float64(duration)) * 100
 }
@@ -64,7 +72,7 @@ func (t Task) PercentComplete() float64 {
 func (t Task) Info() string {
 	buf := bytes.NewBuffer(nil)
 	pc := int(t.PercentComplete())
-	fmt.Fprintf(buf, "[T%d]", t.ID)
+	fmt.Fprintf(buf, "[%d]", t.ID)
 	fmt.Fprintf(buf, "[")
 	if pc == 100 {
 		color.New(color.FgHiGreen).Fprintf(buf, "%d%%", pc)
