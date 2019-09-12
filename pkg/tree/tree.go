@@ -14,73 +14,62 @@ const (
 	lastItem     = "└── "
 )
 
-type Tree pomo.Task
-
-func (t Tree) MaxDepth() int {
-	depth := len(t.Tasks)
-	for _, child := range t.Tasks {
-		depth += Tree(*child).MaxDepth()
-	}
-	return depth
+// Tree prints a hierarchy of tasks
+// in a tree.
+type Tree struct {
+	pomo.Task
+	ShowPomodoros bool
 }
 
-func (t Tree) Write(w io.Writer, depth int, last bool) {
-	if depth == 0 { // root
-		// fmt.Fprintf(w, ".\n")
-		fmt.Fprintf(w, "%s\n", pomo.Task(t).Info())
+func (t Tree) next(value bool, depth []bool) (result []bool) {
+	for _, value := range depth {
+		result = append(result, value)
 	}
-	spaces := depth
-	// task list
-	for i, task := range t.Tasks {
-		for j := 0; j < spaces; j++ {
-			if j == 0 && !last {
-				fmt.Fprintf(w, continueItem)
-				continue
-			}
+	result = append(result, value)
+	return result
+}
+
+func (t Tree) fill(w io.Writer, depth []bool) {
+	for i := 0; i < len(depth); i++ {
+		if depth[i] {
+			fmt.Fprintf(w, continueItem)
+		} else {
 			fmt.Fprintf(w, emptySpace)
 		}
-		if i+1 == len(t.Tasks) && t.MaxDepth() == 0 {
+	}
+}
+
+func (t Tree) Write(w io.Writer, depth []bool) {
+	if depth == nil { // root
+		fmt.Fprintf(w, "%s\n", t.Task.Info())
+	}
+	for n, task := range t.Tasks {
+		last := n+1 == len(t.Tasks)
+		t.fill(w, depth)
+		if last {
 			fmt.Fprintf(w, lastItem)
 		} else {
 			fmt.Fprintf(w, middleItem)
 		}
 		fmt.Fprintf(w, "%s\n", task.Info())
-		// pomodoro list
-		if len(task.Pomodoros) > 0 {
-			for j := 0; j < spaces+1; j++ {
-				if j == 0 && !last {
-					fmt.Fprintf(w, continueItem)
-					continue
-				}
-				if j == spaces && (i != len(t.Tasks)-1 || t.MaxDepth() > 0) {
-					fmt.Fprintf(w, continueItem)
-				}
+		if len(task.Pomodoros) > 0 && t.ShowPomodoros {
+			t.fill(w, depth)
+			if last {
 				fmt.Fprintf(w, emptySpace)
+			} else {
+				fmt.Fprintf(w, continueItem)
 			}
-			fmt.Fprintf(w, lastItem)
 			for _, p := range task.Pomodoros {
-				// fmt.Fprintf(w, "[PM%d]", k)
 				fmt.Fprintf(w, "%s", p.Info(task.Duration))
 			}
+
 			fmt.Fprintf(w, "\n")
 		}
+		next := Tree{
+			Task:          *task,
+			ShowPomodoros: t.ShowPomodoros,
+		}
+		next.Write(w, t.next(len(task.Tasks) > 0 && !last, depth))
 	}
 
-	// sub projects
-	for n, child := range t.Tasks {
-		for j := 0; j < spaces; j++ {
-			if j == 0 && !last {
-				fmt.Fprintf(w, continueItem)
-				continue
-			}
-			fmt.Fprintf(w, emptySpace)
-		}
-		if n+1 == len(t.Tasks) {
-			fmt.Fprintf(w, lastItem)
-		} else {
-			fmt.Fprintf(w, middleItem)
-		}
-		fmt.Fprintf(w, "%s\n", child.Info())
-		Tree(*child).Write(w, depth+1, n+1 == len(t.Tasks) && depth == 0)
-	}
 }
