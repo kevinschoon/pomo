@@ -323,10 +323,9 @@ func (s *SQLiteStore) ReadPomodoros(taskID, pomodoroID int64) ([]*pomo.Pomodoro,
 	query := sq.
 		Select("pomodoro_id", "task_id", "start", "run_time", "pause_time").
 		From("pomodoro")
-	conditional := sq.Eq{}
-	if taskID > 0 {
-		conditional["task_id"] = taskID
-	}
+
+	conditional := sq.Eq{"task_id": taskID}
+
 	if pomodoroID > 0 {
 		conditional["pomodoro_id"] = pomodoroID
 	}
