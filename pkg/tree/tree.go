@@ -5,6 +5,7 @@ import (
 	"io"
 
 	pomo "github.com/kevinschoon/pomo/pkg"
+	"github.com/kevinschoon/pomo/pkg/internal/format"
 )
 
 const (
@@ -59,6 +60,7 @@ func (t Tree) Write(w io.Writer, depth []bool) {
 			} else {
 				fmt.Fprintf(w, continueItem)
 			}
+			fmt.Fprintf(w, "%s*", format.TruncDuration(task.Duration))
 			for _, p := range task.Pomodoros {
 				fmt.Fprintf(w, "%s", p.Info(task.Duration))
 			}

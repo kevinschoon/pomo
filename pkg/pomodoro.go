@@ -35,7 +35,7 @@ func (p Pomodoro) Info(duration time.Duration) string {
 	buf := bytes.NewBuffer(nil)
 	fmt.Fprintf(buf, "[")
 	if p.RunTime >= duration {
-		color.New(color.FgHiGreen).Fprintf(buf, "%s", format.TruncDuration(p.RunTime))
+		color.New(color.FgHiGreen).Fprintf(buf, "%s/%s", format.TruncDuration(p.RunTime))
 	} else {
 		color.New(color.FgHiMagenta).Fprintf(buf, "%s", format.TruncDuration(p.RunTime))
 	}

@@ -64,6 +64,9 @@ func (t Task) TotalDuration() time.Duration {
 }
 
 func (t Task) PercentComplete() float64 {
+	if t.TotalDuration() == 0 {
+		return 100
+	}
 	duration := t.TotalDuration()
 	timeRunning := t.TimeRunning()
 	return (float64(timeRunning) / float64(duration)) * 100
@@ -82,7 +85,7 @@ func (t Task) Info() string {
 		color.New(color.FgHiMagenta).Fprintf(buf, "%d%%", pc)
 	}
 	fmt.Fprintf(buf, "]")
-	fmt.Fprintf(buf, "[%d*%s]", len(t.Pomodoros), format.TruncDuration(t.Duration))
+	fmt.Fprintf(buf, "[%s]", format.TruncDuration(t.TotalDuration()))
 	for _, key := range t.Tags.Keys() {
 		if t.Tags.Get(key) == "" {
 			fmt.Fprintf(buf, "[%s]", key)
