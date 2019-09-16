@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
-	// "sort"
 	"encoding/json"
 	"fmt"
+	"os"
+	"sort"
 
 	cli "github.com/jawher/mow.cli"
 
@@ -27,8 +27,10 @@ pomo get
 pomo get --tree
         `
 		var (
-			asTree        = cmd.BoolOpt("tree", true, "write projects and tasks as a tree")
+			flatten       = cmd.BoolOpt("f flatten", false, "flatten all projects to one level")
 			showPomodoros = cmd.BoolOpt("p pomodoros", true, "show status of each pomodoro")
+			recent        = cmd.BoolOpt("r recent", true, "sort by most recently modified tasks")
+			ascend        = cmd.BoolOpt("a ascend", false, "sort from oldest to newest")
 			filters       = cmd.StringsArg("FILTER", []string{}, "filters")
 		)
 		cmd.Action = func() {
@@ -45,17 +47,23 @@ pomo get --tree
 			filters := filter.Filters(filter.TaskFiltersFromStrings(*filters))
 			root.Tasks = filters.Find(root.Tasks)
 
+			pomo.ForEachMutate(root, func(task *pomo.Task) {
+				if *ascend {
+					sort.Sort(sort.Reverse(pomo.TasksByID(task.Tasks)))
+				} else if *recent {
+					sort.Sort(sort.Reverse(pomo.TasksByStart(task.Tasks)))
+				}
+			})
+
 			if cfg.JSON {
 				maybe(json.NewEncoder(os.Stdout).Encode(root))
 				return
-			}
-			if *asTree {
-				tree.Tree{Task: *root, ShowPomodoros: *showPomodoros}.Write(os.Stdout, nil)
-				// tree.Tree(*root).Write(os.Stdout, nil)
-			} else {
-				pomo.ForEach(*root, func(t pomo.Task) {
-					fmt.Fprintln(os.Stdout, t.Info())
+			} else if *flatten {
+				pomo.ForEach(*root, func(task pomo.Task) {
+					fmt.Println(task.Info())
 				})
+			} else {
+				tree.Tree{Task: *root, ShowPomodoros: *showPomodoros}.Write(os.Stdout, nil)
 			}
 		}
 	}

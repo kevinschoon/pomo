@@ -120,38 +120,3 @@ func (t *Task) Truncate() {
 		pomodoro.PauseTime = time.Duration(0)
 	}
 }
-
-// TasksByID is a sortable array of tasks
-type TasksByID []*Task
-
-func (b TasksByID) Len() int           { return len(b) }
-func (b TasksByID) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
-func (b TasksByID) Less(i, j int) bool { return b[i].ID < b[j].ID }
-
-// After returns tasks that were started after the
-// provided start time.
-func After(start time.Time, tasks []*Task) []*Task {
-	filtered := []*Task{}
-	for _, task := range tasks {
-		if len(task.Pomodoros) > 0 {
-			if start.Before(task.Pomodoros[0].Start) {
-				filtered = append(filtered, task)
-			}
-		}
-	}
-	return filtered
-}
-
-func ForEach(t Task, fn func(Task)) {
-	fn(t)
-	for _, child := range t.Tasks {
-		ForEach(*child, fn)
-	}
-}
-
-func ForEachMutate(t *Task, fn func(*Task)) {
-	fn(t)
-	for _, child := range t.Tasks {
-		ForEachMutate(child, fn)
-	}
-}
