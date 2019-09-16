@@ -18,10 +18,10 @@ func ForEachMutate(t *Task, fn func(*Task)) {
 
 // ReduceInt64 applies the reduce function for each child task
 // returning an int64
-func ReduceInt64(i int64, t Task, fn func(int64, Task) int64) int64 {
-	accm := fn(i, t)
+func ReduceInt64(start int64, t Task, fn func(int64, Task) int64) int64 {
+	accm := fn(start, t)
 	for _, child := range t.Tasks {
-		accm += ReduceInt64(accm, *child, fn)
+		accm = ReduceInt64(accm, *child, fn)
 	}
 	return accm
 }
