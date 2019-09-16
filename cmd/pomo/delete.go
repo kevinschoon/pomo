@@ -8,7 +8,7 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
-	"github.com/kevinschoon/pomo/pkg/filter"
+	"github.com/kevinschoon/pomo/pkg/functional"
 	"github.com/kevinschoon/pomo/pkg/store"
 	"github.com/kevinschoon/pomo/pkg/tree"
 )
@@ -17,8 +17,8 @@ func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS] [ID]"
 		var (
-			taskID  = cmd.IntArg("ID", -1, "task to delete")
-			filters = cmd.StringsOpt("f filter", []string{}, "filters")
+			taskID     = cmd.IntArg("ID", -1, "task to delete")
+			filterArgs = cmd.StringsOpt("f filter", []string{}, "filters")
 		)
 
 		cmd.Action = func() {
@@ -41,8 +41,7 @@ func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 				if err != nil {
 					return err
 				}
-				filters := filter.Filters(filter.TaskFiltersFromStrings(*filters))
-				tasks := filters.Find(root.Tasks)
+				tasks := functional.FindMany(root.Tasks, functional.FiltersFromStrings(*filterArgs)...)
 				fmt.Println("are you sure you want to delete the following tasks:")
 				for _, subTask := range tasks {
 					tree.Tree{Task: *subTask}.Write(os.Stdout, nil)

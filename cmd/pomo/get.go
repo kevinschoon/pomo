@@ -10,7 +10,8 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
-	"github.com/kevinschoon/pomo/pkg/filter"
+	"github.com/kevinschoon/pomo/pkg/functional"
+	psort "github.com/kevinschoon/pomo/pkg/sort"
 	"github.com/kevinschoon/pomo/pkg/store"
 	"github.com/kevinschoon/pomo/pkg/tree"
 )
@@ -44,14 +45,13 @@ pomo get --tree
 				return db.ReadTask(root)
 			}))
 
-			filters := filter.Filters(filter.TaskFiltersFromStrings(*filters))
-			root.Tasks = filters.Find(root.Tasks)
+			root.Tasks = functional.FindMany(root.Tasks, functional.FiltersFromStrings(*filters)...)
 
-			pomo.ForEachMutate(root, func(task *pomo.Task) {
+			functional.ForEachMutate(root, func(task *pomo.Task) {
 				if *ascend {
-					sort.Sort(sort.Reverse(pomo.TasksByID(task.Tasks)))
+					sort.Sort(sort.Reverse(psort.TasksByID(task.Tasks)))
 				} else if *recent {
-					sort.Sort(sort.Reverse(pomo.TasksByStart(task.Tasks)))
+					sort.Sort(sort.Reverse(psort.TasksByStart(task.Tasks)))
 				}
 			})
 
@@ -59,7 +59,7 @@ pomo get --tree
 				maybe(json.NewEncoder(os.Stdout).Encode(root))
 				return
 			} else if *flatten {
-				pomo.ForEach(*root, func(task pomo.Task) {
+				functional.ForEach(*root, func(task pomo.Task) {
 					fmt.Println(task.Info())
 				})
 			} else {

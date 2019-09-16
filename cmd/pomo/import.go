@@ -8,6 +8,7 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
+	"github.com/kevinschoon/pomo/pkg/functional"
 	"github.com/kevinschoon/pomo/pkg/store"
 )
 
@@ -33,7 +34,7 @@ func importTasks(cfg *config.Config) func(*cli.Cmd) {
 
 			maybe(db.With(func(db store.Store) error {
 				var err error
-				pomo.ForEachMutate(root, func(task *pomo.Task) {
+				functional.ForEachMutate(root, func(task *pomo.Task) {
 					if err != nil {
 						return
 					}

@@ -1,7 +1,11 @@
-package pomo
+package functional
+
+import (
+	pomo "github.com/kevinschoon/pomo/pkg"
+)
 
 // ForEach applies the func for each child task
-func ForEach(t Task, fn func(Task)) {
+func ForEach(t pomo.Task, fn func(pomo.Task)) {
 	fn(t)
 	for _, child := range t.Tasks {
 		ForEach(*child, fn)
@@ -9,7 +13,7 @@ func ForEach(t Task, fn func(Task)) {
 }
 
 // ForEachMutate applies the func for each child task pointer
-func ForEachMutate(t *Task, fn func(*Task)) {
+func ForEachMutate(t *pomo.Task, fn func(*pomo.Task)) {
 	fn(t)
 	for _, child := range t.Tasks {
 		ForEachMutate(child, fn)
@@ -18,7 +22,7 @@ func ForEachMutate(t *Task, fn func(*Task)) {
 
 // ReduceInt64 applies the reduce function for each child task
 // returning an int64
-func ReduceInt64(i int64, t Task, fn func(int64, Task) int64) int64 {
+func ReduceInt64(i int64, t pomo.Task, fn func(int64, pomo.Task) int64) int64 {
 	accm := fn(i, t)
 	for _, child := range t.Tasks {
 		accm += ReduceInt64(accm, *child, fn)
@@ -28,7 +32,7 @@ func ReduceInt64(i int64, t Task, fn func(int64, Task) int64) int64 {
 
 // MapInt64 applies fn to each task and maps the
 // result into an int64 array
-func MapInt64(t Task, fn func(Task) int64) []int64 {
+func MapInt64(t pomo.Task, fn func(pomo.Task) int64) []int64 {
 	results := []int64{fn(t)}
 	for _, child := range t.Tasks {
 		for _, result := range MapInt64(*child, fn) {
@@ -42,8 +46,8 @@ func MapInt64(t Task, fn func(Task) int64) []int64 {
 
 // MaxStartTime is a reducer function to find
 // a pomodoro with the most recent Start time
-func MaxStartTime(t Task) int64 {
-	maxTimes := MapInt64(t, func(other Task) int64 {
+func MaxStartTime(t pomo.Task) int64 {
+	maxTimes := MapInt64(t, func(other pomo.Task) int64 {
 		var max int64
 		for _, pomodoro := range other.Pomodoros {
 			startTime := pomodoro.Start.Unix()
