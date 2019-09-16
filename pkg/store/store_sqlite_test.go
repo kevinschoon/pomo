@@ -9,7 +9,6 @@ import (
 	"time"
 
 	pomo "github.com/kevinschoon/pomo/pkg"
-	"github.com/kevinschoon/pomo/pkg/functional"
 	"github.com/kevinschoon/pomo/pkg/store"
 )
 
@@ -76,7 +75,7 @@ func TestLargeStore(t *testing.T) {
 		Tasks: makeTasks("test", 5, 50, 3, 0),
 	}
 	db.With(func(s store.Store) error {
-		functional.ForEachMutate(root, func(task *pomo.Task) {
+		pomo.ForEachMutate(root, func(task *pomo.Task) {
 			if task.ID == int64(-1) {
 				return
 			}

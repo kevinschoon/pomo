@@ -8,7 +8,6 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
-	"github.com/kevinschoon/pomo/pkg/functional"
 	"github.com/kevinschoon/pomo/pkg/store"
 	"github.com/kevinschoon/pomo/pkg/tree"
 )
@@ -41,7 +40,7 @@ func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 				if err != nil {
 					return err
 				}
-				tasks := functional.FindMany(root.Tasks, functional.FiltersFromStrings(*filterArgs)...)
+				tasks := pomo.FindMany(root.Tasks, pomo.FiltersFromStrings(*filterArgs)...)
 				fmt.Println("are you sure you want to delete the following tasks:")
 				for _, subTask := range tasks {
 					tree.Tree{Task: *subTask}.Write(os.Stdout, nil)
