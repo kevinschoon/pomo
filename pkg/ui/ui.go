@@ -30,6 +30,24 @@ func (w *Wheel) String() string {
 	return ""
 }
 
+func (w *Wheel) Reverse() string {
+	switch int(*w) {
+	case 0:
+		*w++
+		return "|"
+	case 1:
+		*w++
+		return "\\"
+	case 2:
+		*w++
+		return "-"
+	case 3:
+		*w = 0
+		return "/"
+	}
+	return ""
+}
+
 type UI struct {
 	running bool
 	status  chan runner.Status
