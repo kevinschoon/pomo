@@ -2,8 +2,9 @@ package runner
 
 import (
 	"fmt"
-	"io"
 	"time"
+
+	"github.com/kevinschoon/pomo/pkg/internal/format"
 )
 
 // Status is used to communicate the state
@@ -20,14 +21,11 @@ type Status struct {
 	TimeSuspended time.Duration `json:"time_suspended"`
 }
 
-func (s Status) Write(w io.Writer) {
+func (s Status) String() string {
 	state := "?"
 	if s.State >= RUNNING {
 		state = string(s.State.String()[0])
 	}
-	if s.State == RUNNING {
-		fmt.Fprintf(w, "%s [%d/%d]", state, s.Count, s.NPomodoros)
-	} else {
-		fmt.Fprintf(w, "%s [%d/%d] -", state, s.Count, s.NPomodoros)
-	}
+	remaining := format.TruncDuration(s.Duration - s.TimeRunning)
+	return fmt.Sprintf("%s [%d/%d] - %s", state, s.Count, s.NPomodoros, remaining)
 }

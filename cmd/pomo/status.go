@@ -1,7 +1,7 @@
 package main
 
 import (
-	"os"
+	"fmt"
 
 	cli "github.com/jawher/mow.cli"
 
@@ -10,6 +10,8 @@ import (
 	"github.com/kevinschoon/pomo/pkg/runner/client"
 )
 
+const tomato rune = 0x1F345
+
 func status(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS]"
@@ -17,13 +19,13 @@ func status(cfg *config.Config) func(*cli.Cmd) {
 			c, err := client.NewSocketClient(cfg.SocketPath)
 			if err != nil {
 				status := runner.Status{}
-				status.Write(os.Stdout)
+				fmt.Print(status.String())
 				return
 			}
 			defer c.Close()
 			status, err := c.Status()
 			maybe(err)
-			status.Write(os.Stdout)
+			fmt.Printf("%c %s", tomato, status.String())
 		}
 	}
 }
