@@ -2,11 +2,14 @@ package ui
 
 import (
 	"bytes"
+	"fmt"
 	"text/template"
 	"time"
 
 	"github.com/kevinschoon/pomo/pkg/runner"
 )
+
+const tomato rune = 0x1F345
 
 const logo = `
   ___
@@ -51,7 +54,7 @@ const rawTemplate = `
 `
 
 type TemplateOptions struct {
-	Wheel         *Wheel
+	Wheel         string
 	Logo          string
 	State         string
 	Current       int
@@ -71,7 +74,7 @@ func Template(status runner.Status, renderOpts *RenderOptions) string {
 		return err.Error()
 	}
 	opts := &TemplateOptions{
-		Wheel:         renderOpts.Wheel,
+		Wheel:         renderOpts.Wheel.String(),
 		Logo:          logo,
 		Duration:      status.Duration.Truncate(time.Second).String(),
 		Message:       status.Message,
@@ -86,5 +89,40 @@ func Template(status runner.Status, renderOpts *RenderOptions) string {
 	if err != nil {
 		return err.Error()
 	}
+	return buf.String()
+}
+
+const DefaultStatusTmpl = `{{.TimeRemaining}}{{.Wheel}}[{{.Current}}/{{.Total}}]{{.State}} {{.Logo}}`
+
+func TemplateStatus(status *runner.Status, wheel *Wheel, tmplStr string) string {
+	buf := bytes.NewBuffer(nil)
+	tmpl, err := template.New("").Parse(tmplStr)
+	if err != nil {
+		return err.Error()
+	}
+	opts := &TemplateOptions{
+		Logo: fmt.Sprintf("%c", tomato),
+	}
+
+	if status != nil {
+		opts.State = string(status.State.String()[0])
+		if status.State == runner.RUNNING {
+			opts.TimeRemaining = (status.Duration - status.TimeRunning.Truncate(time.Second)).String()
+			if wheel != nil {
+				opts.Wheel = fmt.Sprintf(" %s ", wheel.String())
+			}
+		} else if status.State == runner.SUSPENDED {
+			opts.TimeRemaining = fmt.Sprintf("+ %s", status.TimeSuspended.Truncate(time.Second))
+			if wheel != nil {
+				opts.Wheel = fmt.Sprintf(" %s ", wheel.Reverse())
+			}
+		}
+	}
+
+	err = tmpl.Execute(buf, opts)
+	if err != nil {
+		return err.Error()
+	}
+
 	return buf.String()
 }
