@@ -8,12 +8,15 @@ import (
 	"github.com/kevinschoon/pomo/pkg/ui"
 )
 
+// Harness is a data structure used to
+// launch Pomo and it's related processes
 type Harness struct {
 	UI     *ui.UI
 	Server server.Server
 	Runner runner.Runner
 }
 
+// Launch launches the Pomo UI and related processes
 func (h Harness) Launch() error {
 	errors := make(chan error)
 	go func() {

@@ -53,6 +53,8 @@ const rawTemplate = `
 {{ end -}}
 `
 
+// TemplateOptions are to template the CLI
+// user interface or status output
 type TemplateOptions struct {
 	Wheel         string
 	Logo          string
@@ -92,8 +94,11 @@ func Template(status runner.Status, renderOpts *RenderOptions) string {
 	return buf.String()
 }
 
+// DefaultStatusTmpl is the default format of pomo status
 const DefaultStatusTmpl = `{{.TimeRemaining}}{{.Wheel}}{{.Logo}}{{.State}}`
 
+// TemplateStatus produces a string containing the current
+// status of a pomo task runner
 func TemplateStatus(status *runner.Status, wheel *Wheel, tmplStr string) string {
 	buf := bytes.NewBuffer(nil)
 	tmpl, err := template.New("").Parse(tmplStr)

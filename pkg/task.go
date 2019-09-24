@@ -27,12 +27,14 @@ type Task struct {
 	Duration time.Duration `json:"duration"`
 }
 
+// NewTask returns a new Task
 func NewTask() *Task {
 	return &Task{
 		Tags: tags.New(),
 	}
 }
 
+// Info returns an info string about this task
 func (t Task) Info() string {
 	buf := bytes.NewBuffer(nil)
 	pc := int(PercentComplete(t))

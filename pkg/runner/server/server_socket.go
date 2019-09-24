@@ -18,17 +18,21 @@ type SocketServer struct {
 	status     runner.Status
 }
 
+// NewSocketServer returns a new SocketServer
 func NewSocketServer(socketPath string) *SocketServer {
 	return &SocketServer{
 		socketPath: socketPath,
 	}
 }
 
+// SetStatus sets the most recent runner Status
 func (s *SocketServer) SetStatus(status runner.Status) error {
 	s.status = status
 	return nil
 }
 
+// Start launches the SocketServer and listens for
+// connections at the configured path
 func (s *SocketServer) Start() error {
 	listener, err := net.Listen("unix", s.socketPath)
 	if err != nil {
@@ -52,6 +56,7 @@ func (s *SocketServer) Start() error {
 	}
 }
 
+// Stop stops the SocketServer
 func (s *SocketServer) Stop() error {
 	if s.listener != nil {
 		err := s.listener.Close()

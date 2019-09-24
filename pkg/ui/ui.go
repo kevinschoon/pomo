@@ -30,6 +30,8 @@ func (w *Wheel) String() string {
 	return ""
 }
 
+// Reverse returns a string representation of
+// the Wheel backwards
 func (w *Wheel) Reverse() string {
 	switch int(*w) {
 	case 0:
@@ -48,6 +50,8 @@ func (w *Wheel) Reverse() string {
 	return ""
 }
 
+// UI is a data structure to run the CLI
+// timer interface
 type UI struct {
 	running bool
 	status  chan runner.Status
@@ -55,6 +59,7 @@ type UI struct {
 	suspend func()
 }
 
+// New creates a new UI
 func New(toggle, suspend func(), statusCh chan runner.Status) *UI {
 	return &UI{
 		status:  statusCh,
@@ -87,6 +92,7 @@ func (ui *UI) render(status runner.Status, opts *RenderOptions) termui.Drawable 
 	return par
 }
 
+// Start launches the UI
 func (ui *UI) Start() error {
 
 	ui.running = true
@@ -143,6 +149,7 @@ func (ui *UI) Start() error {
 	return nil
 }
 
+// Stop stops the UI
 func (ui *UI) Stop() {
 	ui.running = false
 }

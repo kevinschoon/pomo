@@ -40,6 +40,8 @@ func (t Tree) fill(w io.Writer, depth []bool) {
 	}
 }
 
+// Write writes the Tree representation of a Task hierarchy
+// to the io.Writer
 func (t Tree) Write(w io.Writer, depth []bool) {
 	if depth == nil { // root
 		fmt.Fprintf(w, "%s\n", t.Task.Info())
@@ -73,5 +75,4 @@ func (t Tree) Write(w io.Writer, depth []bool) {
 		}
 		next.Write(w, t.next(len(task.Tasks) > 0 && !last, depth))
 	}
-
 }

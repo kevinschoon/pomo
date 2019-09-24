@@ -17,11 +17,14 @@ const datetimeFmt = "2006-01-02 15:04:05.999999999-07:00"
 
 var _ Store = (*SQLiteStore)(nil)
 
+// SQLiteStore implements a Pomo store
+// backed by SQLite
 type SQLiteStore struct {
 	db *sql.DB
 	tx *sql.Tx
 }
 
+// NewSQLiteStore returns a new SQLiteStore
 func NewSQLiteStore(path string) (*SQLiteStore, error) {
 	u, err := url.Parse(path)
 	if err != nil {
@@ -37,8 +40,10 @@ func NewSQLiteStore(path string) (*SQLiteStore, error) {
 	return &SQLiteStore{db: db}, nil
 }
 
+// Close closes the underlying SQLite connection
 func (s *SQLiteStore) Close() error { return s.db.Close() }
 
+// Init initalizes the SQLite database
 func (s *SQLiteStore) Init() error {
 	// TODO Migrate
 	stmt := `
@@ -71,6 +76,8 @@ func (s *SQLiteStore) Init() error {
 	return err
 }
 
+// With executes a StoreFunc in the context
+// of a single transaction
 func (s *SQLiteStore) With(fn func(Store) error) error {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -85,6 +92,7 @@ func (s *SQLiteStore) With(fn func(Store) error) error {
 	return tx.Commit()
 }
 
+// CreateTask creates a new Task
 func (s *SQLiteStore) CreateTask(task *pomo.Task) error {
 	result, err := sq.
 		Insert("task").
@@ -120,6 +128,8 @@ func (s *SQLiteStore) CreateTask(task *pomo.Task) error {
 	return nil
 }
 
+// ReadTask reads a single task recursively updating
+// and sibling tasks
 func (s *SQLiteStore) ReadTask(task *pomo.Task) error {
 	// special case when requesting the root task which
 	// has no parentID and returns null, otherwise there are
@@ -185,6 +195,9 @@ func (s *SQLiteStore) ReadTask(task *pomo.Task) error {
 	return nil
 }
 
+// ReadTasks reads multiple tasks matching
+// the parentID recursively updating any
+// sibling tasks
 func (s *SQLiteStore) ReadTasks(parentID int64) ([]*pomo.Task, error) {
 	var tasks []*pomo.Task
 	query := sq.
@@ -248,6 +261,7 @@ func (s *SQLiteStore) ReadTasks(parentID int64) ([]*pomo.Task, error) {
 	return tasks, nil
 }
 
+// UpdateTask updates a single task
 func (s *SQLiteStore) UpdateTask(task *pomo.Task) error {
 	_, err := sq.
 		Update("task").
@@ -278,6 +292,7 @@ func (s *SQLiteStore) UpdateTask(task *pomo.Task) error {
 	return err
 }
 
+// DeleteTask deletes a task with the given ID
 func (s *SQLiteStore) DeleteTask(taskID int64) error {
 	_, err := sq.
 		Delete("task").
@@ -286,6 +301,7 @@ func (s *SQLiteStore) DeleteTask(taskID int64) error {
 	return err
 }
 
+// CreatePomodoro creates a new pomodoro
 func (s *SQLiteStore) CreatePomodoro(pomodoro *pomo.Pomodoro) error {
 	result, err := sq.
 		Insert("pomodoro").
@@ -303,6 +319,7 @@ func (s *SQLiteStore) CreatePomodoro(pomodoro *pomo.Pomodoro) error {
 	return nil
 }
 
+// UpdatePomodoro updates a single Pomodoro
 func (s *SQLiteStore) UpdatePomodoro(pomodoro *pomo.Pomodoro) error {
 	_, err := sq.
 		Update("pomodoro").
@@ -356,6 +373,9 @@ func (s *SQLiteStore) ReadPomodoros(taskID, pomodoroID int64) ([]*pomo.Pomodoro,
 	return pomodoros, nil
 }
 
+// DeletePomodoros deletes all pomodoros associated with
+// taskID or a single Pomodoro matching both the taskID
+// and pomodoroID
 func (s *SQLiteStore) DeletePomodoros(taskID, pomodoroID int64) error {
 	conditional := sq.Eq{
 		"task_id": taskID,

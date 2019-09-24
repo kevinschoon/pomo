@@ -11,7 +11,9 @@ import (
 
 const (
 	defaultDateTimeFmt = "2006-01-02 15:04"
-	TickTime           = 100 * time.Millisecond
+	// TickTime is the internal refresh time
+	// used across the UI and internal timers
+	TickTime = 100 * time.Millisecond
 )
 
 // Config represents user preferences
@@ -25,6 +27,7 @@ type Config struct {
 	IconPath       string    `json:"iconPath"`
 }
 
+// DefaultConfig returns the default Pomo configuration
 func DefaultConfig() *Config {
 	return &Config{
 		DateTimeFmt: defaultDateTimeFmt,
@@ -34,6 +37,9 @@ func DefaultConfig() *Config {
 	}
 }
 
+// GetConfigPath resolves the configuration path
+// and checks if an alternate path has been
+// specified via environment variable
 func GetConfigPath() string {
 	if os.Getenv("POMO_CONFIG_PATH") != "" {
 		return os.Getenv("POMO_CONFIG_PATH")
@@ -45,6 +51,8 @@ func GetConfigPath() string {
 	return path.Join(u.HomeDir, "/.config/pomo/config.json")
 }
 
+// DefaultSharePath returns the default path pomo
+// stores it's SQLite and other data
 func DefaultSharePath() string {
 	u, err := user.Current()
 	if err != nil {
@@ -53,6 +61,8 @@ func DefaultSharePath() string {
 	return path.Join(u.HomeDir, "/.local/share/pomo")
 }
 
+// EnsurePaths ensures all needed paths have been
+// created when initializing Pomo
 func EnsurePaths(cfg *Config) error {
 	_, err := os.Stat(path.Dir(cfg.DBPath))
 	if os.IsNotExist(err) {
@@ -69,6 +79,7 @@ func EnsurePaths(cfg *Config) error {
 	return nil
 }
 
+// Load loads the given configuration from the path
 func Load(configPath string, config *Config) error {
 	raw, err := ioutil.ReadFile(configPath)
 	if err != nil {

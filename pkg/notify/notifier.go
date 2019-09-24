@@ -45,6 +45,7 @@ func (n Xnotifier) Notify(title, body string) error {
 	return n.Push(title, body, n.iconPath, notificator.UR_NORMAL)
 }
 
+// StatusFunc is a hook that launches desktop notifications
 func StatusFunc(notifier Notifier) runner.Hook {
 	return func(s runner.Status) error {
 		if s.Previous != s.State {

@@ -4,16 +4,9 @@ import (
 	pomo "github.com/kevinschoon/pomo/pkg"
 )
 
+// Store implements persistent storage for Pomo
 type Store interface {
 	With(func(Store) error) error
-
-	/*
-		CreateProject(*pomo.Project) error
-		ReadProject(*pomo.Project) error
-		ReadProjects(int64) ([]*pomo.Project, error)
-		UpdateProject(*pomo.Project) error
-		DeleteProject(int64) error
-	*/
 
 	CreateTask(*pomo.Task) error
 	ReadTask(*pomo.Task) error

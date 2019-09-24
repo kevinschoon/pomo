@@ -6,11 +6,13 @@ import (
 	"github.com/fatih/color"
 )
 
+// ColorMap defines configurable colors for the Pomodoro CLI
 type ColorMap struct {
 	colors map[string]*color.Color
 	tags   map[string]string
 }
 
+// Get returns a color by name
 func (c *ColorMap) Get(name string) *color.Color {
 	if color, ok := c.colors[name]; ok {
 		return color
@@ -18,10 +20,12 @@ func (c *ColorMap) Get(name string) *color.Color {
 	return nil
 }
 
+// MarshalJSON marshals underlying tags
 func (c *ColorMap) MarshalJSON() ([]byte, error) {
 	return json.Marshal(c.tags)
 }
 
+// UnmarshalJSON returns a resolved ColorMap as JSON
 func (c *ColorMap) UnmarshalJSON(raw []byte) error {
 	lookup := map[string]*color.Color{
 		"black":     color.New(color.FgBlack),

@@ -16,6 +16,15 @@ type SocketClient struct {
 	conn net.Conn
 }
 
+// NewSocketClient returns a new SocketClient
+func NewSocketClient(path string) (*SocketClient, error) {
+	conn, err := net.Dial("unix", path)
+	if err != nil {
+		return nil, err
+	}
+	return &SocketClient{conn: conn}, nil
+}
+
 func (c SocketClient) read(statusCh chan *runner.Status) {
 	buf := make([]byte, 512)
 	n, _ := c.conn.Read(buf)
@@ -24,6 +33,7 @@ func (c SocketClient) read(statusCh chan *runner.Status) {
 	statusCh <- status
 }
 
+// Status returns the current status of a remote runner
 func (c SocketClient) Status() (*runner.Status, error) {
 	statusCh := make(chan *runner.Status)
 	c.conn.Write([]byte("status"))
@@ -31,12 +41,5 @@ func (c SocketClient) Status() (*runner.Status, error) {
 	return <-statusCh, nil
 }
 
+// Close closes the client socket
 func (c SocketClient) Close() error { return c.conn.Close() }
-
-func NewSocketClient(path string) (*SocketClient, error) {
-	conn, err := net.Dial("unix", path)
-	if err != nil {
-		return nil, err
-	}
-	return &SocketClient{conn: conn}, nil
-}

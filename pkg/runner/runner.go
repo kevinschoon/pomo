@@ -9,6 +9,8 @@ import (
 	"github.com/kevinschoon/pomo/pkg/timer"
 )
 
+// Runner is capable of running multiple
+// Pomodoro timers
 type Runner interface {
 	Start() error
 	Suspend()
@@ -18,6 +20,8 @@ type Runner interface {
 
 var _ Runner = (*TaskRunner)(nil)
 
+// TaskRunner is the primary implementation
+// of the Runner interface
 type TaskRunner struct {
 	status  Status
 	suspend chan *toggle.Toggle
@@ -29,6 +33,8 @@ type TaskRunner struct {
 	hook    Hook
 }
 
+// NewTaskRunner returns a new TaskRunner configured for
+// the given task and provided Hooks
 func NewTaskRunner(task *pomo.Task, hooks ...Hook) *TaskRunner {
 	timers := make([]*timer.Timer, len(task.Pomodoros))
 	for i := 0; i < len(task.Pomodoros); i++ {
@@ -72,6 +78,7 @@ func (t *TaskRunner) set(count int, state State) error {
 	return t.hook(t.status)
 }
 
+// Start launches the TaskRunner
 func (t *TaskRunner) Start() error {
 	t.running = true
 	ticker := time.NewTicker(config.TickTime * 2)
@@ -130,17 +137,21 @@ func (t *TaskRunner) Start() error {
 	return nil
 }
 
+// Suspend suspends the TaskRunner
 func (t *TaskRunner) Suspend() {
 	if t.running {
 		toggle.New(t.suspend).Wait()
 	}
 }
 
+// Toggle toggles the state of the TaskRunner
 func (t *TaskRunner) Toggle() {
 	if t.running {
 		toggle.New(t.toggle).Wait()
 	}
 }
+
+// Stop stops the TaskRunner
 func (t *TaskRunner) Stop() {
 	if t.running {
 		toggle.New(t.stop).Wait()

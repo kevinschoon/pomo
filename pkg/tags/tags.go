@@ -7,11 +7,14 @@ import (
 
 const deletePattern = "||DELETE||"
 
+// Tags are an ordered collection of key or key-value
+// pairs that can be associated with tasks
 type Tags struct {
 	keys []string
 	kvs  map[string]string
 }
 
+// New creates a new Tags
 func New() *Tags {
 	return &Tags{
 		keys: []string{},
@@ -19,6 +22,7 @@ func New() *Tags {
 	}
 }
 
+// FromMap loads Tags from a string map with order
 func FromMap(order []string, kvs map[string]string) *Tags {
 	tags := &Tags{
 		keys: order,
@@ -27,6 +31,7 @@ func FromMap(order []string, kvs map[string]string) *Tags {
 	return tags
 }
 
+// FromKVs loads Tags from pairs of key=value strings
 func FromKVs(kvs []string) (*Tags, error) {
 	tags := New()
 	for _, pair := range kvs {
@@ -45,19 +50,23 @@ func FromKVs(kvs []string) (*Tags, error) {
 	return tags, nil
 }
 
+// Keys returns ordered keys
 func (t Tags) Keys() []string {
 	return t.keys
 }
 
+// Len returns the length of the Tags
 func (t Tags) Len() int {
 	return len(t.kvs)
 }
 
+// HasTag returns true if there is a matching Tag
 func (t Tags) HasTag(key string) bool {
 	_, ok := t.kvs[key]
 	return ok
 }
 
+// Get gets the value of a tag if it exists
 func (t Tags) Get(key string) string {
 	if value, ok := t.kvs[key]; ok {
 		return value
@@ -65,6 +74,7 @@ func (t Tags) Get(key string) string {
 	return ""
 }
 
+// Set sets the key-value pair for a tag
 func (t *Tags) Set(key, value string) {
 	var hasKey bool
 	for _, k := range t.keys {
@@ -80,6 +90,7 @@ func (t *Tags) Set(key, value string) {
 	}
 }
 
+// Delete removes a key-value pair
 func (t *Tags) Delete(key string) {
 	var keys []string
 	for _, k := range t.keys {
@@ -91,6 +102,8 @@ func (t *Tags) Delete(key string) {
 	delete(t.kvs, key)
 }
 
+// Contains returns true if this Tags instance
+// contains the subset of other
 func (t *Tags) Contains(other *Tags) bool {
 	for _, key := range other.Keys() {
 		if !(t.Get(key) == other.Get(key)) {
@@ -100,6 +113,7 @@ func (t *Tags) Contains(other *Tags) bool {
 	return true
 }
 
+// Merge joins together two Tag pairs
 func Merge(first, second *Tags) *Tags {
 	for _, key := range second.Keys() {
 		if second.Get(key) == deletePattern {

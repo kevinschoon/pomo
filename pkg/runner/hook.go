@@ -5,8 +5,14 @@ import (
 	"github.com/kevinschoon/pomo/pkg/store"
 )
 
+// Hook is a function that runs when the Status
+// of a runner changes. Hooks are the primary
+// interface for extended Pomo with other
+// functionality.
 type Hook func(Status) error
 
+// Hooks returns a Hook that runs each
+// provided Hook sequentially
 func Hooks(fns ...Hook) Hook {
 	return func(status Status) error {
 		for _, fn := range fns {
@@ -18,6 +24,9 @@ func Hooks(fns ...Hook) Hook {
 	}
 }
 
+// StatusTicker attempts to send the status on
+// a channel, if the channel is blocked the
+// current status will be discarded
 func StatusTicker(ch chan Status) Hook {
 	return func(status Status) error {
 		select {
@@ -28,6 +37,7 @@ func StatusTicker(ch chan Status) Hook {
 	}
 }
 
+// StatusUpdater stores the most recent status in a Store
 func StatusUpdater(task *pomo.Task, db store.Store) Hook {
 	return func(status Status) error {
 		if status.Count <= len(task.Pomodoros) {

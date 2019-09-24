@@ -31,6 +31,7 @@ func NewPomodoros(n int) []*Pomodoro {
 	return pomodoros
 }
 
+// Info returns an info string about this Pomodoro
 func (p Pomodoro) Info(duration time.Duration) string {
 	buf := bytes.NewBuffer(nil)
 	fmt.Fprintf(buf, "[")
