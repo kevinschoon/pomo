@@ -92,7 +92,7 @@ func Template(status runner.Status, renderOpts *RenderOptions) string {
 	return buf.String()
 }
 
-const DefaultStatusTmpl = `{{.TimeRemaining}}{{.Wheel}}[{{.Current}}/{{.Total}}]{{.State}} {{.Logo}}`
+const DefaultStatusTmpl = `{{.TimeRemaining}}{{.Wheel}}{{.Logo}}{{.State}}`
 
 func TemplateStatus(status *runner.Status, wheel *Wheel, tmplStr string) string {
 	buf := bytes.NewBuffer(nil)
@@ -117,6 +117,8 @@ func TemplateStatus(status *runner.Status, wheel *Wheel, tmplStr string) string 
 				opts.Wheel = fmt.Sprintf(" %s ", wheel.Reverse())
 			}
 		}
+	} else {
+		opts.State = "-"
 	}
 
 	err = tmpl.Execute(buf, opts)

@@ -10,9 +10,9 @@ import (
 
 const (
 	emptySpace   = "    "
-	middleItem   = "├── "
+	middleItem   = "├──"
 	continueItem = "│   "
-	lastItem     = "└── "
+	lastItem     = "└──"
 )
 
 // Tree prints a hierarchy of tasks
