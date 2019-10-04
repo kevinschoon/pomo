@@ -122,8 +122,6 @@ func TemplateStatus(status *runner.Status, wheel *Wheel, tmplStr string) string 
 				opts.Wheel = fmt.Sprintf(" %s ", wheel.Reverse())
 			}
 		}
-	} else {
-		opts.State = "-"
 	}
 
 	err = tmpl.Execute(buf, opts)
