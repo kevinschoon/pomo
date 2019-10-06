@@ -29,6 +29,9 @@ install:
 test:
 	go test ./...
 
+bench:
+	go test ./... -bench .
+
 staticcheck:
 	staticcheck ./...
 

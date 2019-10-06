@@ -21,13 +21,17 @@ func begin(cfg *config.Config) func(*cli.Cmd) {
 		)
 
 		cmd.Action = func() {
-			db, err := store.NewSQLiteStore(cfg.DBPath)
+			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
 			task := &pomo.Task{
 				ID: int64(*taskId),
 			}
 			maybe(db.With(func(db store.Store) error {
+				err := db.Snapshot()
+				if err != nil {
+					return err
+				}
 				return db.ReadTask(task)
 			}))
 			notifier := notify.NewXNotifier(cfg.IconPath)

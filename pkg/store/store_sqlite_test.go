@@ -1,8 +1,10 @@
 package store_test
 
 import (
+	"database/sql"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"testing"
@@ -10,93 +12,140 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/store"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-func makeStore(t *testing.T) (*store.SQLiteStore, func() error) {
+func mkTmp() (string, func()) {
 	baseDir, _ := ioutil.TempDir("/tmp", "pomo-test-")
-	store, err := store.NewSQLiteStore(path.Join(baseDir, "pomo.db"))
-	if err != nil {
-		t.Error(err)
-	}
-	err = store.Init()
-	if err != nil {
-		t.Error(err)
-	}
-	return store, func() error {
-		return os.RemoveAll(baseDir)
+	return baseDir, func() {
+		os.RemoveAll(baseDir)
 	}
 }
 
-func makeTasks(prefix string, n, pomodoros, depth, count int) []*pomo.Task {
-	var tasks []*pomo.Task
-	for i := 0; i < n; i++ {
-		tasks = append(tasks, pomo.NewTask())
-		tasks[i].Duration = 30 * time.Minute
-		tasks[i].Message = fmt.Sprintf("%s-%d", prefix, i)
-		tasks[i].Pomodoros = pomo.NewPomodoros(pomodoros)
-		if count < depth {
-			for j := 0; j < n; j++ {
-				tasks[i].Tasks = makeTasks(fmt.Sprintf("%s-%d", prefix, count+1), n, pomodoros, depth, count+1)
-			}
-		}
+func connectDB(t *testing.T, path string) *sql.DB {
+	u, err := url.Parse(path)
+	if err != nil {
+		t.Fatal(err)
 	}
-	return tasks
+	qs := &url.Values{}
+	qs.Add("_fk", "yes")
+	u.RawQuery = qs.Encode()
+	db, err := sql.Open("sqlite3", u.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return db
 }
 
-func TestTaskStore(t *testing.T) {
-	db, cleanup := makeStore(t)
+func TestStoreBasic(t *testing.T) {
+	tmpDir, cleanup := mkTmp()
+	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), -1)
+	db.Init()
+	defer cleanup()
 	task := pomo.NewTask()
 	task.Duration = 5 * time.Second
 	task.Pomodoros = pomo.NewPomodoros(20)
-	err := db.With(func(s store.Store) error {
+	db.With(func(s store.Store) error {
 		return s.CreateTask(task)
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = db.With(func(s store.Store) error {
+	taskID := task.ID
+	task = pomo.NewTask()
+	task.ID = taskID
+	db.With(func(s store.Store) error {
 		return s.ReadTask(task)
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
 	if len(task.Pomodoros) != 20 {
 		t.Fatalf("task should have 20 pomodoros, got %d", len(task.Pomodoros))
 	}
-	if err := cleanup(); err != nil {
-		t.Fatal(err)
-	}
 }
 
-func TestLargeStore(t *testing.T) {
-	db, cleanup := makeStore(t)
-	root := &pomo.Task{
-		ID:    int64(-1),
-		Tasks: makeTasks("test", 5, 50, 3, 0),
-	}
-	db.With(func(s store.Store) error {
-		pomo.ForEachMutate(root, func(task *pomo.Task) {
-			if task.ID == int64(-1) {
-				return
-			}
-			err := s.CreateTask(task)
-			if err != nil {
-				t.Fatal(err)
-			}
-			for _, subTask := range task.Tasks {
-				subTask.ParentID = task.ID
-			}
-		})
+func TestStoreSnapshot(t *testing.T) {
+	tmpDir, cleanup := mkTmp()
+	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), 0)
+	db.Init()
+	defer cleanup()
+	task := pomo.NewTask()
+	task.Message = "snapshot test"
+	db.With(func(db store.Store) error {
+		// |root
+		// |----- Task
+		db.CreateTask(task)
+		db.Snapshot()
+		// | root
+		db.DeleteTask(task.ID)
+		reverted := pomo.NewTask()
+		db.Revert(0, reverted)
+		// | root
+		db.Reset()
+		for _, task := range reverted.Tasks {
+			db.CreateTask(task)
+		}
+		// |root
+		// |----- Task
+		restored := pomo.NewTask()
+		db.ReadTask(restored)
+		if restored.Tasks[0].Message != "snapshot test" {
+			t.Fatalf("revert failed")
+		}
 		return nil
 	})
-	root.ID = int64(0)
-	err := db.With(func(s store.Store) error {
-		return s.ReadTask(root)
-	})
+}
+
+func TestStoreSnapshotCleanup(t *testing.T) {
+	tmpDir, cleanup := mkTmp()
+	dbPath := path.Join(tmpDir, "pomo.db")
+	db, _ := store.NewSQLiteStore(dbPath, 5)
+	db.Init()
+	defer cleanup()
+	for i := 0; i < 10; i++ {
+		db.With(func(db store.Store) error {
+			task := pomo.NewTask()
+			task.Message = fmt.Sprintf("task-%d", i)
+			db.Snapshot()
+			db.CreateTask(task)
+			return nil
+		})
+	}
+	db.Close()
+	sqlDB, _ := sql.Open("sqlite3", dbPath)
+	row := sqlDB.QueryRow("select count(*) from snapshot")
+	count := sql.NullInt64{}
+	err := row.Scan(&count)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := cleanup(); err != nil {
-		t.Fatal(err)
+	if count.Int64 != int64(5) {
+		t.Fatalf("should have 5 snaphots, got %d", count.Int64)
+	}
+}
+
+func BenchmarkStore(b *testing.B) {
+	tmpDir, cleanup := mkTmp()
+	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), -1)
+	db.Init()
+	defer cleanup()
+	defer db.Close()
+	task := pomo.NewTask()
+	task.Message = "test"
+	for n := 0; n < b.N; n++ {
+		db.With(func(db store.Store) error {
+			return db.CreateTask(task)
+		})
+	}
+}
+
+func BenchmarkStoreSnapshot(b *testing.B) {
+	tmpDir, cleanup := mkTmp()
+	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), 0)
+	db.Init()
+	defer cleanup()
+	defer db.Close()
+	task := pomo.NewTask()
+	task.Message = "test"
+	for n := 0; n < b.N; n++ {
+		db.With(func(db store.Store) error {
+			db.Snapshot()
+			return db.CreateTask(task)
+		})
 	}
 }

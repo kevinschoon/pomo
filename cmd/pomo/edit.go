@@ -32,17 +32,21 @@ Update an existing task
 		cmd.Action = func() {
 			tgs, err := tags.FromKVs(*kvs)
 			maybe(err)
-			db, err := store.NewSQLiteStore(cfg.DBPath)
+			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
 			if *addPomodoros > 0 && *delPomodoro != -1 {
 				maybe(fmt.Errorf("cannot add and delete pomodoros in one operation"))
 			}
 			maybe(db.With(func(db store.Store) error {
+				err := db.Snapshot()
+				if err != nil {
+					return err
+				}
 				task := &pomo.Task{
 					ID: int64(*taskID),
 				}
-				err := db.ReadTask(task)
+				err = db.ReadTask(task)
 				if err != nil {
 					return err
 				}

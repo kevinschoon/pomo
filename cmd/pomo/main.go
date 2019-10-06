@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 
 	cli "github.com/jawher/mow.cli"
@@ -19,6 +20,7 @@ func main() {
 		socketPath = app.StringOpt("s socket", cfg.SocketPath, "runtime socket path")
 		dbPath     = app.StringOpt("db database", cfg.DBPath, "path to a sqlite database")
 	)
+	app.ErrorHandling = flag.ExitOnError
 	app.Before = func() {
 		maybe(config.Load(config.GetConfigPath(), cfg))
 		cfg.JSON = *asJSON
@@ -36,6 +38,7 @@ func main() {
 	app.Command("get g", "get one or more tasks", get(cfg))
 	app.Command("init", "initialize the sqlite database", initialize(cfg))
 	app.Command("import", "import existing task data", importTasks(cfg))
+	app.Command("revert", "revert to a previous state", revert(cfg))
 	app.Command("start s", "start a new task", start(cfg))
 	app.Command("status st", "output the current status", status(cfg))
 	app.Run(os.Args)

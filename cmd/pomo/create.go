@@ -33,7 +33,7 @@ func create(cfg *config.Config) func(*cli.Cmd) {
 			tgs, err := tags.FromKVs(*kvs)
 			task.Tags = tgs
 			maybe(err)
-			db, err := store.NewSQLiteStore(cfg.DBPath)
+			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(db store.Store) error {

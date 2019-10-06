@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"os"
-
 	cli "github.com/jawher/mow.cli"
 
 	pomo "github.com/kevinschoon/pomo/pkg"
@@ -11,29 +8,32 @@ import (
 	"github.com/kevinschoon/pomo/pkg/store"
 )
 
-func importTasks(cfg *config.Config) func(*cli.Cmd) {
+func revert(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS] PATH"
+		cmd.Spec = "[OPTIONS] [ID]"
 		var (
-			path = cmd.StringArg("PATH", "", "path to import data, - for stdin")
+			id = cmd.IntArg("ID", 0, "snapshot id")
 		)
-
 		cmd.Action = func() {
-			db, err := store.NewSQLiteStore(cfg.DBPath, -1)
+			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
-			root := &pomo.Task{}
-			if *path == "-" {
-				maybe(json.NewDecoder(os.Stdin).Decode(root))
-			} else {
-				fp, err := os.Open(*path)
-				maybe(err)
-				maybe(json.NewDecoder(fp).Decode(root))
-			}
-
 			maybe(db.With(func(db store.Store) error {
-				var err error
-				pomo.ForEachMutate(root, func(task *pomo.Task) {
+				root := pomo.NewTask()
+				err = db.ReadTask(root)
+				if err != nil {
+					return err
+				}
+				last := pomo.NewTask()
+				err = db.Revert(*id, last)
+				if err != nil {
+					return err
+				}
+				err = db.Reset()
+				if err != nil {
+					return err
+				}
+				pomo.ForEachMutate(last, func(task *pomo.Task) {
 					if err != nil {
 						return
 					}
@@ -50,6 +50,7 @@ func importTasks(cfg *config.Config) func(*cli.Cmd) {
 				})
 				return err
 			}))
+
 		}
 	}
 }

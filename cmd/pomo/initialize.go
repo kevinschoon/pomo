@@ -11,7 +11,7 @@ func initialize(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS]"
 		cmd.Action = func() {
-			db, err := store.NewSQLiteStore(cfg.DBPath)
+			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
 			maybe(db.Init())

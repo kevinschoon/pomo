@@ -25,6 +25,10 @@ type Config struct {
 	DBPath         string    `json:"dbPath"`
 	SocketPath     string    `json:"socketPath"`
 	IconPath       string    `json:"iconPath"`
+	// the number of snapshots to retain
+	// if set to -1 snapshotting is disabled
+	// if set to 0 all snapshots are retained
+	Snapshots int `json:"history"`
 }
 
 // DefaultConfig returns the default Pomo configuration
@@ -34,6 +38,7 @@ func DefaultConfig() *Config {
 		DBPath:      DefaultSharePath() + "/pomo.db",
 		SocketPath:  DefaultSharePath() + "/pomo.sock",
 		IconPath:    DefaultSharePath() + "/pomo.png",
+		Snapshots:   10,
 	}
 }
 

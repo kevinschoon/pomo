@@ -8,6 +8,10 @@ import (
 type Store interface {
 	With(func(Store) error) error
 
+	Reset() error
+	Snapshot() error
+	Revert(int, *pomo.Task) error
+
 	CreateTask(*pomo.Task) error
 	ReadTask(*pomo.Task) error
 	ReadTasks(int64) ([]*pomo.Task, error)

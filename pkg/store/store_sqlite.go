@@ -1,7 +1,9 @@
 package store
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"net/url"
 	"time"
 
@@ -20,12 +22,13 @@ var _ Store = (*SQLiteStore)(nil)
 // SQLiteStore implements a Pomo store
 // backed by SQLite
 type SQLiteStore struct {
-	db *sql.DB
-	tx *sql.Tx
+	db        *sql.DB
+	tx        *sql.Tx
+	snapshots int
 }
 
 // NewSQLiteStore returns a new SQLiteStore
-func NewSQLiteStore(path string) (*SQLiteStore, error) {
+func NewSQLiteStore(path string, history int) (*SQLiteStore, error) {
 	u, err := url.Parse(path)
 	if err != nil {
 		return nil, err
@@ -37,7 +40,7 @@ func NewSQLiteStore(path string) (*SQLiteStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &SQLiteStore{db: db}, nil
+	return &SQLiteStore{db: db, snapshots: history}, nil
 }
 
 // Close closes the underlying SQLite connection
@@ -69,6 +72,10 @@ func (s *SQLiteStore) Init() error {
     value TEXT,
     FOREIGN KEY(task_id) REFERENCES task(task_id) ON DELETE CASCADE
     );
+    CREATE TABLE snapshot (
+    snapshot_id INTEGER PRIMARY KEY,
+    data JSON
+    );
     PRAGMA foreign_keys = ON;
     INSERT INTO task (task_id, message, duration) VALUES (0, "root", 0) ON CONFLICT(task_id) DO UPDATE SET task_id = task_id;
     `
@@ -87,9 +94,114 @@ func (s *SQLiteStore) With(fn func(Store) error) error {
 	err = fn(s)
 	if err != nil {
 		tx.Rollback()
+		s.tx = nil
 		return err
 	}
+	s.tx = nil
 	return tx.Commit()
+}
+
+// Reset completely empties the database an all
+// associated data within it aside from the root
+// task created on initialization
+func (s *SQLiteStore) Reset() error {
+	_, err := sq.Delete("task").
+		Where(sq.Eq{"parent_id": int64(0)}).
+		RunWith(s.tx).
+		Exec()
+	return err
+}
+
+// Snapshot saves the entire task tree in JSON format
+// in the snapshot table.
+// TODO: This currently duplicates the state everytime
+// it is called which means the database file size
+// will double on each successful transaction!
+func (s *SQLiteStore) Snapshot() error {
+	// snapshots are disabled
+	if s.snapshots == -1 {
+		return nil
+	}
+	// limit stored number of snapshots
+	if s.snapshots > 0 {
+		// TODO: believe this can be implemented with squirrel but
+		// not immediately sure how to accomplish that
+		_, err := s.tx.Exec(
+			"delete from snapshot where snapshot_id = (select min(snapshot_id) from snapshot) and (select count(*) from snapshot) = ?;", s.snapshots)
+		if err != nil {
+			return err
+		}
+	}
+	root := pomo.NewTask()
+	root.ID = int64(0)
+	err := s.ReadTask(root)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer(nil)
+	err = json.NewEncoder(buf).Encode(root)
+	if err != nil {
+		return err
+	}
+	_, err = sq.
+		Insert("snapshot").
+		Columns("data").
+		Values(buf.Bytes()).
+		RunWith(s.tx).Exec()
+	return err
+}
+
+// Revert reverts the database to the given snapshot_id
+func (s *SQLiteStore) Revert(id int, task *pomo.Task) error {
+	buf := bytes.NewBuffer(nil)
+	switch {
+	// if id is zero return the most recent snapshot
+	case id == 0:
+		var data string
+		err := sq.
+			Select("snapshot_id", "data").
+			From("snapshot").
+			OrderBy("snapshot_id desc").
+			Limit(1).
+			RunWith(s.tx).
+			QueryRow().
+			Scan(&sql.NullInt64{}, &data)
+		if err != nil {
+			return err
+		}
+		buf.WriteString(data)
+	// if id is less than zero take offset from the tail
+	case id < 0:
+		var data string
+		err := sq.
+			Select("snapshot_id", "data").
+			From("snapshot").
+			OrderBy("snapshot_id desc").
+			Limit(1).
+			Offset(uint64(-id)).
+			RunWith(s.tx).
+			QueryRow().
+			Scan(&sql.NullInt64{}, &data)
+		if err != nil {
+			return err
+		}
+		buf.WriteString(data)
+	// if id is greater than zero take the reset by index
+	case id > 0:
+		var data string
+		err := sq.
+			Select("snapshot_id", "data").
+			From("snapshot").
+			Where(sq.Eq{"snapshot_id": id}).
+			RunWith(s.tx).
+			QueryRow().
+			Scan(&sql.NullInt64{}, &data)
+		if err != nil {
+			return err
+		}
+		buf.WriteString(data)
+	}
+	return json.NewDecoder(buf).Decode(task)
 }
 
 // CreateTask creates a new Task

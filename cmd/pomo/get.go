@@ -36,7 +36,7 @@ pomo get --tree
 			root := &pomo.Task{
 				ID: int64(0),
 			}
-			db, err := store.NewSQLiteStore(cfg.DBPath)
+			db, err := store.NewSQLiteStore(cfg.DBPath, -1)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(db store.Store) error {

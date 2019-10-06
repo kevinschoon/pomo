@@ -28,7 +28,7 @@ func start(cfg *config.Config) func(*cli.Cmd) {
 		cmd.Action = func() {
 			parsed, err := time.ParseDuration(*duration)
 			maybe(err)
-			db, err := store.NewSQLiteStore(cfg.DBPath)
+			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
 			tgs, err := tags.FromKVs(*kvs)

@@ -21,10 +21,14 @@ func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 		)
 
 		cmd.Action = func() {
-			db, err := store.NewSQLiteStore(cfg.DBPath)
+			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(db store.Store) error {
+				err := db.Snapshot()
+				if err != nil {
+					return err
+				}
 				if *taskID > 0 {
 					task := &pomo.Task{ID: int64(*taskID)}
 					err := db.ReadTask(task)
@@ -36,7 +40,7 @@ func deleteTask(cfg *config.Config) func(*cli.Cmd) {
 				root := &pomo.Task{
 					ID: int64(0),
 				}
-				err := db.ReadTask(root)
+				err = db.ReadTask(root)
 				if err != nil {
 					return err
 				}
