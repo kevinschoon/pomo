@@ -17,8 +17,8 @@ func create(cfg *config.Config) func(*cli.Cmd) {
 		var (
 			message     = cmd.StringArg("MESSAGE", "", "task message")
 			parent      = cmd.IntOpt("parent", 0, "parent task id")
-			pomodoros   = cmd.IntOpt("p pomodoros", 4, "number of pomodoros")
-			durationStr = cmd.StringOpt("d duration", "30m", "task duration")
+			pomodoros   = cmd.IntOpt("p pomodoros", cfg.DefaultPomodoros, "number of pomodoros")
+			durationStr = cmd.StringOpt("d duration", cfg.DefaultDuration.String(), "task duration")
 			kvs         = cmd.StringsOpt("t tag", []string{}, "task tags")
 		)
 		cmd.Action = func() {

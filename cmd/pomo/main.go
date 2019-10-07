@@ -20,9 +20,9 @@ func main() {
 		socketPath = app.StringOpt("s socket", cfg.SocketPath, "runtime socket path")
 		dbPath     = app.StringOpt("db database", cfg.DBPath, "path to a sqlite database")
 	)
+	maybe(config.Load(config.GetConfigPath(), cfg))
 	app.ErrorHandling = flag.ExitOnError
 	app.Before = func() {
-		maybe(config.Load(config.GetConfigPath(), cfg))
 		cfg.JSON = *asJSON
 		cfg.DBPath = *dbPath
 		cfg.SocketPath = *socketPath
