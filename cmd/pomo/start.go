@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
 	"time"
 
 	cli "github.com/jawher/mow.cli"
@@ -18,26 +20,45 @@ import (
 
 func start(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS] MESSAGE"
+		cmd.Spec = "[OPTIONS] [TASK]"
 		var (
-			duration  = cmd.StringOpt("d duration", "25m", "duration of each stent")
-			pomodoros = cmd.IntOpt("p pomodoros", 4, "number of pomodoros")
-			message   = cmd.StringArg("MESSAGE", "", "descriptive name of the given task")
-			kvs       = cmd.StringsOpt("t tag", []string{}, "tags associated with this task")
+			create          = cmd.BoolOpt("c create", false, "create a new task before starting")
+			taskDescription = cmd.StringArg("TASK", "", "task id or message (with --create)")
+			parentID        = cmd.IntOpt("parent", 0, "parent task id")
+			pomodoros       = cmd.IntOpt("p pomodoros", cfg.DefaultPomodoros, "number of pomodoros")
+			durationStr     = cmd.StringOpt("d duration", cfg.DefaultDuration.String(), "task duration")
+			kvs             = cmd.StringsOpt("t tag", []string{}, "task tags")
 		)
 		cmd.Action = func() {
-			parsed, err := time.ParseDuration(*duration)
-			maybe(err)
 			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
-			tgs, err := tags.FromKVs(*kvs)
-			maybe(err)
-			task := &pomo.Task{
-				Message:   *message,
-				Tags:      tgs,
-				Pomodoros: pomo.NewPomodoros(*pomodoros),
-				Duration:  parsed,
+			task := &pomo.Task{}
+			if *create {
+				if *taskDescription == "" {
+					maybe(fmt.Errorf("need to provide a task description"))
+				}
+				task.Message = *taskDescription
+				task.ParentID = int64(*parentID)
+				duration, err := time.ParseDuration(*durationStr)
+				maybe(err)
+				task.Duration = duration
+				task.Pomodoros = pomo.NewPomodoros(*pomodoros)
+				tgs, err := tags.FromKVs(*kvs)
+				maybe(err)
+				task.Tags = tgs
+				maybe(db.With(func(db store.Store) error {
+					return db.CreateTask(task)
+				}))
+			} else {
+				taskID, err := strconv.ParseUint(*taskDescription, 0, 64)
+				if err != nil {
+					maybe(fmt.Errorf("cannot parse taskID: %s", err.Error()))
+				}
+				task.ID = int64(taskID)
+				maybe(db.With(func(db store.Store) error {
+					return db.ReadTask(task)
+				}))
 			}
 			notifier := notify.NewXNotifier(cfg.IconPath)
 			statusCh := make(chan runner.Status, 20)

@@ -30,7 +30,6 @@ func main() {
 	}
 	app.Version("v version", version.Version)
 
-	app.Command("begin b", "begin requested pomodoro", begin(cfg))
 	app.Command("create c", "create a new task without starting", create(cfg))
 	app.Command("config cf", "display the current configuration", getConfig(cfg))
 	app.Command("delete d", "delete a resource", deleteTask(cfg))
