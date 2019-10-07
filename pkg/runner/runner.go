@@ -139,7 +139,7 @@ func (t *TaskRunner) Start() error {
 
 // Suspend suspends the TaskRunner
 func (t *TaskRunner) Suspend() {
-	if t.running {
+	if t.running && t.status.State > INITIALIZED {
 		toggle.New(t.suspend).Wait()
 	}
 }
