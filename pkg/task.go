@@ -49,11 +49,13 @@ func (t Task) Info() string {
 	}
 	fmt.Fprintf(buf, "]")
 	fmt.Fprintf(buf, "[%s]", format.TruncDuration(time.Duration(TotalDuration(t))))
-	for _, key := range t.Tags.Keys() {
-		if t.Tags.Get(key) == "" {
-			fmt.Fprintf(buf, "[%s]", key)
-		} else {
-			fmt.Fprintf(buf, "[%s=%s]", key, t.Tags.Get(key))
+	if t.Tags != nil {
+		for _, key := range t.Tags.Keys() {
+			if t.Tags.Get(key) == "" {
+				fmt.Fprintf(buf, "[%s]", key)
+			} else {
+				fmt.Fprintf(buf, "[%s=%s]", key, t.Tags.Get(key))
+			}
 		}
 	}
 	fmt.Fprintf(buf, " %s", t.Message)
