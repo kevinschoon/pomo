@@ -1,6 +1,7 @@
 package tree
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 
@@ -75,4 +76,10 @@ func (t Tree) Write(w io.Writer, depth []bool) {
 		}
 		next.Write(w, t.next(len(task.Tasks) > 0 && !last, depth))
 	}
+}
+
+func (t Tree) String() string {
+	buf := bytes.NewBuffer(nil)
+	t.Write(buf, nil)
+	return buf.String()
 }

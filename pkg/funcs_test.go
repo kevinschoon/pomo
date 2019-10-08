@@ -2,10 +2,19 @@ package pomo_test
 
 import (
 	"testing"
-	"time"
 
 	pomo "github.com/kevinschoon/pomo/pkg"
+	"time"
 )
+
+func equal(first, second []int64) bool {
+	for i, entry := range first {
+		if entry != second[i] {
+			return false
+		}
+	}
+	return true
+}
 
 func TestTaskTimeRunning(t *testing.T) {
 	root := pomo.NewTask()
@@ -79,5 +88,68 @@ func TestTaskPercentComplete(t *testing.T) {
 
 	if pc != 50 {
 		t.Fatalf("task should be 50%% complete, got %f", pc)
+	}
+}
+
+func TestTaskAssemble(t *testing.T) {
+	tasks := []*pomo.Task{
+		&pomo.Task{
+			ID:       1,
+			ParentID: 0,
+		},
+		&pomo.Task{
+			ID:       2,
+			ParentID: 0,
+		},
+		&pomo.Task{
+			ID:       3,
+			ParentID: 2,
+		},
+		&pomo.Task{
+			ID:       4,
+			ParentID: 2,
+		},
+	}
+	expected := []int64{0, 1, 2, 3, 4}
+	root := pomo.Assemble(tasks)
+	results := pomo.TaskIDs(root)
+	if !equal(expected, results) {
+		t.Fatalf("unequal: %v %v", expected, results)
+	}
+}
+
+func TestTaskSort(t *testing.T) {
+	root := &pomo.Task{
+		ID: 0,
+		Tasks: []*pomo.Task{
+			&pomo.Task{
+				ID: 4,
+				Tasks: []*pomo.Task{
+					&pomo.Task{
+						ID: 6,
+					},
+					&pomo.Task{
+						ID: 5,
+					},
+				},
+			},
+			&pomo.Task{
+				ID: 1,
+				Tasks: []*pomo.Task{
+					&pomo.Task{
+						ID: 3,
+					},
+					&pomo.Task{
+						ID: 2,
+					},
+				},
+			},
+		},
+	}
+	pomo.SortByID(root)
+	expected := []int64{0, 1, 2, 3, 4, 5, 6}
+	results := pomo.TaskIDs(root)
+	if !equal(expected, results) {
+		t.Fatalf("unequal: %v %v", expected, results)
 	}
 }
