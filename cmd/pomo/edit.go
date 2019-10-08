@@ -65,7 +65,7 @@ Update an existing task
 				if *addPomodoros > 0 {
 					for _, pomodoro := range pomo.NewPomodoros(*addPomodoros) {
 						pomodoro.TaskID = task.ID
-						err = db.CreatePomodoro(pomodoro)
+						err = db.WritePomodoro(pomodoro)
 						if err != nil {
 							return err
 						}
@@ -76,7 +76,7 @@ Update an existing task
 						return fmt.Errorf("no pomodoro at index %d", *delPomodoro)
 					}
 					targetID := task.Pomodoros[*delPomodoro].ID
-					err = db.DeletePomodoros(task.ID, targetID)
+					err = db.DeletePomodoro(targetID)
 					if err != nil {
 						return err
 					}
@@ -84,7 +84,7 @@ Update an existing task
 				if *truncate {
 					task.Truncate()
 					for _, pomodoro := range task.Pomodoros {
-						err = db.UpdatePomodoro(pomodoro)
+						err = db.WritePomodoro(pomodoro)
 						if err != nil {
 							return err
 						}
@@ -93,13 +93,13 @@ Update an existing task
 				if *done {
 					task.Fill()
 					for _, pomodoro := range task.Pomodoros {
-						err = db.UpdatePomodoro(pomodoro)
+						err = db.WritePomodoro(pomodoro)
 						if err != nil {
 							return err
 						}
 					}
 				}
-				return db.UpdateTask(task)
+				return db.WriteTask(task)
 			}))
 
 		}

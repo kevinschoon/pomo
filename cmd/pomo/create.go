@@ -37,7 +37,7 @@ func create(cfg *config.Config) func(*cli.Cmd) {
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(db store.Store) error {
-				return db.CreateTask(task)
+				return db.WriteTask(task)
 			}))
 		}
 	}

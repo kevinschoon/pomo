@@ -40,7 +40,7 @@ func revert(cfg *config.Config) func(*cli.Cmd) {
 					if task.ID == int64(0) {
 						return
 					}
-					e := db.CreateTask(task)
+					e := db.WriteTask(task)
 					if e != nil {
 						err = e
 					}

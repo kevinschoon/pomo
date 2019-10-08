@@ -48,7 +48,7 @@ func start(cfg *config.Config) func(*cli.Cmd) {
 				maybe(err)
 				task.Tags = tgs
 				maybe(db.With(func(db store.Store) error {
-					return db.CreateTask(task)
+					return db.WriteTask(task)
 				}))
 			} else {
 				taskID, err := strconv.ParseUint(*taskDescription, 0, 64)

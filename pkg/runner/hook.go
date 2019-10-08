@@ -46,7 +46,7 @@ func StatusUpdater(task *pomo.Task, db store.Store) Hook {
 				pomodoro.Start = status.TimeStarted
 				pomodoro.RunTime = status.TimeRunning
 				pomodoro.PauseTime = status.TimeSuspended
-				return db.UpdatePomodoro(pomodoro)
+				return db.WritePomodoro(pomodoro)
 			})
 		}
 		return nil

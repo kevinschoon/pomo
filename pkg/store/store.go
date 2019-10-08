@@ -12,14 +12,11 @@ type Store interface {
 	Snapshot() error
 	Revert(int, *pomo.Task) error
 
-	CreateTask(*pomo.Task) error
 	ReadTask(*pomo.Task) error
-	ReadTasks(int64) ([]*pomo.Task, error)
-	UpdateTask(*pomo.Task) error
+	WriteTask(*pomo.Task) error
 	DeleteTask(int64) error
 
-	CreatePomodoro(*pomo.Pomodoro) error
-	UpdatePomodoro(*pomo.Pomodoro) error
-	ReadPomodoros(int64, int64) ([]*pomo.Pomodoro, error)
-	DeletePomodoros(int64, int64) error
+	ReadPomodoro(*pomo.Pomodoro) error
+	WritePomodoro(*pomo.Pomodoro) error
+	DeletePomodoro(int64) error
 }

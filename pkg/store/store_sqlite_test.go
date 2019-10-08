@@ -42,34 +42,56 @@ func TestStoreBasic(t *testing.T) {
 	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), -1)
 	db.Init()
 	defer cleanup()
-	task := pomo.NewTask()
-	task.Duration = 5 * time.Second
-	task.Pomodoros = pomo.NewPomodoros(20)
 	db.With(func(s store.Store) error {
-		return s.CreateTask(task)
+		task := pomo.NewTask()
+		task.Duration = 5 * time.Second
+		task.Pomodoros = pomo.NewPomodoros(20)
+		s.WriteTask(task)
+		taskID := task.ID
+		task = pomo.NewTask()
+		task.ID = taskID
+		s.ReadTask(task)
+		if len(task.Pomodoros) != 20 {
+			t.Fatalf("task should have 20 pomodoros, got %d", len(task.Pomodoros))
+		}
+		return nil
 	})
-	taskID := task.ID
-	task = pomo.NewTask()
-	task.ID = taskID
+}
+
+func TestStoreDepth(t *testing.T) {
+	tmpDir, cleanup := mkTmp()
+	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), -1)
+	db.Init()
+	defer cleanup()
 	db.With(func(s store.Store) error {
-		return s.ReadTask(task)
+		task := pomo.NewTask()
+		task.Tasks = []*pomo.Task{
+			pomo.NewTask(),
+			pomo.NewTask(),
+		}
+		s.WriteTask(task)
+		taskID := task.ID
+		task = pomo.NewTask()
+		task.ID = taskID
+		s.ReadTask(task)
+		if len(task.Tasks) != 2 {
+			t.Fatalf("root task should contain two children, got %d", len(task.Tasks))
+		}
+		return nil
 	})
-	if len(task.Pomodoros) != 20 {
-		t.Fatalf("task should have 20 pomodoros, got %d", len(task.Pomodoros))
-	}
 }
 
 func TestStoreSnapshot(t *testing.T) {
-	tmpDir, cleanup := mkTmp()
+	tmpDir, _ := mkTmp()
 	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), 0)
 	db.Init()
-	defer cleanup()
+	// defer cleanup()
 	task := pomo.NewTask()
 	task.Message = "snapshot test"
 	db.With(func(db store.Store) error {
 		// |root
 		// |----- Task
-		db.CreateTask(task)
+		db.WriteTask(task)
 		db.Snapshot()
 		// | root
 		db.DeleteTask(task.ID)
@@ -77,8 +99,9 @@ func TestStoreSnapshot(t *testing.T) {
 		db.Revert(0, reverted)
 		// | root
 		db.Reset()
-		for _, task := range reverted.Tasks {
-			db.CreateTask(task)
+		for _, child := range reverted.Tasks {
+			t.Logf("%v", child)
+			db.WriteTask(child)
 		}
 		// |root
 		// |----- Task
@@ -102,7 +125,7 @@ func TestStoreSnapshotCleanup(t *testing.T) {
 			task := pomo.NewTask()
 			task.Message = fmt.Sprintf("task-%d", i)
 			db.Snapshot()
-			db.CreateTask(task)
+			db.WriteTask(task)
 			return nil
 		})
 	}
@@ -129,7 +152,7 @@ func BenchmarkStore(b *testing.B) {
 	task.Message = "test"
 	for n := 0; n < b.N; n++ {
 		db.With(func(db store.Store) error {
-			return db.CreateTask(task)
+			return db.WriteTask(task)
 		})
 	}
 }
@@ -145,7 +168,7 @@ func BenchmarkStoreSnapshot(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		db.With(func(db store.Store) error {
 			db.Snapshot()
-			return db.CreateTask(task)
+			return db.WriteTask(task)
 		})
 	}
 }
