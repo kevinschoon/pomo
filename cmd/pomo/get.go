@@ -26,6 +26,7 @@ pomo get
 pomo get --tree
         `
 		var (
+			root          = cmd.IntOpt("root", int(cfg.CurrentRoot), "show tasks below the specified task")
 			flatten       = cmd.BoolOpt("f flatten", false, "flatten all projects to one level")
 			showPomodoros = cmd.BoolOpt("p pomodoros", true, "show status of each pomodoro")
 			recent        = cmd.BoolOpt("r recent", true, "sort by most recently modified tasks")
@@ -34,7 +35,7 @@ pomo get --tree
 		)
 		cmd.Action = func() {
 			root := &pomo.Task{
-				ID: int64(0),
+				ID: int64(*root),
 			}
 			db, err := store.NewSQLiteStore(cfg.DBPath, -1)
 			maybe(err)

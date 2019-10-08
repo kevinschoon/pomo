@@ -23,6 +23,9 @@ type Config struct {
 	DBPath         string
 	SocketPath     string
 	IconPath       string
+	// if specified get calls will return
+	// tasks below the id
+	CurrentRoot int64
 	// the number of snapshots to retain
 	// if set to -1 snapshotting is disabled
 	// if set to 0 all snapshots are retained
@@ -36,22 +39,16 @@ type Config struct {
 }
 
 type configJson struct {
-	Colors         *ColorMap `json:"colors"`
-	CurrentProject int64     `json:"current_project"`
-	JSON           bool      `json:"json"`
-	DBPath         string    `json:"db_path"`
-	SocketPath     string    `json:"socket_path"`
-	IconPath       string    `json:"icon_path"`
-	// the number of snapshots to retain
-	// if set to -1 snapshotting is disabled
-	// if set to 0 all snapshots are retained
-	Snapshots int `json:"history"`
-	// sets the default duration of pomodoros
-	// when creating a new task
-	DefaultDuration string `json:"default_duration"`
-	// the default number of pomodoros that are configured
-	// when creating a new task
-	DefaultPomodoros int `json:"default_pomodoros"`
+	Colors           *ColorMap `json:"colors"`
+	CurrentProject   int64     `json:"current_project"`
+	JSON             bool      `json:"json"`
+	DBPath           string    `json:"db_path"`
+	SocketPath       string    `json:"socket_path"`
+	IconPath         string    `json:"icon_path"`
+	CurrentRoot      int64     `json:"current_root"`
+	Snapshots        int       `json:"history"`
+	DefaultDuration  string    `json:"default_duration"`
+	DefaultPomodoros int       `json:"default_pomodoros"`
 }
 
 func (c Config) MarshalJSON() ([]byte, error) {
@@ -62,6 +59,7 @@ func (c Config) MarshalJSON() ([]byte, error) {
 		DBPath:           c.DBPath,
 		SocketPath:       c.SocketPath,
 		IconPath:         c.IconPath,
+		CurrentRoot:      c.CurrentRoot,
 		Snapshots:        c.Snapshots,
 		DefaultDuration:  c.DefaultDuration.String(),
 		DefaultPomodoros: c.DefaultPomodoros,
@@ -70,19 +68,20 @@ func (c Config) MarshalJSON() ([]byte, error) {
 }
 
 func (c *Config) UnmarshalJSON(raw []byte) error {
-	intermediate := &configJson{}
-	err := json.Unmarshal(raw, intermediate)
+	cfg := &configJson{}
+	err := json.Unmarshal(raw, cfg)
 	if err != nil {
 		return err
 	}
-	c.Colors = intermediate.Colors
-	c.CurrentProject = intermediate.CurrentProject
-	c.JSON = intermediate.JSON
-	c.SocketPath = intermediate.SocketPath
-	c.IconPath = intermediate.IconPath
-	c.Snapshots = intermediate.Snapshots
-	if intermediate.DefaultDuration != "" {
-		d, err := time.ParseDuration(intermediate.DefaultDuration)
+	c.Colors = cfg.Colors
+	c.CurrentProject = cfg.CurrentProject
+	c.JSON = cfg.JSON
+	c.SocketPath = cfg.SocketPath
+	c.IconPath = cfg.IconPath
+	c.CurrentRoot = cfg.CurrentRoot
+	c.Snapshots = cfg.Snapshots
+	if cfg.DefaultDuration != "" {
+		d, err := time.ParseDuration(cfg.DefaultDuration)
 		if err != nil {
 			return err
 		}
@@ -90,7 +89,7 @@ func (c *Config) UnmarshalJSON(raw []byte) error {
 	} else {
 		c.DefaultDuration = 50 * time.Minute
 	}
-	c.DefaultPomodoros = intermediate.DefaultPomodoros
+	c.DefaultPomodoros = cfg.DefaultPomodoros
 	return nil
 }
 
