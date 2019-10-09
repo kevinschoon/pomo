@@ -106,7 +106,16 @@ func (s *SQLiteStore) With(fn func(Store) error) error {
 // task created on initialization
 func (s *SQLiteStore) Reset() error {
 	_, err := sq.Delete("task").
-		Where(sq.Eq{"parent_id": int64(0)}).
+		RunWith(s.tx).
+		Exec()
+	if err != nil {
+		return err
+	}
+	_, err = sq.
+		Insert("task").
+		Columns("task_id", "message", "duration").
+		Values(0, "root", 0).
+		Suffix("ON CONFLICT(task_id) DO UPDATE SET task_id = task_id").
 		RunWith(s.tx).
 		Exec()
 	return err
