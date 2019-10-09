@@ -37,7 +37,7 @@ func main() {
 	app.Command("get g", "get one or more tasks", get(cfg))
 	app.Command("init", "initialize the sqlite database", initialize(cfg))
 	app.Command("import", "import existing task data", importTasks(cfg))
-	app.Command("revert", "revert to a previous state", revert(cfg))
+	app.Command("history h", "browse and revert to previous states", history(cfg))
 	app.Command("start s", "start a new task", start(cfg))
 	app.Command("status st", "output the current status", status(cfg))
 	app.Run(os.Args)

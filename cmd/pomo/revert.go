@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"os"
+
 	cli "github.com/jawher/mow.cli"
 
 	pomo "github.com/kevinschoon/pomo/pkg"
@@ -8,46 +11,39 @@ import (
 	"github.com/kevinschoon/pomo/pkg/store"
 )
 
-func revert(cfg *config.Config) func(*cli.Cmd) {
+func history(cfg *config.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS] [ID]"
 		var (
-			id = cmd.IntArg("ID", 0, "snapshot id")
+			id      = cmd.IntArg("ID", 0, "snapshot id")
+			dump    = cmd.BoolOpt("d dump", false, "dump the previous state")
+			restore = cmd.BoolOpt("r restore", false, "restore the snapshot")
 		)
 		cmd.Action = func() {
 			db, err := store.NewSQLiteStore(cfg.DBPath, cfg.Snapshots)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(db store.Store) error {
-				root := pomo.NewTask()
-				err = db.ReadTask(root)
-				if err != nil {
-					return err
-				}
 				last := pomo.NewTask()
 				err = db.Revert(*id, last)
 				if err != nil {
 					return err
 				}
-				err = db.Reset()
-				if err != nil {
-					return err
+				if *dump {
+					json.NewEncoder(os.Stdout).Encode(last)
 				}
-				pomo.ForEachMutate(last, func(task *pomo.Task) {
+				if *restore {
+					err = db.Reset()
 					if err != nil {
-						return
+						return err
 					}
-					if task.ID == int64(0) {
-						return
+					for _, task := range last.Tasks {
+						err := db.WriteTask(task)
+						if err != nil {
+							return err
+						}
 					}
-					e := db.WriteTask(task)
-					if e != nil {
-						err = e
-					}
-					for _, subTask := range task.Tasks {
-						subTask.ParentID = task.ID
-					}
-				})
+				}
 				return err
 			}))
 

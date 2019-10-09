@@ -144,6 +144,10 @@ func (s *SQLiteStore) Snapshot() error {
 	pomo.ForEachMutate(root, func(other *pomo.Task) {
 		other.ID = 0
 		other.ParentID = 0
+		for _, pomodoro := range other.Pomodoros {
+			pomodoro.TaskID = 0
+			pomodoro.ID = 0
+		}
 	})
 	buf := bytes.NewBuffer(nil)
 	err = json.NewEncoder(buf).Encode(root)

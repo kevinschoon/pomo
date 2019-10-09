@@ -14,11 +14,11 @@ import (
 // Task represents a goal to accomplished with
 // the Pomodoro technique.
 type Task struct {
-	ID       int64      `json:"id"`
-	ParentID int64      `json:"project_id"`
-	Message  string     `json:"message"`
-	Tags     *tags.Tags `json:"tags"`
-	Tasks    []*Task    `json:"tasks"`
+	ID       int64      `json:"id,omitempty"`
+	ParentID int64      `json:"parent_id,omitempty"`
+	Message  string     `json:"message,omitempty"`
+	Tags     *tags.Tags `json:"tags,omitempty"`
+	Tasks    []*Task    `json:"tasks,omitempty"`
 	// Array of completed pomodoros
 	Pomodoros []*Pomodoro `json:"pomodoros"`
 	// Number of pomodoros for this task

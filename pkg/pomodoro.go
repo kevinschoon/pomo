@@ -15,11 +15,11 @@ import (
 type Pomodoro struct {
 	// Duration  time.Duration `json:"duration"`
 	// End       time.Time     `json:"end"`
-	ID        int64         `json:"id"`
-	TaskID    int64         `json:"task_id"`
-	Start     time.Time     `json:"start"`
-	RunTime   time.Duration `json:"run_time"`
-	PauseTime time.Duration `json:"pause_time"`
+	ID        int64         `json:"id,omitempty"`
+	TaskID    int64         `json:"task_id,omitempty"`
+	Start     time.Time     `json:"start,omitempty"`
+	RunTime   time.Duration `json:"run_time,omitempty"`
+	PauseTime time.Duration `json:"pause_time,omitempty"`
 }
 
 // NewPomodoros creates an initialized array of n pomodoro
