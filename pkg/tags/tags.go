@@ -10,8 +10,9 @@ const deletePattern = "||DELETE||"
 // Tags are an ordered collection of key or key-value
 // pairs that can be associated with tasks
 type Tags struct {
-	keys []string
-	kvs  map[string]string
+	TaskID int64
+	keys   []string
+	kvs    map[string]string
 }
 
 // New creates a new Tags

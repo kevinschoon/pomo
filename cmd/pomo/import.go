@@ -32,22 +32,7 @@ func importTasks(cfg *config.Config) func(*cli.Cmd) {
 			}
 
 			maybe(db.With(func(db store.Store) error {
-				var err error
-				pomo.ForEachMutate(root, func(task *pomo.Task) {
-					if err != nil {
-						return
-					}
-					if task.ID == int64(0) {
-						return
-					}
-					e := db.WriteTask(task)
-					if e != nil {
-						err = e
-					}
-					for _, subTask := range task.Tasks {
-						subTask.ParentID = task.ID
-					}
-				})
+				_, err := store.WriteAll(db, root)
 				return err
 			}))
 		}

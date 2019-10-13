@@ -2,6 +2,7 @@ package pomo
 
 import (
 	"sort"
+	"time"
 )
 
 // ForEach applies the func for each child task
@@ -134,6 +135,11 @@ func PercentComplete(task Task) float64 {
 	}
 	timeRunning := TimeRunning(task)
 	return (float64(timeRunning) / float64(duration)) * 100
+}
+
+func Truncate(task Task) time.Duration {
+	runtime := time.Duration(TimeRunning(task)).Round(time.Second)
+	return time.Duration(int64(runtime) / int64(len(task.Pomodoros)))
 }
 
 // Assemble takes a flattened array of tasks and

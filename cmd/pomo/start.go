@@ -48,16 +48,25 @@ func start(cfg *config.Config) func(*cli.Cmd) {
 				maybe(err)
 				task.Tags = tgs
 				maybe(db.With(func(db store.Store) error {
-					return db.WriteTask(task)
+					_, err := db.WriteTask(task)
+					return err
 				}))
 			} else {
 				taskID, err := strconv.ParseUint(*taskDescription, 0, 64)
 				if err != nil {
 					maybe(fmt.Errorf("cannot parse taskID: %s", err.Error()))
 				}
-				task.ID = int64(taskID)
 				maybe(db.With(func(db store.Store) error {
-					return db.ReadTask(task)
+					result, err := db.ReadTask(int64(taskID))
+					if err != nil {
+						return err
+					}
+					err = store.ReadAll(db, result)
+					if err != nil {
+						return err
+					}
+					task = result
+					return nil
 				}))
 			}
 			notifier := notify.NewXNotifier(cfg.IconPath)

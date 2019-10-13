@@ -37,12 +37,8 @@ func history(cfg *config.Config) func(*cli.Cmd) {
 					if err != nil {
 						return err
 					}
-					for _, task := range last.Tasks {
-						err := db.WriteTask(task)
-						if err != nil {
-							return err
-						}
-					}
+					_, err = store.WriteAll(db, last)
+					return err
 				}
 				return err
 			}))

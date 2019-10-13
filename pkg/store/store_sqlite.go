@@ -104,6 +104,7 @@ func (s *SQLiteStore) With(fn func(Store) error) error {
 // Reset completely empties the database an all
 // associated data within it aside from the root
 // task created on initialization
+
 func (s *SQLiteStore) Reset() error {
 	_, err := sq.Delete("task").
 		RunWith(s.tx).
@@ -143,21 +144,10 @@ func (s *SQLiteStore) Snapshot() error {
 	}
 	root := pomo.NewTask()
 	root.ID = int64(0)
-	err := s.ReadTask(root)
+	err := ReadAll(s, root)
 	if err != nil {
 		return err
 	}
-	// IDs need to be stripped from the snapshot
-	// so they can be loaded as an insert rather
-	// than upsert.
-	pomo.ForEachMutate(root, func(other *pomo.Task) {
-		other.ID = 0
-		other.ParentID = 0
-		for _, pomodoro := range other.Pomodoros {
-			pomodoro.TaskID = 0
-			pomodoro.ID = 0
-		}
-	})
 	buf := bytes.NewBuffer(nil)
 	err = json.NewEncoder(buf).Encode(root)
 	if err != nil {
@@ -224,109 +214,132 @@ func (s *SQLiteStore) Revert(id int, task *pomo.Task) error {
 	return json.NewDecoder(buf).Decode(task)
 }
 
-func (s *SQLiteStore) ReadTask(task *pomo.Task) error {
-	err := sq.Select("task_id", "message", "duration").
+func (s *SQLiteStore) Search(opts SearchOptions) ([]*pomo.Task, error) {
+	var (
+		// find many
+		statement = sq.
+				Select("task.task_id").
+				From("task").
+				LeftJoin("tag on task.task_id = tag.task_id")
+
+		conditions []sq.Sqlizer
+		results    []*pomo.Task
+	)
+	if opts.ParentID > 0 {
+		conditions = append(conditions, sq.Eq{"parent_id": opts.ParentID})
+	}
+
+	for _, value := range opts.Messages {
+		conditions = append(conditions, sq.Like{"message": value})
+	}
+
+	if opts.Tags != nil && opts.Tags.Len() > 0 {
+		keys := opts.Tags.Keys()
+		var values []string
+		conditions = append(conditions, sq.Eq{"key": keys})
+		for _, key := range keys {
+			value := opts.Tags.Get(key)
+			if value != "" {
+				values = append(values, value)
+			}
+		}
+		if len(values) > 0 {
+			conditions = append(conditions, sq.Eq{"value": values})
+		}
+	}
+
+	if len(conditions) > 0 {
+		if opts.MatchAny {
+			statement = statement.Where(sq.Or(conditions))
+		} else {
+			statement = statement.Where(sq.And(conditions))
+		}
+	}
+
+	rows, err := statement.
+		RunWith(s.tx).
+		Query()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var taskID int64
+		err = rows.Scan(&taskID)
+		if err != nil {
+			return nil, err
+		}
+		task, err := s.ReadTask(taskID)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, task)
+	}
+
+	return results, nil
+}
+
+func (s *SQLiteStore) ReadTask(taskID int64) (*pomo.Task, error) {
+	task := &pomo.Task{}
+
+	parentIDValue := sql.NullInt64{}
+	err := sq.
+		Select("task_id", "parent_id", "message", "duration").
 		From("task").
-		Where(sq.Eq{"task_id": task.ID}).
+		Where(sq.Eq{"task_id": taskID}).
 		RunWith(s.tx).
 		QueryRow().
-		Scan(&task.ID, &task.Message, &task.Duration)
-
+		Scan(&task.ID, &parentIDValue, &task.Message, &task.Duration)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	task.ParentID = parentIDValue.Int64
+	return task, nil
+}
+
+func (s *SQLiteStore) ReadTasks(taskID int64, parentID int64) ([]*pomo.Task, error) {
+	var (
+		statement = sq.
+				Select("task_id", "parent_id", "message", "duration").
+				From("task")
+		conditions []sq.Sqlizer
+		results    []*pomo.Task
+	)
+
+	if taskID >= 0 {
+		conditions = append(conditions, sq.Eq{"task_id": taskID})
 	}
 
-	task.Tags = tags.New()
+	if parentID >= 0 {
+		conditions = append(conditions, sq.Eq{"parent_id": parentID})
+	}
 
-	rows, err := sq.
-		Select("key", "value").
-		From("tag").
-		Where(sq.Eq{"task_id": task.ID}).
+	if len(conditions) > 0 {
+		statement = statement.Where(sq.And(conditions))
+	}
+
+	rows, err := statement.
 		RunWith(s.tx).
 		Query()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	parentIDValue := sql.NullInt64{}
 
 	for rows.Next() {
-		var (
-			key, value string
-		)
-		err = rows.Scan(&key, &value)
+		task := &pomo.Task{}
+		err := rows.Scan(&task.ID, &parentIDValue, &task.Message, &task.Duration)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		task.Tags.Set(key, value)
+		task.ParentID = parentIDValue.Int64
+		results = append(results, task)
 	}
 
-	rows, err = sq.
-		Select("pomodoro_id", "task_id").
-		From("pomodoro").
-		Where(sq.Eq{"task_id": task.ID}).
-		RunWith(s.tx).
-		Query()
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// no pomodoros
-			return nil
-		}
-		return err
-	}
-
-	for rows.Next() {
-		var (
-			pomodoroID int64
-			taskID     int64
-		)
-		err := rows.Scan(&pomodoroID, &taskID)
-
-		if err != nil {
-			return err
-		}
-		pomodoro := &pomo.Pomodoro{ID: pomodoroID, TaskID: taskID}
-		err = s.ReadPomodoro(pomodoro)
-		if err != nil {
-			return err
-		}
-		task.Pomodoros = append(task.Pomodoros, pomodoro)
-	}
-
-	rows, err = sq.Select("task_id", "parent_id").
-		From("task").
-		Where(sq.Eq{"parent_id": task.ID}).
-		RunWith(s.tx).
-		Query()
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// no child tasks
-			return nil
-		}
-		return err
-	}
-
-	for rows.Next() {
-		var (
-			taskID   int64
-			parentID int64
-		)
-		err := rows.Scan(&taskID, &parentID)
-		if err != nil {
-			return err
-		}
-		subTask := &pomo.Task{
-			ID:       taskID,
-			ParentID: parentID,
-		}
-		err = s.ReadTask(subTask)
-		if err != nil {
-			return err
-		}
-		task.Tasks = append(task.Tasks, subTask)
-	}
-	return nil
+	return results, nil
 }
 
 // DeleteTask deletes a task with the given ID
@@ -338,72 +351,88 @@ func (s *SQLiteStore) DeleteTask(taskID int64) error {
 	return err
 }
 
-func (s *SQLiteStore) WriteTask(task *pomo.Task) error {
-
-	if task.ID == 0 {
-		result, err := sq.
-			Insert("task").
-			Columns("parent_id", "message", "duration").
-			Values(task.ParentID, task.Message, task.Duration).
-			RunWith(s.tx).
-			Exec()
-		if err != nil {
-			return err
-		}
-
-		id, err := result.LastInsertId()
-		if err != nil {
-			return err
-		}
-		task.ID = id
-
-	} else {
-		// upsert
-		_, err := sq.
-			Update("task").
-			Where(sq.Eq{"task_id": task.ID}).
-			Set("parent_id", task.ParentID).
-			Set("duration", task.Duration).
-			Set("message", task.Message).
-			RunWith(s.tx).Exec()
-		if err != nil {
-			return err
-		}
-	}
-
-	tags := task.Tags
-
+func (s *SQLiteStore) UpdateTask(task *pomo.Task) error {
+	// upsert
 	_, err := sq.
-		Delete("tag").
+		Update("task").
 		Where(sq.Eq{"task_id": task.ID}).
+		Set("parent_id", task.ParentID).
+		Set("duration", task.Duration).
+		Set("message", task.Message).
+		RunWith(s.tx).Exec()
+
+	return err
+}
+
+func (s *SQLiteStore) WriteTask(task *pomo.Task) (int64, error) {
+
+	result, err := sq.
+		Insert("task").
+		Columns("parent_id", "message", "duration").
+		Values(task.ParentID, task.Message, task.Duration).
 		RunWith(s.tx).
 		Exec()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	for _, key := range tags.Keys() {
+	id, err := result.LastInsertId()
+	if err != nil {
+		return -1, err
+	}
+
+	// TODO
+	task.ID = id
+	return id, nil
+}
+
+func (s *SQLiteStore) ReadTags(taskID int64) (*tags.Tags, error) {
+	var (
+		statement = sq.
+				Select("key", "value").
+				From("tag")
+		conditions []sq.Sqlizer
+		results    = tags.New()
+	)
+
+	if taskID > 0 {
+		conditions = append(conditions, sq.Eq{"task_id": taskID})
+	}
+
+	if len(conditions) > 0 {
+		statement = statement.Where(sq.And(conditions))
+	}
+
+	rows, err := statement.
+		RunWith(s.tx).
+		Query()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var (
+			key, value string
+		)
+		err = rows.Scan(&key, &value)
+		if err != nil {
+			return nil, err
+		}
+		results.Set(key, value)
+	}
+
+	return results, nil
+}
+
+func (s *SQLiteStore) WriteTags(kvs *tags.Tags) error {
+
+	for _, key := range kvs.Keys() {
 		_, err := sq.
 			Insert("tag").
 			Columns("task_id", "key", "value").
-			Values(task.ID, key, tags.Get(key)).
+			Values(kvs.TaskID, key, kvs.Get(key)).
 			RunWith(s.tx).Exec()
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, pomodoro := range task.Pomodoros {
-		pomodoro.TaskID = task.ID
-		err := s.WritePomodoro(pomodoro)
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, other := range task.Tasks {
-		other.ParentID = task.ID
-		err := s.WriteTask(other)
 		if err != nil {
 			return err
 		}
@@ -412,67 +441,103 @@ func (s *SQLiteStore) WriteTask(task *pomo.Task) error {
 	return nil
 }
 
-func (s *SQLiteStore) ReadPomodoro(pomodoro *pomo.Pomodoro) error {
-
-	var dateTimeStr string
-
-	row := sq.
-		Select("pomodoro_id", "task_id", "start", "run_time", "pause_time").
-		From("pomodoro").
-		Where(sq.Eq{"pomodoro_id": pomodoro.ID}).
+func (s *SQLiteStore) DeleteTags(id int64) error {
+	_, err := sq.
+		Delete("tag").
+		Where(sq.Eq{"task_id": id}).
 		RunWith(s.tx).
-		QueryRow()
+		Exec()
+	return err
+}
 
-	err := row.Scan(
-		&pomodoro.ID,
-		&pomodoro.TaskID,
-		&dateTimeStr,
-		&pomodoro.RunTime,
-		&pomodoro.PauseTime,
+func (s *SQLiteStore) ReadPomodoros(pomodoroID int64, taskID int64) ([]*pomo.Pomodoro, error) {
+
+	var (
+		statement = sq.
+				Select("pomodoro_id", "task_id", "start", "run_time", "pause_time").
+				From("pomodoro")
+
+		conditions []sq.Sqlizer
+		results    []*pomo.Pomodoro
 	)
 
-	if err != nil {
-		return err
+	if (pomodoroID) >= 0 {
+		conditions = append(conditions, sq.Eq{"pomodoro_id": pomodoroID})
 	}
 
-	// TODO: store in unix time
+	if (taskID) >= 0 {
+		conditions = append(conditions, sq.Eq{"task_id": taskID})
+	}
 
-	dt, _ := time.Parse(datetimeFmt, dateTimeStr)
-	pomodoro.Start = dt
+	if len(conditions) > 0 {
+		statement = statement.Where(sq.And(conditions))
+	}
 
-	return nil
+	rows, err := statement.
+		RunWith(s.tx).
+		Query()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+
+		pomodoro := &pomo.Pomodoro{}
+
+		var dateTimeStr string
+
+		err := rows.Scan(
+			&pomodoro.ID,
+			&pomodoro.TaskID,
+			&dateTimeStr,
+			&pomodoro.RunTime,
+			&pomodoro.PauseTime,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO: store in unix time
+
+		dt, _ := time.Parse(datetimeFmt, dateTimeStr)
+		pomodoro.Start = dt
+
+		results = append(results, pomodoro)
+	}
+
+	return results, nil
 }
 
-func (s *SQLiteStore) WritePomodoro(pomodoro *pomo.Pomodoro) error {
-	if pomodoro.ID == 0 {
-		result, err := sq.
-			Insert("pomodoro").
-			Columns("task_id", "start", "run_time", "pause_time").
-			Values(pomodoro.TaskID, pomodoro.Start, pomodoro.RunTime, pomodoro.PauseTime).
-			RunWith(s.tx).Exec()
-		if err != nil {
-			return err
-		}
-		id, err := result.LastInsertId()
-		if err != nil {
-			return err
-		}
-		pomodoro.ID = id
-	} else {
-		// upsert
-		_, err := sq.
-			Update("pomodoro").
-			Set("start", pomodoro.Start).
-			Set("run_time", pomodoro.RunTime).
-			Set("pause_time", pomodoro.PauseTime).
-			Where(sq.Eq{"pomodoro_id": pomodoro.ID}).
-			RunWith(s.tx).Exec()
-		if err != nil {
-			return err
-		}
-	}
+func (s *SQLiteStore) UpdatePomodoro(pomodoro *pomo.Pomodoro) error {
+	// upsert
+	_, err := sq.
+		Update("pomodoro").
+		Set("start", pomodoro.Start).
+		Set("run_time", pomodoro.RunTime).
+		Set("pause_time", pomodoro.PauseTime).
+		Where(sq.Eq{"pomodoro_id": pomodoro.ID}).
+		RunWith(s.tx).Exec()
+	return err
+}
 
-	return nil
+func (s *SQLiteStore) WritePomodoro(pomodoro *pomo.Pomodoro) (int64, error) {
+	result, err := sq.
+		Insert("pomodoro").
+		Columns("task_id", "start", "run_time", "pause_time").
+		Values(pomodoro.TaskID, pomodoro.Start, pomodoro.RunTime, pomodoro.PauseTime).
+		RunWith(s.tx).Exec()
+	if err != nil {
+		return -1, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return -1, err
+	}
+	// TODO
+	pomodoro.ID = id
+	return id, nil
 }
 
 func (s *SQLiteStore) DeletePomodoro(id int64) error {

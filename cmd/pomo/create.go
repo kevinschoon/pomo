@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	cli "github.com/jawher/mow.cli"
@@ -37,7 +38,12 @@ func create(cfg *config.Config) func(*cli.Cmd) {
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(db store.Store) error {
-				return db.WriteTask(task)
+				taskID, err := store.WriteAll(db, task)
+				if err != nil {
+					return err
+				}
+				fmt.Println(taskID)
+				return nil
 			}))
 		}
 	}

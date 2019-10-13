@@ -23,6 +23,10 @@ type Tree struct {
 	ShowPomodoros bool
 }
 
+func New(task pomo.Task, pomodoros bool) Tree {
+	return Tree{Task: task, ShowPomodoros: pomodoros}
+}
+
 func (t Tree) next(value bool, depth []bool) (result []bool) {
 	for _, value := range depth {
 		result = append(result, value)
