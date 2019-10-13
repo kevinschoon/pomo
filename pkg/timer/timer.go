@@ -52,7 +52,7 @@ func (t *Timer) Start() chan struct{} {
 			t.mu.Lock()
 			t.now = time.Now()
 			<-t.timer.C
-			t.add(time.Now().Sub(t.now))
+			t.add(time.Since(t.now))
 			t.timer.Reset(config.TickTime)
 			t.mu.Unlock()
 		}
@@ -95,10 +95,10 @@ func (t *Timer) Suspend() bool {
 	defer t.mu.Unlock()
 	if t.timer.Stop() {
 		// cleanup current timer
-		t.add(t.now.Sub(time.Now()))
+		t.add(time.Until(t.now))
 	}
 	// toggle suspended
-	t.suspended = t.suspended == false
+	t.suspended = !t.suspended
 	t.now = time.Now()
 	t.timer.Reset(config.TickTime)
 	return t.suspended

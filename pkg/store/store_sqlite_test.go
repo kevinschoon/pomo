@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"path"
 	"testing"
@@ -22,21 +21,6 @@ func mkTmp() (string, func()) {
 	return baseDir, func() {
 		os.RemoveAll(baseDir)
 	}
-}
-
-func connectDB(t *testing.T, path string) *sql.DB {
-	u, err := url.Parse(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	qs := &url.Values{}
-	qs.Add("_fk", "yes")
-	u.RawQuery = qs.Encode()
-	db, err := sql.Open("sqlite3", u.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-	return db
 }
 
 func TestStoreTask(t *testing.T) {

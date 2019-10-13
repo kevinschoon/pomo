@@ -36,9 +36,7 @@ func ReduceInt64(start int64, t Task, fn func(int64, Task) int64) int64 {
 func MapInt64(t Task, fn func(Task) int64) []int64 {
 	results := []int64{fn(t)}
 	for _, child := range t.Tasks {
-		for _, result := range MapInt64(*child, fn) {
-			results = append(results, result)
-		}
+		results = append(results, MapInt64(*child, fn)...)
 	}
 	return results
 }

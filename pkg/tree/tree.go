@@ -28,19 +28,15 @@ func New(task pomo.Task, pomodoros bool) Tree {
 }
 
 func (t Tree) next(value bool, depth []bool) (result []bool) {
-	for _, value := range depth {
-		result = append(result, value)
-	}
-	result = append(result, value)
-	return result
+	return append(append(result, depth...), value)
 }
 
 func (t Tree) fill(w io.Writer, depth []bool) {
 	for i := 0; i < len(depth); i++ {
 		if depth[i] {
-			fmt.Fprintf(w, continueItem)
+			fmt.Fprint(w, continueItem)
 		} else {
-			fmt.Fprintf(w, emptySpace)
+			fmt.Fprint(w, emptySpace)
 		}
 	}
 }
@@ -55,17 +51,17 @@ func (t Tree) Write(w io.Writer, depth []bool) {
 		last := n+1 == len(t.Tasks)
 		t.fill(w, depth)
 		if last {
-			fmt.Fprintf(w, lastItem)
+			fmt.Fprint(w, lastItem)
 		} else {
-			fmt.Fprintf(w, middleItem)
+			fmt.Fprint(w, middleItem)
 		}
 		fmt.Fprintf(w, "%s\n", task.Info())
 		if len(task.Pomodoros) > 0 && t.ShowPomodoros {
 			t.fill(w, depth)
 			if last {
-				fmt.Fprintf(w, emptySpace)
+				fmt.Fprint(w, emptySpace)
 			} else {
-				fmt.Fprintf(w, continueItem)
+				fmt.Fprint(w, continueItem)
 			}
 			fmt.Fprintf(w, "%s*", format.TruncDuration(task.Duration))
 			for _, p := range task.Pomodoros {
