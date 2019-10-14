@@ -395,6 +395,8 @@ func (s *SQLiteStore) ReadTags(taskID int64) (*tags.Tags, error) {
 		results    = tags.New()
 	)
 
+	results.TaskID = taskID
+
 	if taskID > 0 {
 		conditions = append(conditions, sq.Eq{"task_id": taskID})
 	}
