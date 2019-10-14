@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fatih/color"
+	"github.com/bcicen/color"
 
 	"github.com/kevinschoon/pomo/pkg/internal/format"
 	"github.com/kevinschoon/pomo/pkg/tags"

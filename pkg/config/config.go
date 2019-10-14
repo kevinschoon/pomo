@@ -7,6 +7,8 @@ import (
 	"os/user"
 	"path"
 	"time"
+
+	"github.com/kevinschoon/pomo/pkg/config/color"
 )
 
 const (
@@ -17,7 +19,7 @@ const (
 
 // Config represents user preferences
 type Config struct {
-	Colors         *ColorMap
+	Colors         *color.Colors
 	CurrentProject int64
 	JSON           bool
 	DBPath         string
@@ -38,21 +40,21 @@ type Config struct {
 	DefaultPomodoros int
 }
 
-type configJson struct {
-	Colors           *ColorMap `json:"colors"`
-	CurrentProject   int64     `json:"current_project"`
-	JSON             bool      `json:"json"`
-	DBPath           string    `json:"db_path"`
-	SocketPath       string    `json:"socket_path"`
-	IconPath         string    `json:"icon_path"`
-	CurrentRoot      int64     `json:"current_root"`
-	Snapshots        int       `json:"history"`
-	DefaultDuration  string    `json:"default_duration"`
-	DefaultPomodoros int       `json:"default_pomodoros"`
+type configJSON struct {
+	Colors           *color.Colors `json:"colors"`
+	CurrentProject   int64         `json:"current_project"`
+	JSON             bool          `json:"json"`
+	DBPath           string        `json:"db_path"`
+	SocketPath       string        `json:"socket_path"`
+	IconPath         string        `json:"icon_path"`
+	CurrentRoot      int64         `json:"current_root"`
+	Snapshots        int           `json:"history"`
+	DefaultDuration  string        `json:"default_duration"`
+	DefaultPomodoros int           `json:"default_pomodoros"`
 }
 
 func (c Config) MarshalJSON() ([]byte, error) {
-	intermediate := configJson{
+	intermediate := configJSON{
 		Colors:           c.Colors,
 		CurrentProject:   c.CurrentProject,
 		JSON:             c.JSON,
@@ -68,7 +70,7 @@ func (c Config) MarshalJSON() ([]byte, error) {
 }
 
 func (c *Config) UnmarshalJSON(raw []byte) error {
-	cfg := &configJson{}
+	cfg := &configJSON{}
 	err := json.Unmarshal(raw, cfg)
 	if err != nil {
 		return err
