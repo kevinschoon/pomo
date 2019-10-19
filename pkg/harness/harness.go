@@ -3,17 +3,17 @@ package harness
 import (
 	"fmt"
 
+	"github.com/kevinschoon/pomo/pkg/display"
 	"github.com/kevinschoon/pomo/pkg/runner"
 	"github.com/kevinschoon/pomo/pkg/runner/server"
-	"github.com/kevinschoon/pomo/pkg/ui"
 )
 
 // Harness is a data structure used to
 // launch Pomo and it's related processes
 type Harness struct {
-	UI     *ui.UI
-	Server server.Server
-	Runner runner.Runner
+	Display *display.Display
+	Server  server.Server
+	Runner  runner.Runner
 }
 
 // Launch launches the Pomo UI and related processes
@@ -21,7 +21,7 @@ func (h Harness) Launch() error {
 	errors := make(chan error)
 	go func() {
 		fmt.Println("ui starting")
-		err := h.UI.Start()
+		err := h.Display.Start()
 		if err != nil {
 			fmt.Printf("ui error: %s", err.Error())
 		} else {
@@ -58,7 +58,7 @@ func (h Harness) Launch() error {
 
 			// return err
 		}
-		h.UI.Stop()
+		h.Display.Stop()
 		h.Server.Stop()
 		h.Runner.Stop()
 	}

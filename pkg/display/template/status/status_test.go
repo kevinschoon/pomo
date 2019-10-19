@@ -1,4 +1,4 @@
-package ui_test
+package status
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/kevinschoon/pomo/pkg/runner"
-	"github.com/kevinschoon/pomo/pkg/ui"
 )
 
 func surround(s string) string {
@@ -28,14 +27,13 @@ func TestTemplater(t *testing.T) {
 		Count:         2,
 		NPomodoros:    4,
 	}
-	wheel := ui.Wheel(0)
-	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
+	templater := NewStatusTemplater()
+	t.Log(surround(templater(status)))
 	status.State = runner.RUNNING
-	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
+	t.Log(surround(templater(status)))
 	status.State = runner.SUSPENDED
-	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
+	t.Log(surround(templater(status)))
 	status.State = runner.BREAKING
-	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
+	t.Log(surround(templater(status)))
 	status.State = runner.COMPLETE
-	t.Log(surround(ui.Template(status, &ui.RenderOptions{Wheel: &wheel})))
 }

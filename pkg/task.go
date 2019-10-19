@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bcicen/color"
-
 	"github.com/kevinschoon/pomo/pkg/internal/format"
 	"github.com/kevinschoon/pomo/pkg/tags"
 )
@@ -39,15 +37,7 @@ func (t Task) Info() string {
 	buf := bytes.NewBuffer(nil)
 	pc := int(PercentComplete(t))
 	fmt.Fprintf(buf, "[%d]", t.ID)
-	fmt.Fprintf(buf, "[")
-	if pc == 100 {
-		color.New(color.FgHiGreen).Fprintf(buf, "%d%%", pc)
-	} else if pc > 50 && pc < 100 {
-		color.New(color.FgHiYellow).Fprintf(buf, "%d%%", pc)
-	} else {
-		color.New(color.FgHiMagenta).Fprintf(buf, "%d%%", pc)
-	}
-	fmt.Fprintf(buf, "]")
+	fmt.Fprintf(buf, "[%d]", pc)
 	fmt.Fprintf(buf, "[%s]", format.TruncDuration(time.Duration(TotalDuration(t))))
 	if t.Tags != nil {
 		for _, key := range t.Tags.Keys() {

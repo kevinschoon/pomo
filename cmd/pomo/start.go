@@ -9,13 +9,13 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
+	"github.com/kevinschoon/pomo/pkg/display"
 	"github.com/kevinschoon/pomo/pkg/harness"
 	"github.com/kevinschoon/pomo/pkg/notify"
 	"github.com/kevinschoon/pomo/pkg/runner"
 	"github.com/kevinschoon/pomo/pkg/runner/server"
 	"github.com/kevinschoon/pomo/pkg/store"
 	"github.com/kevinschoon/pomo/pkg/tags"
-	"github.com/kevinschoon/pomo/pkg/ui"
 )
 
 func start(cfg *config.Config) func(*cli.Cmd) {
@@ -48,7 +48,7 @@ func start(cfg *config.Config) func(*cli.Cmd) {
 				maybe(err)
 				task.Tags = tgs
 				maybe(db.With(func(db store.Store) error {
-					_, err := db.WriteTask(task)
+					_, err := store.WriteAll(db, task)
 					return err
 				}))
 			} else {
@@ -78,11 +78,11 @@ func start(cfg *config.Config) func(*cli.Cmd) {
 				runner.StatusUpdater(task, db),
 				notify.StatusFunc(notifier),
 			)
-			termUI := ui.New(taskRunner.Toggle, taskRunner.Suspend, statusCh)
+			dsp := display.New(taskRunner.Toggle, taskRunner.Suspend, statusCh)
 			maybe(harness.Harness{
-				UI:     termUI,
-				Server: socketServer,
-				Runner: taskRunner,
+				Display: dsp,
+				Server:  socketServer,
+				Runner:  taskRunner,
 			}.Launch())
 		}
 	}

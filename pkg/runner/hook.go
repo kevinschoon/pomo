@@ -40,7 +40,7 @@ func StatusTicker(ch chan Status) Hook {
 // StatusUpdater stores the most recent status in a Store
 func StatusUpdater(task *pomo.Task, db store.Store) Hook {
 	return func(status Status) error {
-		if status.Count <= len(task.Pomodoros) {
+		if status.Count < len(task.Pomodoros) {
 			return db.With(func(db store.Store) error {
 				pomodoro := task.Pomodoros[status.Count]
 				pomodoro.Start = status.TimeStarted

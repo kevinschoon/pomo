@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bcicen/color"
-
 	"github.com/kevinschoon/pomo/pkg/internal/format"
 )
 
@@ -34,12 +32,6 @@ func NewPomodoros(n int) []*Pomodoro {
 // Info returns an info string about this Pomodoro
 func (p Pomodoro) Info(duration time.Duration) string {
 	buf := bytes.NewBuffer(nil)
-	fmt.Fprintf(buf, "[")
-	if p.RunTime >= duration {
-		color.New(color.FgHiGreen).Fprintf(buf, "%s", format.TruncDuration(p.RunTime))
-	} else {
-		color.New(color.FgHiMagenta).Fprintf(buf, "%s", format.TruncDuration(p.RunTime))
-	}
-	fmt.Fprintf(buf, "]")
+	fmt.Fprintf(buf, "[%s]", format.TruncDuration(p.RunTime))
 	return buf.String()
 }

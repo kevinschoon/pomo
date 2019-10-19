@@ -9,9 +9,9 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
+	"github.com/kevinschoon/pomo/pkg/display/tree"
 	"github.com/kevinschoon/pomo/pkg/store"
 	"github.com/kevinschoon/pomo/pkg/tags"
-	"github.com/kevinschoon/pomo/pkg/tree"
 	"strconv"
 )
 
