@@ -9,6 +9,7 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
+	ttemplate "github.com/kevinschoon/pomo/pkg/display/template/task"
 	"github.com/kevinschoon/pomo/pkg/display/tree"
 	"github.com/kevinschoon/pomo/pkg/store"
 	"github.com/kevinschoon/pomo/pkg/tags"
@@ -89,32 +90,26 @@ pomo get
 				maybe(json.NewEncoder(os.Stdout).Encode(results))
 			} else {
 				for _, result := range results {
-					fmt.Print(tree.New(*result, *showPomodoros).String())
+					if pomo.Depth(*result) == 1 {
+						templater := ttemplate.NewTemplater(ttemplate.Options{Template: ttemplate.DefaultTemplate})
+						for _, task := range result.Tasks {
+							if pomo.Complete(*task) {
+								cfg.Colors.Tertiary.Println(templater(*task))
+							} else {
+								cfg.Colors.Primary.Println(templater(*task))
+							}
+						}
+					} else {
+						t := tree.New(*result, *showPomodoros)
+						t.Colors = *cfg.Colors
+						t.TaskTemplater = ttemplate.NewTemplater(ttemplate.Options{
+							Template: ttemplate.DefaultTemplate,
+						})
+						fmt.Println(t.String())
+					}
 				}
 
 			}
-			/*
-
-				root.Tasks = pomo.FindMany(root.Tasks, pomo.FiltersFromStrings(*filters)...)
-				pomo.ForEachMutate(root, func(task *pomo.Task) {
-					if *ascend {
-						sort.Sort(sort.Reverse(pomo.TasksByID(task.Tasks)))
-					} else if *recent {
-						sort.Sort(sort.Reverse(pomo.TasksByStart(task.Tasks)))
-					}
-				})
-
-				if cfg.JSON {
-					maybe(json.NewEncoder(os.Stdout).Encode(root))
-					return
-				} else if *flatten {
-					pomo.ForEach(*root, func(task pomo.Task) {
-						fmt.Println(task.Info())
-					})
-				} else {
-					tree.Tree{Task: *root, ShowPomodoros: *showPomodoros}.Write(os.Stdout, nil)
-				}
-			*/
 		}
 	}
 }

@@ -47,23 +47,23 @@ func (t *TagPair) UnmarshalJSON(raw []byte) error {
 // Colors defines configurable colors for the Pomodoro CLI
 type Colors struct {
 	// color of progress below 50%
-	Start color.Color
-	start string
+	Primary color.Color
+	primary string
 	//  color of progress above 50%
-	Middle color.Color
-	middle string
+	Secondary color.Color
+	secondary string
 	// color of progress at 100%
-	End color.Color
-	end string
+	Tertiary color.Color
+	tertiary string
 	// map of tag key/value pair to colors
 	Tags map[string]TagPair
 }
 
 type colorsJSON struct {
-	Start  string             `json:"start"`
-	Middle string             `json:"middle"`
-	End    string             `json:"end"`
-	Tags   map[string]TagPair `json:"tags"`
+	Primary   string             `json:"primary"`
+	Secondary string             `json:"secondary"`
+	Tertiary  string             `json:"tertiary"`
+	Tags      map[string]TagPair `json:"tags"`
 }
 
 // Get returns the color for a tag key/value pair
@@ -79,10 +79,10 @@ func (c Colors) Get(key, value string) color.Color {
 // MarshalJSON marshals underlying tags
 func (c *Colors) MarshalJSON() ([]byte, error) {
 	cfg := &colorsJSON{
-		Start:  c.start,
-		Middle: c.middle,
-		End:    c.end,
-		Tags:   c.Tags,
+		Primary:   c.primary,
+		Secondary: c.secondary,
+		Tertiary:  c.tertiary,
+		Tags:      c.Tags,
 	}
 	return json.Marshal(cfg)
 }
@@ -95,23 +95,23 @@ func (c *Colors) UnmarshalJSON(raw []byte) error {
 		return err
 	}
 	c.Tags = cfg.Tags
-	start, err := color.NewHex(cfg.Start)
+	primary, err := color.NewHex(cfg.Primary)
 	if err != nil {
 		return err
 	}
-	c.Start = *start
-	c.start = cfg.Start
-	middle, err := color.NewHex(cfg.Middle)
+	c.Primary = *primary
+	c.primary = cfg.Primary
+	secondary, err := color.NewHex(cfg.Secondary)
 	if err != nil {
 		return err
 	}
-	c.Middle = *middle
-	c.middle = cfg.Middle
-	end, err := color.NewHex(cfg.End)
+	c.Secondary = *secondary
+	c.secondary = cfg.Secondary
+	tertiary, err := color.NewHex(cfg.Tertiary)
 	if err != nil {
 		return err
 	}
-	c.End = *end
-	c.end = cfg.End
+	c.Tertiary = *tertiary
+	c.tertiary = cfg.Tertiary
 	return nil
 }

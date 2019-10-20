@@ -135,9 +135,31 @@ func PercentComplete(task Task) float64 {
 	return (float64(timeRunning) / float64(duration)) * 100
 }
 
+// Complete determines if the task is completed
+func Complete(task Task) bool {
+	return PercentComplete(task) == 100
+}
+
+func Depth(task Task) int {
+	var depth int
+	ForEach(task, func(task Task) {
+		if len(task.Tasks) > 0 {
+			depth++
+		}
+	})
+	return depth
+}
+
 func Truncate(task Task) time.Duration {
 	runtime := time.Duration(TimeRunning(task)).Round(time.Second)
 	return time.Duration(int64(runtime) / int64(len(task.Pomodoros)))
+}
+
+// IsLeaf checks if the task has a zero duration
+// no pomodoros, and child tasks
+func IsLeaf(task Task) bool {
+	return task.Duration == time.Duration(0) &&
+		len(task.Pomodoros) == 0 && len(task.Tasks) > 0
 }
 
 // Assemble takes a flattened array of tasks and

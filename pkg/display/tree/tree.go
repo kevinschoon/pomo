@@ -6,7 +6,7 @@ import (
 	"io"
 
 	pomo "github.com/kevinschoon/pomo/pkg"
-	"github.com/kevinschoon/pomo/pkg/internal/format"
+	"github.com/kevinschoon/pomo/pkg/config/color"
 )
 
 const (
@@ -20,11 +20,16 @@ const (
 // in a tree.
 type Tree struct {
 	pomo.Task
+	Colors        color.Colors
 	ShowPomodoros bool
+	TaskTemplater func(pomo.Task) string
 }
 
 func New(task pomo.Task, pomodoros bool) Tree {
-	return Tree{Task: task, ShowPomodoros: pomodoros}
+	return Tree{
+		Task:          task,
+		ShowPomodoros: pomodoros,
+	}
 }
 
 func (t Tree) next(value bool, depth []bool) (result []bool) {
@@ -34,7 +39,7 @@ func (t Tree) next(value bool, depth []bool) (result []bool) {
 func (t Tree) fill(w io.Writer, depth []bool) {
 	for i := 0; i < len(depth); i++ {
 		if depth[i] {
-			fmt.Fprint(w, continueItem)
+			t.Colors.Primary.Fprint(w, continueItem)
 		} else {
 			fmt.Fprint(w, emptySpace)
 		}
@@ -44,35 +49,57 @@ func (t Tree) fill(w io.Writer, depth []bool) {
 // Write writes the Tree representation of a Task hierarchy
 // to the io.Writer
 func (t Tree) Write(w io.Writer, depth []bool) {
+	rootComplete := pomo.Complete(t.Task)
 	if depth == nil { // root
-		fmt.Fprintf(w, "%s\n", t.Task.Info())
+		if rootComplete {
+			t.Colors.Tertiary.Fprintf(w, "%s\n", t.TaskTemplater(t.Task))
+		} else {
+			t.Colors.Primary.Fprintf(w, "%s\n", t.TaskTemplater(t.Task))
+		}
 	}
 	for n, task := range t.Tasks {
+		taskComplete := pomo.Complete(*task)
 		last := n+1 == len(t.Tasks)
 		t.fill(w, depth)
+		var item string
 		if last {
-			fmt.Fprint(w, lastItem)
+			item = lastItem
+			// fmt.Fprint(w, lastItem)
 		} else {
-			fmt.Fprint(w, middleItem)
+			item = middleItem
+			//fmt.Fprint(w, middleItem)
 		}
-		fmt.Fprintf(w, "%s\n", task.Info())
-		if len(task.Pomodoros) > 0 && t.ShowPomodoros {
-			t.fill(w, depth)
-			if last {
-				fmt.Fprint(w, emptySpace)
+		if rootComplete {
+			t.Colors.Tertiary.Fprintf(w, "%s%s\n", item, t.TaskTemplater(*task))
+		} else {
+			t.Colors.Primary.Fprintf(w, item)
+			if taskComplete {
+				t.Colors.Tertiary.Fprintf(w, "%s\n", t.TaskTemplater(*task))
 			} else {
-				fmt.Fprint(w, continueItem)
+				t.Colors.Primary.Fprintf(w, "%s\n", t.TaskTemplater(*task))
 			}
-			fmt.Fprintf(w, "%s*", format.TruncDuration(task.Duration))
-			for _, p := range task.Pomodoros {
-				fmt.Fprintf(w, "%s", p.Info(task.Duration))
-			}
-
-			fmt.Fprintf(w, "\n")
 		}
+
+		/*
+			if len(task.Pomodoros) > 0 && t.ShowPomodoros {
+				t.fill(w, depth)
+				if last {
+					fmt.Fprint(w, emptySpace)
+				} else {
+					t.Colors.Primary.Fprintf(w, continueItem)
+				}
+				// fmt.Fprintf(w, "%s*", format.TruncDuration(task.Duration))
+				for _, p := range task.Pomodoros {
+					fmt.Fprintf(w, "%s", p.Info(task.Duration))
+				}
+				fmt.Fprintf(w, "\n")
+			}
+		*/
 		next := Tree{
 			Task:          *task,
+			Colors:        t.Colors,
 			ShowPomodoros: t.ShowPomodoros,
+			TaskTemplater: t.TaskTemplater,
 		}
 		next.Write(w, t.next(len(task.Tasks) > 0 && !last, depth))
 	}

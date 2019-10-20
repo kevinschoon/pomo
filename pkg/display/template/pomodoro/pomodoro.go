@@ -5,11 +5,13 @@ import (
 	"github.com/kevinschoon/pomo/pkg/config/color"
 )
 
-type PomodoroOptions struct {
+type Options struct {
 	Colors   color.Colors
 	Template string
 }
 
-func TemplatePomodoro(opts PomodoroOptions, pomodoro *pomo.Pomodoro) string {
-	return ""
+func NewTemplater(opts Options) func(pomo.Task, pomo.Pomodoro) string {
+	return func(task pomo.Task, pomodoro pomo.Pomodoro) string {
+		return ""
+	}
 }
