@@ -28,9 +28,17 @@ func TestStoreTask(t *testing.T) {
 	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), -1)
 	db.Init()
 	defer cleanup()
+	const notes = `
+## Task Title
+
+some very interesting and important notes
+containing multiple lines of text
+
+    `
 	db.With(func(s store.Store) error {
 		task := pomo.NewTask()
 		task.Duration = 5 * time.Second
+		task.Notes = notes
 		s.WriteTask(task) // extra
 		s.WriteTask(task)
 		taskID, _ := s.WriteTask(task)
@@ -43,6 +51,10 @@ func TestStoreTask(t *testing.T) {
 		results, _ = s.ReadTasks(taskID, -1)
 		if results[0].Message != "update::" {
 			t.Fatalf("update failed, got %s", results[0].Message)
+		}
+		if results[0].Notes != notes {
+			t.Fatalf(
+				"notes is not correct, expected: %s, got %s", notes, results[0].Message)
 		}
 		s.DeleteTask(taskID)
 		results, _ = s.ReadTasks(taskID, 0)
@@ -334,6 +346,30 @@ func TestStoreFindOneByMessage(t *testing.T) {
 		s.WriteTask(pomo.NewTask())
 		results, _ := s.Search(store.SearchOptions{
 			Messages: []string{"%search%"},
+		})
+		if len(results) != 1 {
+			t.Fatalf("expected %d results, got %d", 1, len(results))
+		}
+		if results[0].ID != taskID {
+			t.Fatal("returned the wrong task")
+		}
+		return nil
+	})
+}
+
+func TestStoreFindOneByNote(t *testing.T) {
+	tmpDir, cleanup := mkTmp()
+	db, _ := store.NewSQLiteStore(path.Join(tmpDir, "pomo.db"), -1)
+	db.Init()
+	defer cleanup()
+	db.With(func(s store.Store) error {
+		task := pomo.NewTask()
+		task.Notes = "search note 1"
+		s.WriteTask(pomo.NewTask())
+		taskID, _ := s.WriteTask(task)
+		s.WriteTask(pomo.NewTask())
+		results, _ := s.Search(store.SearchOptions{
+			Notes: []string{"%search%"},
 		})
 		if len(results) != 1 {
 			t.Fatalf("expected %d results, got %d", 1, len(results))

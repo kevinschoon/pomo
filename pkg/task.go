@@ -17,6 +17,7 @@ type Task struct {
 	Message  string     `json:"message,omitempty"`
 	Tags     *tags.Tags `json:"tags,omitempty"`
 	Tasks    []*Task    `json:"tasks,omitempty"`
+	Notes    string     `json:"notes,omitempty"`
 	// Array of completed pomodoros
 	Pomodoros []*Pomodoro `json:"pomodoros"`
 	// Number of pomodoros for this task

@@ -54,6 +54,7 @@ func (s *SQLiteStore) Init() error {
     task_id INTEGER PRIMARY KEY,
     parent_id INTEGER,
 	message TEXT,
+    notes TEXT,
 	duration INTEGER,
     FOREIGN KEY(parent_id) REFERENCES task(task_id) ON DELETE CASCADE
     );
@@ -77,7 +78,7 @@ func (s *SQLiteStore) Init() error {
     data JSON
     );
     PRAGMA foreign_keys = ON;
-    INSERT INTO task (task_id, message, duration) VALUES (0, "root", 0) ON CONFLICT(task_id) DO UPDATE SET task_id = task_id;
+    INSERT INTO task (task_id, message, notes, duration) VALUES (0, "root", "", 0) ON CONFLICT(task_id) DO UPDATE SET task_id = task_id;
     `
 	_, err := s.db.Exec(stmt)
 	return err
@@ -233,6 +234,10 @@ func (s *SQLiteStore) Search(opts SearchOptions) ([]*pomo.Task, error) {
 		conditions = append(conditions, sq.Like{"message": value})
 	}
 
+	for _, value := range opts.Notes {
+		conditions = append(conditions, sq.Like{"notes": value})
+	}
+
 	if opts.Tags != nil && opts.Tags.Len() > 0 {
 		keys := opts.Tags.Keys()
 		var values []string
@@ -283,25 +288,27 @@ func (s *SQLiteStore) Search(opts SearchOptions) ([]*pomo.Task, error) {
 func (s *SQLiteStore) ReadTask(taskID int64) (*pomo.Task, error) {
 	task := &pomo.Task{}
 
+	notesValue := sql.NullString{}
 	parentIDValue := sql.NullInt64{}
 	err := sq.
-		Select("task_id", "parent_id", "message", "duration").
+		Select("task_id", "parent_id", "message", "notes", "duration").
 		From("task").
 		Where(sq.Eq{"task_id": taskID}).
 		RunWith(s.tx).
 		QueryRow().
-		Scan(&task.ID, &parentIDValue, &task.Message, &task.Duration)
+		Scan(&task.ID, &parentIDValue, &task.Message, &notesValue, &task.Duration)
 	if err != nil {
 		return nil, err
 	}
 	task.ParentID = parentIDValue.Int64
+	task.Notes = notesValue.String
 	return task, nil
 }
 
 func (s *SQLiteStore) ReadTasks(taskID int64, parentID int64) ([]*pomo.Task, error) {
 	var (
 		statement = sq.
-				Select("task_id", "parent_id", "message", "duration").
+				Select("task_id", "parent_id", "message", "notes", "duration").
 				From("task")
 		conditions []sq.Sqlizer
 		results    []*pomo.Task
@@ -328,14 +335,16 @@ func (s *SQLiteStore) ReadTasks(taskID int64, parentID int64) ([]*pomo.Task, err
 	}
 
 	parentIDValue := sql.NullInt64{}
+	notesValue := sql.NullString{}
 
 	for rows.Next() {
 		task := &pomo.Task{}
-		err := rows.Scan(&task.ID, &parentIDValue, &task.Message, &task.Duration)
+		err := rows.Scan(&task.ID, &parentIDValue, &task.Message, &notesValue, &task.Duration)
 		if err != nil {
 			return nil, err
 		}
 		task.ParentID = parentIDValue.Int64
+		task.Notes = notesValue.String
 		results = append(results, task)
 	}
 
@@ -359,6 +368,7 @@ func (s *SQLiteStore) UpdateTask(task *pomo.Task) error {
 		Set("parent_id", task.ParentID).
 		Set("duration", task.Duration).
 		Set("message", task.Message).
+		Set("notes", task.Notes).
 		RunWith(s.tx).Exec()
 
 	return err
@@ -368,8 +378,8 @@ func (s *SQLiteStore) WriteTask(task *pomo.Task) (int64, error) {
 
 	result, err := sq.
 		Insert("task").
-		Columns("parent_id", "message", "duration").
-		Values(task.ParentID, task.Message, task.Duration).
+		Columns("parent_id", "message", "notes", "duration").
+		Values(task.ParentID, task.Message, task.Notes, task.Duration).
 		RunWith(s.tx).
 		Exec()
 	if err != nil {

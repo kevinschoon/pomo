@@ -19,6 +19,7 @@ var (
 type SearchOptions struct {
 	ParentID int64
 	Messages []string
+	Notes    []string
 	Tags     *tags.Tags
 	MatchAny bool
 }

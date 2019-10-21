@@ -10,6 +10,7 @@ import (
 
 	pomo "github.com/kevinschoon/pomo/pkg"
 	"github.com/kevinschoon/pomo/pkg/config"
+	"github.com/kevinschoon/pomo/pkg/note"
 	"github.com/kevinschoon/pomo/pkg/store"
 	"github.com/kevinschoon/pomo/pkg/tags"
 )
@@ -65,6 +66,7 @@ pomo edit --remove 2:3
 			durationStr  = cmd.StringOpt("d duration", "", "pomodoro duration")
 			addPomodoros = cmd.IntOpt("a add", 0, "add n pomodoros")
 			message      = cmd.StringOpt("m message", "", "modify the task message")
+			updateNote   = cmd.BoolOpt("n note", false, "add or modify notes")
 			rmPomodoros  = cmd.StringOpt("r remove", "", "remove a subset of pomodoros between start:end")
 			truncate     = cmd.BoolOpt("t truncate", false, "truncate the task to it's current runtime")
 			done         = cmd.BoolOpt("D done", false, "mark the task as completed")
@@ -105,7 +107,20 @@ pomo edit --remove 2:3
 					task.Message = *message
 					taskUpdated = true
 				}
+				if *updateNote {
+					prev := string(task.Notes)
+					notes := note.Note(task.Notes)
+					err := notes.Edit(cfg.Editor)
+					if err != nil {
+						return err
+					}
+					if string(notes) != prev {
+						task.Notes = string(notes)
+						taskUpdated = true
+					}
+				}
 				if taskUpdated {
+					fmt.Println("task updated")
 					err = db.UpdateTask(task)
 					if err != nil {
 						return err
@@ -184,6 +199,7 @@ pomo edit --remove 2:3
 						return err
 					}
 				}
+
 				return nil
 			}))
 

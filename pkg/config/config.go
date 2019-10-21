@@ -25,6 +25,10 @@ type Config struct {
 	DBPath         string
 	SocketPath     string
 	IconPath       string
+	// the text editor to use when annotating
+	// tasks. Uses $EDITOR and then defaults
+	// to vim.
+	Editor string
 	// if specified get calls will return
 	// tasks below the id
 	CurrentRoot int64
@@ -47,6 +51,7 @@ type configJSON struct {
 	DBPath           string        `json:"db_path"`
 	SocketPath       string        `json:"socket_path"`
 	IconPath         string        `json:"icon_path"`
+	Editor           string        `json:"editor"`
 	CurrentRoot      int64         `json:"current_root"`
 	Snapshots        int           `json:"history"`
 	DefaultDuration  string        `json:"default_duration"`
@@ -98,10 +103,12 @@ func (c *Config) UnmarshalJSON(raw []byte) error {
 // DefaultConfig returns the default Pomo configuration
 func DefaultConfig() *Config {
 	sharePath := DefaultSharePath()
+	editor := DefaultEditor()
 	return &Config{
 		DBPath:           path.Join(sharePath, "/pomo.db"),
 		SocketPath:       path.Join(sharePath, "/pomo.sock"),
 		IconPath:         path.Join(sharePath, "/pomo.png"),
+		Editor:           editor,
 		Snapshots:        10,
 		DefaultDuration:  50 * time.Minute,
 		DefaultPomodoros: 3,
@@ -130,6 +137,16 @@ func DefaultSharePath() string {
 		panic(err)
 	}
 	return path.Join(u.HomeDir, "/.local/share/pomo")
+}
+
+// DefaultEditor attemts to determine the
+// system editor to use
+func DefaultEditor() string {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "vim"
+	}
+	return editor
 }
 
 // EnsurePaths ensures all needed paths have been

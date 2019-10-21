@@ -27,10 +27,11 @@ pomo get
 `
 		var (
 			// search options
-			taskIDStr  = cmd.StringArg("ID", "", "task id")
-			parentID   = cmd.IntOpt("p parent", int(cfg.CurrentRoot), "show tasks below the specified parent")
-			strFilters = cmd.StringsOpt("m message", []string{}, "string filters")
-			tagFilters = cmd.StringsOpt("t tag", []string{}, "tag filters")
+			taskIDStr    = cmd.StringArg("ID", "", "task id")
+			parentID     = cmd.IntOpt("p parent", int(cfg.CurrentRoot), "show tasks below the specified parent")
+			strFilters   = cmd.StringsOpt("m message", []string{}, "string filters")
+			tagFilters   = cmd.StringsOpt("t tag", []string{}, "tag filters")
+			notesFilters = cmd.StringsOpt("n note", []string{}, "note filters")
 			// display options
 			//flatten       = cmd.BoolOpt("f flatten", false, "flatten all projects to one level")
 			showPomodoros = cmd.BoolOpt("P pomodoros", true, "show status of each pomodoro")
@@ -70,6 +71,7 @@ pomo get
 				options := &store.SearchOptions{
 					ParentID: int64(*parentID),
 					Messages: *strFilters,
+					Notes:    *notesFilters,
 					Tags:     tgs,
 				}
 				tasks, err := db.Search(*options)
