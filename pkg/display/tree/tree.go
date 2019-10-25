@@ -79,22 +79,6 @@ func (t Tree) Write(w io.Writer, depth []bool) {
 				t.Colors.Primary.Fprintf(w, "%s\n", t.TaskTemplater(*task))
 			}
 		}
-
-		/*
-			if len(task.Pomodoros) > 0 && t.ShowPomodoros {
-				t.fill(w, depth)
-				if last {
-					fmt.Fprint(w, emptySpace)
-				} else {
-					t.Colors.Primary.Fprintf(w, continueItem)
-				}
-				// fmt.Fprintf(w, "%s*", format.TruncDuration(task.Duration))
-				for _, p := range task.Pomodoros {
-					fmt.Fprintf(w, "%s", p.Info(task.Duration))
-				}
-				fmt.Fprintf(w, "\n")
-			}
-		*/
 		next := Tree{
 			Task:          *task,
 			Colors:        t.Colors,

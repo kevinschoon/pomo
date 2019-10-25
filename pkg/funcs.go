@@ -137,7 +137,8 @@ func PercentComplete(task Task) float64 {
 
 // Complete determines if the task is completed
 func Complete(task Task) bool {
-	return PercentComplete(task) == 100
+	// return PercentComplete(task) == 100
+	return TimeRunning(task) >= TotalDuration(task)
 }
 
 func Depth(task Task) int {
