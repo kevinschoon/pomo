@@ -6,6 +6,20 @@ import (
 	"github.com/bcicen/color"
 )
 
+func DefaultColors() *Colors {
+	return &Colors{
+		ConfigSrc: ConfigSrc{
+			PrimaryStr:   "#FF6985",
+			SecondaryStr: "#FFEC42",
+			TertiaryStr:  "#7FE9A2",
+			Tags:         make(map[string]TagPair),
+		},
+		Primary:   color.MustNewHex("#FF6985"),
+		Secondary: color.MustNewHex("#FFEC42"),
+		Tertiary:  color.MustNewHex("#7FE9A2"),
+	}
+}
+
 // TagPair describes the color configuration
 // of a particular tag
 type TagPair struct {
@@ -46,24 +60,18 @@ func (t *TagPair) UnmarshalJSON(raw []byte) error {
 
 // Colors defines configurable colors for the Pomodoro CLI
 type Colors struct {
-	// color of progress below 50%
-	Primary color.Color
-	primary string
-	//  color of progress above 50%
-	Secondary color.Color
-	secondary string
-	// color of progress at 100%
-	Tertiary color.Color
-	tertiary string
-	// map of tag key/value pair to colors
-	Tags map[string]TagPair
+	ConfigSrc
+
+	Primary   *color.Color
+	Secondary *color.Color
+	Tertiary  *color.Color
 }
 
-type colorsJSON struct {
-	Primary   string             `json:"primary"`
-	Secondary string             `json:"secondary"`
-	Tertiary  string             `json:"tertiary"`
-	Tags      map[string]TagPair `json:"tags"`
+type ConfigSrc struct {
+	PrimaryStr   string             `json:"primary"`   // color of progress below 50%
+	SecondaryStr string             `json:"secondary"` // color of progress above 50%
+	TertiaryStr  string             `json:"tertiary"`  // color of progress at 100%
+	Tags         map[string]TagPair `json:"tags"`      // map of tag key/value pair to colors
 }
 
 // Get returns the color for a tag key/value pair
@@ -78,40 +86,33 @@ func (c Colors) Get(key, value string) color.Color {
 
 // MarshalJSON marshals underlying tags
 func (c *Colors) MarshalJSON() ([]byte, error) {
-	cfg := &colorsJSON{
-		Primary:   c.primary,
-		Secondary: c.secondary,
-		Tertiary:  c.tertiary,
-		Tags:      c.Tags,
-	}
-	return json.Marshal(cfg)
+	return json.Marshal(&c.ConfigSrc)
 }
 
 // UnmarshalJSON returns a resolved ColorMap as JSON
 func (c *Colors) UnmarshalJSON(raw []byte) error {
-	cfg := &colorsJSON{}
-	err := json.Unmarshal(raw, cfg)
+	var cfg ConfigSrc
+	var err error
+
+	err = json.Unmarshal(raw, &cfg)
 	if err != nil {
 		return err
 	}
-	c.Tags = cfg.Tags
-	primary, err := color.NewHex(cfg.Primary)
+
+	c.ConfigSrc = cfg
+
+	c.Primary, err = color.NewHex(c.PrimaryStr)
 	if err != nil {
 		return err
 	}
-	c.Primary = *primary
-	c.primary = cfg.Primary
-	secondary, err := color.NewHex(cfg.Secondary)
+	c.Secondary, err = color.NewHex(c.SecondaryStr)
 	if err != nil {
 		return err
 	}
-	c.Secondary = *secondary
-	c.secondary = cfg.Secondary
-	tertiary, err := color.NewHex(cfg.Tertiary)
+	c.Tertiary, err = color.NewHex(c.TertiaryStr)
 	if err != nil {
 		return err
 	}
-	c.Tertiary = *tertiary
-	c.tertiary = cfg.Tertiary
+
 	return nil
 }
