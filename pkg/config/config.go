@@ -80,13 +80,17 @@ func (c *Config) UnmarshalJSON(raw []byte) error {
 	if err != nil {
 		return err
 	}
-	c.Colors = cfg.Colors
-	c.CurrentProject = cfg.CurrentProject
-	c.JSON = cfg.JSON
-	c.SocketPath = cfg.SocketPath
-	c.IconPath = cfg.IconPath
-	c.CurrentRoot = cfg.CurrentRoot
-	c.Snapshots = cfg.Snapshots
+
+	// conditionally set fields from JSON
+	if cfg.Colors != nil {
+		c.Colors = cfg.Colors
+	}
+	if cfg.SocketPath != "" {
+		c.SocketPath = cfg.SocketPath
+	}
+	if cfg.IconPath != "" {
+		c.IconPath = cfg.IconPath
+	}
 	if cfg.DefaultDuration != "" {
 		d, err := time.ParseDuration(cfg.DefaultDuration)
 		if err != nil {
@@ -96,19 +100,25 @@ func (c *Config) UnmarshalJSON(raw []byte) error {
 	} else {
 		c.DefaultDuration = 50 * time.Minute
 	}
+
+	c.CurrentRoot = cfg.CurrentRoot
+	c.Snapshots = cfg.Snapshots
+	c.CurrentProject = cfg.CurrentProject
+	c.JSON = cfg.JSON
 	c.DefaultPomodoros = cfg.DefaultPomodoros
+
 	return nil
 }
 
 // DefaultConfig returns the default Pomo configuration
 func DefaultConfig() *Config {
 	sharePath := DefaultSharePath()
-	editor := DefaultEditor()
 	return &Config{
+		Colors:           color.DefaultColors(),
 		DBPath:           path.Join(sharePath, "/pomo.db"),
 		SocketPath:       path.Join(sharePath, "/pomo.sock"),
 		IconPath:         path.Join(sharePath, "/pomo.png"),
-		Editor:           editor,
+		Editor:           DefaultEditor(),
 		Snapshots:        10,
 		DefaultDuration:  50 * time.Minute,
 		DefaultPomodoros: 3,
@@ -188,5 +198,6 @@ func Load(configPath string, config *Config) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
