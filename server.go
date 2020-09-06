@@ -43,7 +43,7 @@ func (s *Server) Stop() {
 
 func NewServer(runner *TaskRunner, config *Config) (*Server, error) {
 	//check if socket file exists
-	if _, err := os.Stat(config.SocketPath); os.IsExist(err) {
+	if _, err := os.Stat(config.SocketPath); err == nil {
 		_, err := net.Dial("unix", config.SocketPath)
 		//if error then sock file was saved after crash
 		if err != nil {
