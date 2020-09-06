@@ -1,5 +1,7 @@
 module github.com/kevinschoon/pomo
 
+go 1.15
+
 require (
 	github.com/0xAX/notificator v0.0.0-20181105090803-d81462e38c21
 	github.com/fatih/color v1.7.0

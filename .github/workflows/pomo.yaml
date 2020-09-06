@@ -1,0 +1,26 @@
+name: pomo
+
+on: ["push"]
+
+jobs:
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: setup go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.14
+      id: go
+
+    - name: check out
+      uses: actions/checkout@v2
+
+    - name: dependencies
+      run: |
+        go get -v -t -d ./...
+
+    - name: build
+      run: make
