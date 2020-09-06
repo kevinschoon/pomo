@@ -2,7 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net"
+	"os"
 )
 
 // Server listens on a Unix domain socket
@@ -39,6 +42,17 @@ func (s *Server) Stop() {
 }
 
 func NewServer(runner *TaskRunner, config *Config) (*Server, error) {
+	//check if socket file exists
+	if _, err := os.Stat(config.SocketPath); err == nil {
+		_, err := net.Dial("unix", config.SocketPath)
+		//if error then sock file was saved after crash
+		if err != nil {
+			os.Remove(config.SocketPath)
+		} else {
+			// another instance of pomo is running
+			return nil, errors.New(fmt.Sprintf("Socket %s is already in use", config.SocketPath))
+		}
+	}
 	listener, err := net.Listen("unix", config.SocketPath)
 	if err != nil {
 		return nil, err
