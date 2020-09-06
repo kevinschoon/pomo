@@ -20,6 +20,21 @@ type TaskRunner struct {
 	duration     time.Duration
 }
 
+func NewMockedTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunner, error) {
+	tr := &TaskRunner{
+		taskID:       task.ID,
+		taskMessage:  task.Message,
+		nPomodoros:   task.NPomodoros,
+		origDuration: task.Duration,
+		store:        store,
+		state:        State(0),
+		pause:        make(chan bool),
+		toggle:       make(chan bool),
+		notifier:     notifier,
+		duration:     task.Duration,
+	}
+	return tr, nil
+}
 func NewTaskRunner(task *Task, config *Config) (*TaskRunner, error) {
 	store, err := NewStore(config.DBPath)
 	if err != nil {

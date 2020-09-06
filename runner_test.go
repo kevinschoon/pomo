@@ -18,7 +18,7 @@ func TestTaskRunner(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	runner, err := NewTaskRunner(&Task{
+	runner, err := NewMockedTaskRunner(&Task{
 		Duration:   time.Second * 2,
 		NPomodoros: 2,
 		Message:    fmt.Sprint("Test Task"),
