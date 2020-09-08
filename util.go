@@ -63,12 +63,18 @@ func summerizeTasks(config *Config, tasks []*Task) {
 					fmt.Printf(" ")
 				}
 				// user specified color mapping exists
-				if color := config.Colors.Get(tag); color != nil {
-					color.Printf("%s", tag)
+				if config.Colors != nil {
+					if color := config.Colors.Get(tag); color != nil {
+						color.Printf("%s", tag)
+					} else {
+						// no color mapping for tag
+						fmt.Printf("%s", tag)
+					}
 				} else {
 					// no color mapping
 					fmt.Printf("%s", tag)
 				}
+
 			}
 			fmt.Printf("]")
 		}
