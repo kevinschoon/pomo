@@ -1,4 +1,4 @@
-package main
+package pomo
 
 import (
 	"fmt"
@@ -86,7 +86,7 @@ func centered(part termui.GridBufferer) *termui.Grid {
 	return grid
 }
 
-func startUI(runner *TaskRunner) {
+func StartUI(runner *TaskRunner) {
 	err := termui.Init()
 	if err != nil {
 		panic(err)
