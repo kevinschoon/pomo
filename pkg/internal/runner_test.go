@@ -1,4 +1,4 @@
-package main
+package pomo
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ func TestTaskRunner(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = initDB(store)
+	err = InitDB(store)
 	if err != nil {
 		t.Error(err)
 	}

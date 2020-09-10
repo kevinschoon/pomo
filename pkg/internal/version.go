@@ -1,3 +1,3 @@
-package main
+package pomo
 
 var Version = "undefined"

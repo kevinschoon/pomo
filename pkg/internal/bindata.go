@@ -3,7 +3,7 @@
 // tomato-icon.png
 // DO NOT EDIT!
 
-package main
+package pomo
 
 import (
 	"bytes"

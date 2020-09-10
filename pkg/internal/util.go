@@ -1,29 +1,14 @@
-package main
+package pomo
 
 import (
 	"fmt"
-	"os"
-	"os/user"
-	"path"
 	"time"
 
 	"github.com/fatih/color"
 )
 
-func maybe(err error) {
-	if err != nil {
-		fmt.Printf("Error:\n%s\n", err)
-		os.Exit(1)
-	}
-}
 
-func defaultConfigPath() string {
-	u, err := user.Current()
-	maybe(err)
-	return path.Join(u.HomeDir, "/.pomo/config.json")
-}
-
-func summerizeTasks(config *Config, tasks []*Task) {
+func SummerizeTasks(config *Config, tasks []*Task) {
 	for _, task := range tasks {
 		var start string
 		if len(task.Pomodoros) > 0 {
@@ -83,7 +68,7 @@ func summerizeTasks(config *Config, tasks []*Task) {
 	}
 }
 
-func outputStatus(status Status) {
+func OutputStatus(status Status) {
 	state := "?"
 	if status.State >= RUNNING {
 		state = string(status.State.String()[0])

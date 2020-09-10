@@ -1,4 +1,4 @@
-package main
+package pomo
 
 import (
 	"database/sql"
@@ -168,7 +168,7 @@ func (s Store) DeletePomodoros(tx *sql.Tx, taskID int) error {
 
 func (s Store) Close() error { return s.db.Close() }
 
-func initDB(db *Store) error {
+func InitDB(db *Store) error {
 	stmt := `
     CREATE TABLE task (
 	message TEXT,
