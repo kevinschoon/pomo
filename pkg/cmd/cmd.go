@@ -193,14 +193,14 @@ func list(config *pomo.Config) func(*cli.Cmd) {
 
 func _delete(config *pomo.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS] TASK_ID"
-		var taskID = cmd.IntArg("TASK_ID", -1, "task to delete")
+		cmd.Spec = "TASK_IDS..."
+		ids := cmd.IntsArg("TASK_IDS", nil, "tasks to delete")
 		cmd.Action = func() {
 			db, err := pomo.NewStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(tx *sql.Tx) error {
-				return db.DeleteTask(tx, *taskID)
+				return db.DeleteTasks(tx, *ids)
 			}))
 		}
 	}
@@ -232,8 +232,18 @@ func _config(config *pomo.Config) func(*cli.Cmd) {
 	}
 }
 
+//cli description
+func appDescription() (name string, description string) {
+	return "pomo", "Pomodoro CLI"
+}
+
+//delete command
+func deleteCommand(config *pomo.Config) (name string, description string, init cli.CmdInitializer) {
+	return "delete d", "delete a list of of stored tasks", _delete(config)
+}
+
 func Run() {
-	app := cli.App("pomo", "Pomodoro CLI")
+	app := cli.App(appDescription())
 	app.LongDesc = "Pomo helps you track what you did, how long it took you to do it, and how much effort you expect it to take."
 	app.Spec = "[OPTIONS]"
 	var (
@@ -250,7 +260,7 @@ func Run() {
 	app.Command("create c", "create a new task without starting", create(config))
 	app.Command("begin b", "begin requested pomodoro", begin(config))
 	app.Command("list l", "list historical tasks", list(config))
-	app.Command("delete d", "delete a stored task", _delete(config))
+	app.Command(deleteCommand(config))
 	app.Command("status st", "output the current status", _status(config))
 	app.Run(os.Args)
 }

@@ -2,10 +2,10 @@ package pomo
 
 import (
 	"database/sql"
+	"fmt"
+	_ "github.com/mattn/go-sqlite3"
 	"strings"
 	"time"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 // 2018-01-16 19:05:21.752851759+08:00
@@ -95,14 +95,23 @@ func (s Store) ReadTasks(tx *sql.Tx) ([]*Task, error) {
 	return tasks, nil
 }
 
-func (s Store) DeleteTask(tx *sql.Tx, taskID int) error {
-	_, err := tx.Exec("DELETE FROM task WHERE rowid = $1", &taskID)
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec("DELETE FROM pomodoro WHERE task_id = $1", &taskID)
-	if err != nil {
-		return err
+func (s Store) DeleteTasks(tx *sql.Tx, taskIds []int) error {
+	for _, id := range taskIds {
+		result, err := tx.Exec("DELETE FROM task WHERE rowid = $1", id)
+		if err != nil {
+			return err
+		}
+		effected, _ := result.RowsAffected()
+		if effected == 0 {
+			fmt.Printf("Task with id [%d] doesn't exist\n", id)
+		} else {
+			_, err = tx.Exec("DELETE FROM pomodoro WHERE task_id = $1", id)
+			if err != nil {
+				return err
+			} else {
+				fmt.Printf("Task with id [%d] was deleted\n", id)
+			}
+		}
 	}
 	return nil
 }
