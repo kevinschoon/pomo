@@ -20,7 +20,7 @@ func TestDeleteSingleTask(t *testing.T) {
 	config := &pomo.Config{DBPath: dbPath}
 	//start cli
 	app := cli.App(appDescription())
-	app.Command(deleteCommand(*config))
+	app.Command(deleteCommand(config))
 	app.Run([]string{"pomo", "delete", "1"})
 	err = store.With(func(tx *sql.Tx) error {
 		tasks, err := store.ReadTasks(tx)
@@ -47,7 +47,7 @@ func TestDeleteMultipleTasks(t *testing.T) {
 	config := &pomo.Config{DBPath: dbPath}
 	//start cli
 	app := cli.App(appDescription())
-	app.Command(deleteCommand(*config))
+	app.Command(deleteCommand(config))
 	app.Run([]string{"pomo", "delete", "1", "2"})
 	err = store.With(func(tx *sql.Tx) error {
 		tasks, err := store.ReadTasks(tx)
