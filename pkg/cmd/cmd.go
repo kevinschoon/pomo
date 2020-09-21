@@ -232,15 +232,17 @@ func _config(config *pomo.Config) func(*cli.Cmd) {
 	}
 }
 
-func Run() {
+func New(config *pomo.Config) *cli.Cli {
 	app := cli.App("pomo", "Pomodoro CLI")
 	app.LongDesc = "Pomo helps you track what you did, how long it took you to do it, and how much effort you expect it to take."
 	app.Spec = "[OPTIONS]"
 	var (
-		config = &pomo.Config{}
-		path   = app.StringOpt("p path", defaultConfigPath(), "path to the pomo config directory")
+		path = app.StringOpt("p path", defaultConfigPath(), "path to the pomo config directory")
 	)
 	app.Before = func() {
+		if config == nil {
+			config = &pomo.Config{}
+		}
 		maybe(pomo.LoadConfig(*path, config))
 	}
 	app.Version("v version", pomo.Version)
@@ -252,5 +254,7 @@ func Run() {
 	app.Command("list l", "list historical tasks", list(config))
 	app.Command("delete d", "delete a stored task", _delete(config))
 	app.Command("status st", "output the current status", _status(config))
-	app.Run(os.Args)
+	return app
 }
+
+func Run() { New(nil).Run(os.Args) }
