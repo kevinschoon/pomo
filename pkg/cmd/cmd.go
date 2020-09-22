@@ -240,9 +240,6 @@ func New(config *pomo.Config) *cli.Cli {
 		path = app.StringOpt("p path", defaultConfigPath(), "path to the pomo config directory")
 	)
 	app.Before = func() {
-		if config == nil {
-			config = &pomo.Config{}
-		}
 		maybe(pomo.LoadConfig(*path, config))
 	}
 	app.Version("v version", pomo.Version)
@@ -257,4 +254,4 @@ func New(config *pomo.Config) *cli.Cli {
 	return app
 }
 
-func Run() { New(nil).Run(os.Args) }
+func Run() { New(&pomo.Config{}).Run(os.Args) }
