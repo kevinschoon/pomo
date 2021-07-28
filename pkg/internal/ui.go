@@ -2,15 +2,16 @@ package pomo
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/gizak/termui"
+	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 )
 
-func render(wheel *Wheel, status *Status) termui.GridBufferer {
-	var text string
+func setContent(wheel *Wheel, status *Status, par *widgets.Paragraph) {
 	switch status.State {
 	case RUNNING:
-		text = fmt.Sprintf(
+		par.Text = fmt.Sprintf(
 			`[%d/%d] Pomodoros completed
 
 			%s %s remaining
@@ -24,15 +25,15 @@ func render(wheel *Wheel, status *Status) termui.GridBufferer {
 			status.Remaining,
 		)
 	case BREAKING:
-		text = `It is time to take a break!
+		par.Text = `It is time to take a break!
 
-		Once you are ready, press [enter] 
+		Once you are ready, press [enter]
 		to begin the next Pomodoro.
 
 		[q] - quit [p] - pause
 		`
 	case PAUSED:
-		text = `Pomo is suspended.
+		par.Text = `Pomo is suspended.
 
 		Press [p] to continue.
 
@@ -40,84 +41,77 @@ func render(wheel *Wheel, status *Status) termui.GridBufferer {
 		[q] - quit [p] - unpause
 		`
 	case COMPLETE:
-		text = `This session has concluded. 
-		
+		par.Text = `This session has concluded.
+
 		Press [q] to exit.
 
 
 		[q] - quit
 		`
 	}
-	par := termui.NewPar(text)
-	par.Height = 8
-	par.BorderLabel = fmt.Sprintf("Pomo - %s", status.State)
-	par.BorderLabelFg = termui.ColorWhite
-	par.BorderFg = termui.ColorRed
+	par.Title = fmt.Sprintf("Pomo - %s", status.State)
+	par.TitleStyle.Fg = ui.ColorWhite
+	par.BorderStyle.Fg = ui.ColorRed
 	if status.State == RUNNING {
-		par.BorderFg = termui.ColorGreen
+		par.BorderStyle.Fg = ui.ColorGreen
 	}
-	return par
-}
-
-func newBlk() termui.GridBufferer {
-	blk := termui.NewBlock()
-	blk.Height = termui.TermHeight() / 3
-	blk.Border = false
-	return blk
-}
-
-func centered(part termui.GridBufferer) *termui.Grid {
-	grid := termui.NewGrid(
-		termui.NewRow(
-			termui.NewCol(12, 0, newBlk()),
-		),
-		termui.NewRow(
-			termui.NewCol(3, 0, newBlk()),
-			termui.NewCol(6, 0, part),
-			termui.NewCol(3, 0, newBlk()),
-		),
-		termui.NewRow(
-			termui.NewCol(12, 0, newBlk()),
-		),
-	)
-	grid.BgColor = termui.ThemeAttr("bg")
-	grid.Width = termui.TermWidth()
-	grid.Align()
-	return grid
 }
 
 func StartUI(runner *TaskRunner) {
-	err := termui.Init()
+	err := ui.Init()
 	if err != nil {
 		panic(err)
 	}
+
+	ticker := time.NewTicker(250 * time.Millisecond)
+
+	defer ui.Close()
+
 	wheel := Wheel(0)
 
-	defer termui.Close()
+	par := widgets.NewParagraph()
 
-	termui.Render(centered(render(&wheel, runner.Status())))
+	resize := func() {
+		termWidth, termHeight := ui.TerminalDimensions()
 
-	termui.Handle("/timer/1s", func(termui.Event) {
-		termui.Render(centered(render(&wheel, runner.Status())))
-	})
+		x1 := (termWidth - 50) / 2
+		x2 := x1 + 50
+		y1 := (termHeight - 8) / 2
+		y2 := y1 + 8
 
-	termui.Handle("/sys/wnd/resize", func(termui.Event) {
-		termui.Render(centered(render(&wheel, runner.Status())))
-	})
+		par.SetRect(x1, y1, x2, y2)
+		ui.Clear()
+	}
 
-	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
-		runner.Toggle()
-		termui.Render(centered(render(&wheel, runner.Status())))
-	})
+	render := func() {
+		setContent(&wheel, runner.Status(), par)
+		ui.Render(par)
+	}
 
-	termui.Handle("/sys/kbd/p", func(termui.Event) {
-		runner.Pause()
-		termui.Render(centered(render(&wheel, runner.Status())))
-	})
+	resize()
+	render()
 
-	termui.Handle("/sys/kbd/q", func(termui.Event) {
-		termui.StopLoop()
-	})
+	events := ui.PollEvents()
 
-	termui.Loop()
+	for {
+		select {
+		case e := <-events:
+			switch e.ID {
+			case "q", "<C-c>":
+				return
+			case "<Resize>":
+				resize()
+				render()
+			case "<Enter>":
+				runner.Toggle()
+				render()
+			case "p":
+				runner.Pause()
+				render()
+			}
+		case <-ticker.C:
+			render()
+		}
+	}
+
 }
