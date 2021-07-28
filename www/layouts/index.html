@@ -1,25 +1,15 @@
-{{ partial "header" . }}
+{{ define "main" }}
 
 <main>
-
     <div class="intro">
-
-        {{ with .Site.Params.profilePic }} <img class="profile" src="{{ . }}"> {{ end }}
-
-        <h1>{{ .Site.Title }}</h1>
-
-        <h2>{{ markdownify .Site.Params.Description }}</h2>
-
-        <div class="btn-group" role="group" aria-label="...">
-            <a class="btn btn-default" href="https://github.com/kevinschoon/pomo">github</a>
-            <a class="btn btn-default" href="https://github.com/kevinschoon/pomo/releases">releases</a>
-        </div>
-
-
+        <a href="https://github.com/kevinschoon/pomo"> <img class="tomato" src="/tomato.png" /> </a>
+        <h1> Pomo </h1>
+        <h1> Pomodoro Command Line Interface </h1>
+        <img class="demo" src="/demo.gif" />
     </div>
-
     <div class="readme">
         {{ index .Site.Data.readme "content" | markdownify }}
     </div>
-
 </main>
+
+{{ end }}

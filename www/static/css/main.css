@@ -1,109 +1,83 @@
-html,
-body {
-    height: 100%;
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
-body {
-    padding-top: 55px;
-    display: flex;
-    text-align: center;
-    flex-direction: column;
+:root {
+    --accent: #b1675d;
+	--light-gray: #eee;
+	--dark-gray: #c2c2c2;
+    --white: #f8f9fa;
+    --black: #2d2d2d;
+    --border-width: 5px;
 }
 
-main {
-    margin: auto;
-    padding: 25px;
-    flex: 1 0 auto;
-    max-width: 1200px;
+body {}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+label {
+    color: var(--black);
 }
 
-/*footer*/
-
-.copyright {
-    margin: 15px 0;
-}
-
-/*home page*/
-
-/*
 .intro {
-    transform: translateY(22vh);
-}
-*/
-
-.intro>h1 {
-    color: #212121;
-    font-size: 12vh;
+    text-align: center;
 }
 
-.intro>h2 {
-    color: #757575;
-    font-size: 3vmin;
+.tomato {
+    max-width: 20em;
 }
 
-.intro>.profile {
-    width: 10vh;
-    height: 10vh;
-    border-radius: 50%;
+.icons a {
+	text-decoration: none;
 }
 
-div.readme {
-    text-align: left !important;
-    padding-top: 50px;
+.icons svg {
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
-/*apply accent colour to links*/
-
-a:link,
-a:visited {
-    color: var(--accent);
+.content {
+    margin: auto;
+    padding-top: 5em;
 }
 
-a.icon:hover {
-    text-decoration: none;
+.readme {
+    font-size: 12px;
 }
 
-a:hover {
-    color: var(--accent) !important;
+.content h1,h2,h3,h4,h5,h6 { 
+    padding: .2em;
 }
 
-/*paginator at bottom of list view*/
-
-.pages {
-    padding: 15px 0;
+.center-splash {
+    text-align: center;
 }
 
-.pages-icon {
-    padding: 0 15px;
+.splash-image img {
+    border-radius: 2em;
 }
 
-/*list item for posts and projects*/
-
-.item {
-    padding: 10px 0;
+@media screen and (max-height: 600px) {
+	.center-splash {
+		padding-top: 10%;
+	}
 }
 
-.item-tag {
-    background-color: var(--accent);
+@media screen and (max-width: 900px) {
+	.splash-image img {
+		max-height: 250px;
+	}
 }
 
-/*navigation bar icons*/
-
-.navbar-icon {
-    font-size: 125%;
-    display: inline-block !important;
+@media screen and (min-width: 900px) {
+  .content {
+    max-width: 75% ;
+  }
 }
 
-/*coloured borders at top and bottom of the page*/
-
-.navbar.navbar-default {
-    border-top: var(--border-width) solid var(--accent);
-}
-
-footer {
-    border-bottom: var(--border-width) solid var(--accent);
-}
-
-img {
-    max-width: 100%;
-}

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>
+    {{- block "title" . -}}
+      {{ .Site.Title }}
+    {{- end }}
+    </title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/pure.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <!-- Code that all your templates share, like a header -->
+    <div class="content">
+    {{- block "main" . }}
+      <!-- The part of the page that begins to differ between templates -->
+    {{ end }}
+    </div>
+    {{- block "footer" . -}}
+    <div id="footer">
+        <small>
+        {{ now.Format "2006"}}
+        </small>
+    </div>
+    {{ end }}
+  </body>
+</html>
