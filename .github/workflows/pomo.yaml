@@ -21,6 +21,7 @@ jobs:
     - name: dependencies
       run: |
         go get -v -t -d ./...
-
+    - name: test
+      run: make test
     - name: build
       run: make
