@@ -59,6 +59,21 @@ Example:
 
 ## Integrations
 
+By default pomo will setup a Unix socket and serve it's status there.
+
+```bash
+echo | socat stdio UNIX-CONNECT:/home/kevin/.pomo/pomo.sock | jq .
+{
+  "state": 1,
+  "remaining": 1492000000000,
+  "count": 0,
+  "n_pomodoros": 4
+}
+```
+
+Alternately by setting the `publish` flag to `true` it will publish it's status
+to an existing socket.
+
 ### Status Bars
 
 The Pomo CLI can output the current state of a running task session via the `pomo status`
@@ -74,6 +89,43 @@ embed Pomo's status output in your Polybar:
 type = custom/script
 interval = 1
 exec = pomo status
+```
+
+#### [luastatus](https://github.com/shdown/luastatus)
+
+Configured this bar by setting `publish` to `true`.
+
+```lua
+widget = {
+	plugin = "unixsock",
+	opts = {
+		path = "pomo.sock",
+		timeout = 2,
+	},
+	cb = function(t)
+		local full_text
+		local foreground = ""
+		local background = ""
+		if t.what == "line" then
+			if string.match(t.line, "R") then
+				-- green
+				foreground = "#ffffff"
+				background = "#307335"
+			end
+			if string.match(t.line, "B") or string.match(t.line, "P") or string.match(t.line, "C") then
+				-- red
+				foreground = "#ffffff"
+				background = "ff8080"
+			end
+			return { full_text = t.line, background = background, foreground = foreground }
+		elseif t.what == "timeout" then
+			return { full_text = "-" }
+		elseif t.what == "hello" then
+			return { full_text = "-" }
+		end
+	end,
+}
+
 ```
 
 

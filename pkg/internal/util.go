@@ -68,14 +68,14 @@ func SummerizeTasks(config *Config, tasks []*Task) {
 	}
 }
 
-func OutputStatus(status Status) {
+func FormatStatus(status Status) string {
 	state := "?"
 	if status.State >= RUNNING {
 		state = string(status.State.String()[0])
 	}
 	if status.State == RUNNING {
-		fmt.Printf("%s [%d/%d] %s", state, status.Count, status.NPomodoros, status.Remaining)
+		return fmt.Sprintf("%s [%d/%d] %s", state, status.Count, status.NPomodoros, status.Remaining)
 	} else {
-		fmt.Printf("%s [%d/%d] -", state, status.Count, status.NPomodoros)
+		return fmt.Sprintf("%s [%d/%d] -", state, status.Count, status.NPomodoros)
 	}
 }

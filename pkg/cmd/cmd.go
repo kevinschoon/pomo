@@ -212,13 +212,13 @@ func _status(config *pomo.Config) func(*cli.Cmd) {
 		cmd.Action = func() {
 			client, err := pomo.NewClient(config.SocketPath)
 			if err != nil {
-				pomo.OutputStatus(pomo.Status{})
+				fmt.Println(pomo.FormatStatus(pomo.Status{}))
 				return
 			}
 			defer client.Close()
 			status, err := client.Status()
 			maybe(err)
-			pomo.OutputStatus(*status)
+			fmt.Println(pomo.FormatStatus(*status))
 		}
 	}
 }

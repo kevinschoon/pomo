@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 )
 
 // Server listens on a Unix domain socket
 // for Pomo status requests
 type Server struct {
-	listener net.Listener
-	runner   *TaskRunner
-	running  bool
+	listener    net.Listener
+	runner      *TaskRunner
+	running     bool
+	publish     bool
+	publishJson bool
+	socketPath  string
 }
 
 func (s *Server) listen() {
@@ -31,17 +35,50 @@ func (s *Server) listen() {
 	}
 }
 
+func (s *Server) push() {
+	ticker := time.NewTicker(1 * time.Second)
+	for s.running {
+		conn, err := net.Dial("unix", s.socketPath)
+		if err != nil {
+			<-ticker.C
+			continue
+		}
+		status := s.runner.Status()
+		if s.publishJson {
+			raw, _ := json.Marshal(status)
+			json.NewEncoder(conn).Encode(raw)
+		} else {
+			conn.Write([]byte(FormatStatus(*status) + "\n"))
+		}
+		conn.Close()
+		<-ticker.C
+	}
+}
+
 func (s *Server) Start() {
 	s.running = true
-	go s.listen()
+	if s.publish {
+		go s.push()
+	} else {
+		go s.listen()
+	}
 }
 
 func (s *Server) Stop() {
 	s.running = false
-	s.listener.Close()
+	if s.listener != nil {
+		s.listener.Close()
+	}
 }
 
 func NewServer(runner *TaskRunner, config *Config) (*Server, error) {
+	if config.Publish {
+		return &Server{
+			runner:      runner,
+			publish:     true,
+			publishJson: config.PublishJson,
+			socketPath:  config.SocketPath}, nil
+	}
 	//check if socket file exists
 	if _, err := os.Stat(config.SocketPath); err == nil {
 		_, err := net.Dial("unix", config.SocketPath)

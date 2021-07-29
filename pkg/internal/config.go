@@ -21,6 +21,12 @@ type Config struct {
 	DBPath      string    `json:"dbPath"`
 	SocketPath  string    `json:"socketPath"`
 	IconPath    string    `json:"iconPath"`
+	// Publish pushes updates to the configured
+	// SocketPath rather than listening for requests
+	Publish bool `json:"publish"`
+	// PublishJson pushes socket updates as a JSON
+	// encoded status message instead of string formatted
+	PublishJson bool `json:"publishJson"`
 }
 
 type ColorMap struct {
