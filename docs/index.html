@@ -35,15 +35,10 @@
 <li>Repeat</li>
 </ul>
 <h2 id="installation">Installation</h2>
-<h3 id="binaries">Binaries</h3>
-<p>Binaries are available for Linux and OSX platforms in the <a href="https://github.com/kevinschoon/pomo/releases">releases section</a> on github.</p>
-<h3 id="installer-script">Installer Script</h3>
-<p>A bash script to download and verify the latest release for Linux and OSX platforms can be run
-with the following command:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">curl -L -s https://kevinschoon.github.io/pomo/install.sh | bash /dev/stdin
-</code></pre></div><h3 id="source">Source</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">go get github.com/kevinschoon/pomo
-pomo -v
+<h3 id="source">Source</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">git clone git@github.com:kevinschoon/pomo.git
+cd pomo
+make
 </code></pre></div><h2 id="usage">Usage</h2>
 <p>Once <code>pomo</code> is installed you need to initialize it&rsquo;s database.</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">pomo init
