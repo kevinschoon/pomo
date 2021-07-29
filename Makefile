@@ -1,13 +1,10 @@
-DOCKER_CMD=docker run --rm -ti -w /build/pomo -v $$PWD:/build/pomo
-DOCKER_IMAGE=pomo-build
-
 VERSION ?= $(shell git describe --tags 2>/dev/null)
 ifeq "$(VERSION)" ""
 	VERSION := UNKNOWN
 endif
 
 LDFLAGS=\
-	-X github.com/kevinschoon/pomo/pkg/internal/version.Version=$(VERSION)
+	-X github.com/kevinschoon/pomo/pkg/internal.Version=$(VERSION)
 
 .PHONY: \
 	test \
@@ -22,9 +19,6 @@ default:
 bin/pomo: test
 	cd cmd/pomo && \
 	go build -ldflags '${LDFLAGS}' -o ../../$@
-
-#bindata.go: tomato-icon.png
-#	go-bindata -pkg main -o $@ $^
 
 test:
 	go test ./...
