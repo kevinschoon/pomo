@@ -18,24 +18,12 @@ The Pomodoro Technique is simple and effective:
 
 ## Installation
 
-### Binaries
-
-Binaries are available for Linux and OSX platforms in the [releases section](https://github.com/kevinschoon/pomo/releases) on github.
-
-### Installer Script
-
-A bash script to download and verify the latest release for Linux and OSX platforms can be run
-with the following command:
-
-```bash
-curl -L -s https://kevinschoon.github.io/pomo/install.sh | bash /dev/stdin
-```
-
 ### Source
 
  ```bash
- go get github.com/kevinschoon/pomo
- pomo -v
+ git clone git@github.com:kevinschoon/pomo.git
+ cd pomo
+ make
  ```
 
 ## Usage
