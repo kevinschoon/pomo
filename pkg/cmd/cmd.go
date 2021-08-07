@@ -8,6 +8,8 @@ import (
 	"os/user"
 	"path"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	cli "github.com/jawher/mow.cli"
@@ -26,6 +28,26 @@ func defaultConfigPath() string {
 	u, err := user.Current()
 	maybe(err)
 	return path.Join(u.HomeDir, "/.pomo/config.json")
+}
+
+func parseRange(arg string) (int, int, error) {
+	if strings.Contains(arg, ":") {
+		split := strings.Split(arg, ":")
+		start, err := strconv.ParseInt(split[0], 0, 64)
+		if err != nil {
+			return -1, -1, err
+		}
+		end, err := strconv.ParseInt(split[1], 0, 64)
+		if err != nil {
+			return -1, -1, err
+		}
+		return int(start), int(end), nil
+	}
+	n, err := strconv.ParseInt(arg, 0, 64)
+	if err != nil {
+		return -1, -1, err
+	}
+	return int(n), int(n), err
 }
 
 func start(config *pomo.Config) func(*cli.Cmd) {
@@ -193,14 +215,40 @@ func list(config *pomo.Config) func(*cli.Cmd) {
 
 func _delete(config *pomo.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
-		cmd.Spec = "[OPTIONS] TASK_ID"
-		var taskID = cmd.IntArg("TASK_ID", -1, "task to delete")
+		cmd.Spec = "[OPTIONS] [TASK_ID...]"
+		cmd.LongDesc = `
+delete one or more tasks by ID
+
+## Examples:
+# delete a single task
+pomo delete 1
+# delete a range of tasks (1 - 10)
+pomo delete 1:10
+# delete multiple tasks 5, 10, and 20
+pomo delete 5 10 20
+`
+		var taskIDs = cmd.StringsArg("TASK_ID", nil, "task to delete")
 		cmd.Action = func() {
+
 			db, err := pomo.NewStore(config.DBPath)
 			maybe(err)
 			defer db.Close()
 			maybe(db.With(func(tx *sql.Tx) error {
-				return db.DeleteTask(tx, *taskID)
+				for _, expr := range *taskIDs {
+					start, end, err := parseRange(expr)
+					if err != nil {
+						return err
+					}
+					for i := start; i <= end; i++ {
+						err := db.DeleteTask(tx, i)
+						if err != nil {
+							return err
+						}
+						fmt.Printf("deleted task %d\n", i)
+					}
+				}
+
+				return nil
 			}))
 		}
 	}
