@@ -126,7 +126,6 @@ func (t *TaskRunner) run() error {
 			break
 		}
 
-
 		t.notifier.Notify("Pomo", "It is time to take a break!")
 		// Reset the duration incase it
 		// was paused.
@@ -150,10 +149,10 @@ func (t *TaskRunner) Pause() {
 
 func (t *TaskRunner) Status() *Status {
 	return &Status{
-		State:      t.state,
-		Count:      t.count,
-		NPomodoros: t.nPomodoros,
-		Remaining:  t.TimeRemaining(),
-        Pauseduration: t.TimePauseDuration(),
+		State:         t.state,
+		Count:         t.count,
+		NPomodoros:    t.nPomodoros,
+		Remaining:     t.TimeRemaining(),
+		Pauseduration: t.TimePauseDuration(),
 	}
 }

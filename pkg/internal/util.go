@@ -7,7 +7,6 @@ import (
 	"github.com/fatih/color"
 )
 
-
 func SummerizeTasks(config *Config, tasks []*Task) {
 	for _, task := range tasks {
 		var start string
