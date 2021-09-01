@@ -25,13 +25,22 @@ func setContent(wheel *Wheel, status *Status, par *widgets.Paragraph) {
 			status.Remaining,
 		)
 	case BREAKING:
-		par.Text = `It is time to take a break!
 
-		Once you are ready, press [enter]
-		to begin the next Pomodoro.
+		par.Text = fmt.Sprintf(
+			`It is time to take a break!
 
-		[q] - quit [p] - pause
-		`
+
+			Once you are ready, press [Enter]
+			to begin the next Pomodoro
+
+			%s %s pause duration
+
+
+			[q] - quit [p] - pause
+			`,
+			wheel,
+			status.Pauseduration,
+		)
 	case PAUSED:
 		par.Text = `Pomo is suspended.
 
@@ -76,8 +85,15 @@ func StartUI(runner *TaskRunner) {
 
 		x1 := (termWidth - 50) / 2
 		x2 := x1 + 50
+
 		y1 := (termHeight - 8) / 2
 		y2 := y1 + 8
+
+		switch runner.state {
+		case BREAKING:
+			y1 = (termHeight - 12) / 2
+			y2 = y1 + 12
+		}
 
 		par.SetRect(x1, y1, x2, y2)
 		ui.Clear()
@@ -94,6 +110,7 @@ func StartUI(runner *TaskRunner) {
 	events := ui.PollEvents()
 
 	for {
+		laststate := runner.state
 		select {
 		case e := <-events:
 			switch e.ID {
@@ -104,12 +121,17 @@ func StartUI(runner *TaskRunner) {
 				render()
 			case "<Enter>":
 				runner.Toggle()
+				resize()
 				render()
 			case "p":
 				runner.Pause()
 				render()
 			}
 		case <-ticker.C:
+			if runner.state != laststate {
+				resize()
+				laststate = runner.state
+			}
 			render()
 		}
 	}

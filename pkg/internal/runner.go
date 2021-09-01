@@ -14,6 +14,7 @@ type TaskRunner struct {
 	state        State
 	store        *Store
 	started      time.Time
+	stopped      time.Time
 	pause        chan bool
 	toggle       chan bool
 	notifier     Notifier
@@ -63,6 +64,10 @@ func (t *TaskRunner) TimeRemaining() time.Duration {
 	return (t.duration - time.Since(t.started)).Truncate(time.Second)
 }
 
+func (t *TaskRunner) TimePauseDuration() time.Duration {
+	return (time.Since(t.stopped)).Truncate(time.Second)
+}
+
 func (t *TaskRunner) SetState(state State) {
 	t.state = state
 }
@@ -85,6 +90,7 @@ func (t *TaskRunner) run() error {
 		select {
 		case <-timer.C:
 			t.SetState(BREAKING)
+			t.stopped = time.Now()
 			t.count++
 		case <-t.toggle:
 			// Catch any toggles when we
@@ -120,6 +126,7 @@ func (t *TaskRunner) run() error {
 			break
 		}
 
+
 		t.notifier.Notify("Pomo", "It is time to take a break!")
 		// Reset the duration incase it
 		// was paused.
@@ -147,5 +154,6 @@ func (t *TaskRunner) Status() *Status {
 		Count:      t.count,
 		NPomodoros: t.nPomodoros,
 		Remaining:  t.TimeRemaining(),
+        Pauseduration: t.TimePauseDuration(),
 	}
 }
