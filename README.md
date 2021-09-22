@@ -62,7 +62,7 @@ Example:
 By default pomo will setup a Unix socket and serve it's status there.
 
 ```bash
-echo | socat stdio UNIX-CONNECT:/home/kevin/.pomo/pomo.sock | jq .
+echo | socat stdio UNIX-CONNECT:$HOME/.pomo/pomo.sock | jq .
 {
   "state": 1,
   "remaining": 1492000000000,
