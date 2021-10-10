@@ -24,6 +24,8 @@ The Pomodoro Technique is simple and effective:
  git clone git@github.com:kevinschoon/pomo.git
  cd pomo
  make
+ # copy pomo somewhere on your $PATH
+ cp bin/pomo ~/bin/
  ```
 
 ## Usage
