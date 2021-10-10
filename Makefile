@@ -12,9 +12,10 @@ LDFLAGS=\
 	pomo-build \
 	readme 
 
-default:
-	cd cmd/pomo && \
-	go install -ldflags '${LDFLAGS}'
+default: bin/pomo
+
+clean:
+	[[ -f bin/pomo ]] && rm bin/pomo || true
 
 bin/pomo: test
 	cd cmd/pomo && \
