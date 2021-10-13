@@ -2,6 +2,7 @@ package pomo
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -118,5 +119,9 @@ func LoadConfig(configPath string, config *Config) error {
 	if config.IconPath == "" {
 		config.IconPath = path.Join(config.BasePath, "/icon.png")
 	}
+	if config.Publish && (config.PublishSocketPath == "" || config.PublishSocketPath == config.SocketPath) {
+		return fmt.Errorf("'publish' option now requires 'publishSocketPath' which must not be the same as 'socketPath'")
+	}
+
 	return nil
 }
