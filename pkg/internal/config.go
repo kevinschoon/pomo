@@ -27,6 +27,8 @@ type Config struct {
 	// PublishJson pushes socket updates as a JSON
 	// encoded status message instead of string formatted
 	PublishJson bool `json:"publishJson"`
+	// If Publish is true, provide a socket path to publish to
+	PublishSocketPath string `json:"publishSocketPath"`
 }
 
 type ColorMap struct {
