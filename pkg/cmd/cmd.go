@@ -257,16 +257,28 @@ pomo delete 5 10 20
 func _status(config *pomo.Config) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		cmd.Spec = "[OPTIONS]"
+		var asJSON = cmd.BoolOpt("json", false, "output task history as JSON")
 		cmd.Action = func() {
 			client, err := pomo.NewClient(config.SocketPath)
 			if err != nil {
-				fmt.Println(pomo.FormatStatus(pomo.Status{}))
+				if *asJSON {
+					maybe(json.NewEncoder(os.Stdout).Encode(pomo.Status{}))
+				} else {
+					fmt.Println(pomo.FormatStatus(pomo.Status{}))
+				}
 				return
 			}
 			defer client.Close()
 			status, err := client.Status()
 			maybe(err)
-			fmt.Println(pomo.FormatStatus(*status))
+
+			if *asJSON {
+
+				maybe(json.NewEncoder(os.Stdout).Encode(status))
+
+			} else {
+				fmt.Println(pomo.FormatStatus(*status))
+			}
 		}
 	}
 }
