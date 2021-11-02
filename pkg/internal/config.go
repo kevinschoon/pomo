@@ -2,6 +2,7 @@ package pomo
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -27,6 +28,8 @@ type Config struct {
 	// PublishJson pushes socket updates as a JSON
 	// encoded status message instead of string formatted
 	PublishJson bool `json:"publishJson"`
+	// If Publish is true, provide a socket path to publish to
+	PublishSocketPath string `json:"publishSocketPath"`
 }
 
 type ColorMap struct {
@@ -116,5 +119,9 @@ func LoadConfig(configPath string, config *Config) error {
 	if config.IconPath == "" {
 		config.IconPath = path.Join(config.BasePath, "/icon.png")
 	}
+	if config.Publish && (config.PublishSocketPath == "" || config.PublishSocketPath == config.SocketPath) {
+		return fmt.Errorf("'publish' option now requires 'publishSocketPath' which must not be the same as 'socketPath'")
+	}
+
 	return nil
 }

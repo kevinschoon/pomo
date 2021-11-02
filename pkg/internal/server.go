@@ -12,12 +12,12 @@ import (
 // Server listens on a Unix domain socket
 // for Pomo status requests
 type Server struct {
-	listener    net.Listener
-	runner      *TaskRunner
-	running     bool
-	publish     bool
-	publishJson bool
-	socketPath  string
+	listener          net.Listener
+	runner            *TaskRunner
+	running           bool
+	publish           bool
+	publishJson       bool
+	publishSocketPath string
 }
 
 func (s *Server) listen() {
@@ -38,7 +38,7 @@ func (s *Server) listen() {
 func (s *Server) push() {
 	ticker := time.NewTicker(1 * time.Second)
 	for s.running {
-		conn, err := net.Dial("unix", s.socketPath)
+		conn, err := net.Dial("unix", s.publishSocketPath)
 		if err != nil {
 			<-ticker.C
 			continue
@@ -59,9 +59,9 @@ func (s *Server) Start() {
 	s.running = true
 	if s.publish {
 		go s.push()
-	} else {
-		go s.listen()
 	}
+
+	go s.listen()
 }
 
 func (s *Server) Stop() {
@@ -72,13 +72,6 @@ func (s *Server) Stop() {
 }
 
 func NewServer(runner *TaskRunner, config *Config) (*Server, error) {
-	if config.Publish {
-		return &Server{
-			runner:      runner,
-			publish:     true,
-			publishJson: config.PublishJson,
-			socketPath:  config.SocketPath}, nil
-	}
 	//check if socket file exists
 	if _, err := os.Stat(config.SocketPath); err == nil {
 		_, err := net.Dial("unix", config.SocketPath)
@@ -94,7 +87,16 @@ func NewServer(runner *TaskRunner, config *Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Server{listener: listener, runner: runner}, nil
+
+	server := &Server{
+		listener:          listener,
+		runner:            runner,
+		publish:           config.Publish,
+		publishJson:       config.PublishJson,
+		publishSocketPath: config.PublishSocketPath,
+	}
+
+	return server, nil
 }
 
 // Client makes requests to a listening
