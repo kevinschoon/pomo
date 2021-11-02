@@ -28,6 +28,10 @@ The Pomodoro Technique is simple and effective:
  cp bin/pomo ~/bin/
  ```
 
+### Package Managers
+
+On Arch Pomo is available on the [aur](https://aur.archlinux.org/packages/pomo).
+
 ## Usage
 
 Once `pomo` is installed you need to initialize it's database.
