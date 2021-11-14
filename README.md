@@ -32,6 +32,8 @@ The Pomodoro Technique is simple and effective:
 
 On Arch Pomo is available on the [aur](https://aur.archlinux.org/packages/pomo).
 
+On macOS, `pomo` can be installed via [MacPorts](https://ports.macports.org/port/pomo/).
+
 ## Usage
 
 Once `pomo` is installed you need to initialize it's database.
