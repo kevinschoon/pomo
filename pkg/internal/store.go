@@ -123,6 +123,13 @@ func (s Store) ReadTask(tx *sql.Tx, taskID int) (*Task, error) {
 	if tags != "" {
 		task.Tags = strings.Split(tags, ",")
 	}
+	pomodoros, err := s.ReadPomodoros(tx, task.ID)
+	if err != nil {
+		return nil, err
+	}
+	for _, pomodoro := range pomodoros {
+		task.Pomodoros = append(task.Pomodoros, pomodoro)
+	}
 	return task, nil
 }
 
