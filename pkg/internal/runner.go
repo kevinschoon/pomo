@@ -42,6 +42,7 @@ func NewTaskRunner(task *Task, config *Config) (*TaskRunner, error) {
 		return nil, err
 	}
 	tr := &TaskRunner{
+		count:        len(task.Pomodoros),
 		taskID:       task.ID,
 		taskMessage:  task.Message,
 		nPomodoros:   task.NPomodoros,

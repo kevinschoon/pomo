@@ -142,11 +142,6 @@ func begin(config *pomo.Config) func(*cli.Cmd) {
 					return err
 				}
 				task = read
-				err = db.DeletePomodoros(tx, *taskId)
-				if err != nil {
-					return err
-				}
-				task.Pomodoros = []*pomo.Pomodoro{}
 				return nil
 			}))
 			runner, err := pomo.NewTaskRunner(task, config)
