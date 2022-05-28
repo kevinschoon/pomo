@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/adrg/xdg"
 	"github.com/fatih/color"
 )
 
@@ -109,15 +110,31 @@ func LoadConfig(configPath string, config *Config) error {
 	}
 	if config.BasePath == "" {
 		config.BasePath = path.Dir(configPath)
+		err := os.MkdirAll(config.BasePath, os.ModePerm)
+		if err != nil {
+			return err
+		}
 	}
 	if config.DBPath == "" {
-		config.DBPath = path.Join(config.BasePath, "/pomo.db")
+		config.DBPath = path.Join(xdg.DataHome, "pomo", "pomo.db")
+		err := os.MkdirAll(path.Dir(config.DBPath), os.ModePerm)
+		if err != nil {
+			return err
+		}
 	}
 	if config.SocketPath == "" {
-		config.SocketPath = path.Join(config.BasePath, "/pomo.sock")
+		config.SocketPath = path.Join(xdg.RuntimeDir, "pomo.sock")
+		err := os.MkdirAll(path.Dir(config.SocketPath), os.ModePerm)
+		if err != nil {
+			return err
+		}
 	}
 	if config.IconPath == "" {
-		config.IconPath = path.Join(config.BasePath, "/icon.png")
+		config.IconPath = path.Join(xdg.DataHome, "pomo", "icon.png")
+		err := os.MkdirAll(path.Dir(config.IconPath), os.ModePerm)
+		if err != nil {
+			return err
+		}
 	}
 	if config.Publish && (config.PublishSocketPath == "" || config.PublishSocketPath == config.SocketPath) {
 		return fmt.Errorf("'publish' option now requires 'publishSocketPath' which must not be the same as 'socketPath'")

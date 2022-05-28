@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/user"
 	"path"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/adrg/xdg"
 	cli "github.com/jawher/mow.cli"
 
 	pomo "github.com/kevinschoon/pomo/pkg/internal"
@@ -25,9 +25,7 @@ func maybe(err error) {
 }
 
 func defaultConfigPath() string {
-	u, err := user.Current()
-	maybe(err)
-	return path.Join(u.HomeDir, "/.pomo/config.json")
+	return path.Join(xdg.ConfigHome, "pomo", "config.json")
 }
 
 func parseRange(arg string) (int, int, error) {
