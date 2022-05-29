@@ -17,11 +17,11 @@ type TaskRunner struct {
 	stopped      time.Time
 	pause        chan bool
 	toggle       chan bool
-	notifier     Notifier
+	notifier     func(string, string) error
 	duration     time.Duration
 }
 
-func NewMockedTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunner, error) {
+func NewMockedTaskRunner(task *Task, store *Store) (*TaskRunner, error) {
 	tr := &TaskRunner{
 		taskID:       task.ID,
 		taskMessage:  task.Message,
@@ -31,7 +31,7 @@ func NewMockedTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunn
 		state:        State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
-		notifier:     notifier,
+		notifier:     NewBeepNotifier(""),
 		duration:     task.Duration,
 	}
 	return tr, nil
@@ -51,7 +51,7 @@ func NewTaskRunner(task *Task, config *Config) (*TaskRunner, error) {
 		state:        State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
-		notifier:     NewXnotifier(config.IconPath),
+		notifier:     NewBeepNotifier(config.IconPath),
 		duration:     task.Duration,
 	}
 	return tr, nil
@@ -127,7 +127,7 @@ func (t *TaskRunner) run() error {
 			break
 		}
 
-		t.notifier.Notify("Pomo", "It is time to take a break!")
+		t.notifier("Pomo", "It is time to take a break!")
 		// Reset the duration incase it
 		// was paused.
 		t.duration = t.origDuration
@@ -135,7 +135,7 @@ func (t *TaskRunner) run() error {
 		<-t.toggle
 
 	}
-	t.notifier.Notify("Pomo", "Pomo session has completed!")
+	t.notifier("Pomo", "Pomo session has completed!")
 	t.SetState(COMPLETE)
 	return nil
 }

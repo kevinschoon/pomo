@@ -6,6 +6,7 @@ require (
 	github.com/0xAX/notificator v0.0.0-20191016112426-3962a5ea8da1
 	github.com/adrg/xdg v0.4.0
 	github.com/fatih/color v1.12.0
+	github.com/gen2brain/beeep v0.0.0-20220518085355-d7852edf42fc
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/jawher/mow.cli v1.2.0
 	github.com/mattn/go-isatty v0.0.13 // indirect
