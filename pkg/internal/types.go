@@ -107,9 +107,16 @@ type Status struct {
 	NPomodoros    int           `json:"n_pomodoros"`
 }
 
-// Returns beeep notifier with iconPath set
+// Returns beeep notifier (no terminal bell) with iconPath set
 func NewBeepNotifier(iconPath string) func(string, string) error {
 	return func(title string, body string) error {
 		return beeep.Notify(title, body, iconPath)
+	}
+}
+
+// Returns beeep alerter (notifications and terminal bell) with iconPath set
+func NewBeepAlerter(iconPath string) func(string, string) error {
+	return func(title string, body string) error {
+		return beeep.Alert(title, body, iconPath)
 	}
 }

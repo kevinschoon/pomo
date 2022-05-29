@@ -17,12 +17,13 @@ const (
 
 // Config represents user preferences
 type Config struct {
-	Colors      *ColorMap `json:"colors"`
-	DateTimeFmt string    `json:"dateTimeFmt"`
-	BasePath    string    `json:"basePath"`
-	DBPath      string    `json:"dbPath"`
-	SocketPath  string    `json:"socketPath"`
-	IconPath    string    `json:"iconPath"`
+	Colors       *ColorMap `json:"colors"`
+	DateTimeFmt  string    `json:"dateTimeFmt"`
+	BasePath     string    `json:"basePath"`
+	DBPath       string    `json:"dbPath"`
+	SocketPath   string    `json:"socketPath"`
+	IconPath     string    `json:"iconPath"`
+	TerminalBell bool      `json:"terminalBell"`
 	// Publish pushes updates to the configured
 	// SocketPath rather than listening for requests
 	Publish bool `json:"publish"`

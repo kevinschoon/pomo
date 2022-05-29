@@ -41,6 +41,11 @@ func NewTaskRunner(task *Task, config *Config) (*TaskRunner, error) {
 	if err != nil {
 		return nil, err
 	}
+	Notifier := NewBeepNotifier(config.IconPath)
+	if config.TerminalBell {
+		// Notifications and terminal bell
+		Notifier = NewBeepAlerter(config.IconPath)
+	}
 	tr := &TaskRunner{
 		count:        len(task.Pomodoros),
 		taskID:       task.ID,
@@ -51,7 +56,7 @@ func NewTaskRunner(task *Task, config *Config) (*TaskRunner, error) {
 		state:        State(0),
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
-		notifier:     NewBeepNotifier(config.IconPath),
+		notifier:     Notifier,
 		duration:     task.Duration,
 	}
 	return tr, nil
