@@ -25,6 +25,9 @@ test:
 	go test ./...
 	go vet ./...
 
+install:
+	go install ./cmd/...
+
 docs: www/data/readme.json
 	cd www && hugo -d ../docs
 
