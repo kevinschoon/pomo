@@ -29,6 +29,11 @@ test:
 install:
 	go install ./cmd/...
 
+man/pomo.1: man/pomo.1.scd
+	scdoc < $< > $@
+
+manpages: man/pomo.1
+
 docs: www/data/readme.json
 	cd www && hugo -d ../docs
 

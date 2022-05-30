@@ -49,7 +49,7 @@ pomo start -t my-project "write some codes"
 
 ## Configuration
 
-Pomo has a few configuration options which can be read from a JSON file in Pomo's state directory `~/.pomo/config.json`.
+Pomo has a few configuration options which can be read from a JSON file in Pomo's config directory `~/.config/pomo/config.json`.
 
 ### colors
 
