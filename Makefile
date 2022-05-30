@@ -12,18 +12,21 @@ LDFLAGS=\
 	pomo-build \
 	readme 
 
-default: bin/pomo
+default: bin/pomo test
 
 clean:
 	[[ -f bin/pomo ]] && rm bin/pomo || true
 
-bin/pomo: test
+bin/pomo:
 	cd cmd/pomo && \
 	go build -ldflags '${LDFLAGS}' -o ../../$@
 
 test:
 	go test ./...
 	go vet ./...
+
+install:
+	go install ./cmd/...
 
 docs: www/data/readme.json
 	cd www && hugo -d ../docs
