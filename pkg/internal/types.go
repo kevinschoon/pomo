@@ -12,6 +12,8 @@ type State int
 
 func (s State) String() string {
 	switch s {
+	case CREATED:
+		return "CREATED"
 	case RUNNING:
 		return "RUNNING"
 	case BREAKING:
@@ -25,7 +27,8 @@ func (s State) String() string {
 }
 
 const (
-	RUNNING State = iota + 1
+	CREATED State = iota
+	RUNNING
 	BREAKING
 	COMPLETE
 	PAUSED

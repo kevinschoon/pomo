@@ -10,7 +10,8 @@ LDFLAGS=\
 	test \
 	docs \
 	pomo-build \
-	readme 
+	readme \
+	bin/pomo
 
 default: bin/pomo test
 

@@ -2,6 +2,7 @@ package pomo
 
 import (
 	"database/sql"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type TaskRunner struct {
 	toggle       chan bool
 	notifier     Notifier
 	duration     time.Duration
+	mu           sync.Mutex
 }
 
 func NewMockedTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunner, error) {
@@ -28,7 +30,7 @@ func NewMockedTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunn
 		nPomodoros:   task.NPomodoros,
 		origDuration: task.Duration,
 		store:        store,
-		state:        State(0),
+		state:        CREATED,
 		pause:        make(chan bool),
 		toggle:       make(chan bool),
 		notifier:     notifier,
@@ -90,7 +92,6 @@ func (t *TaskRunner) run() error {
 	loop:
 		select {
 		case <-timer.C:
-			t.SetState(BREAKING)
 			t.stopped = time.Now()
 			t.count++
 		case <-t.toggle:
@@ -126,7 +127,7 @@ func (t *TaskRunner) run() error {
 		if t.count == t.nPomodoros {
 			break
 		}
-
+		t.SetState(BREAKING)
 		t.notifier.Notify("Pomo", "It is time to take a break!")
 		// Reset the duration incase it
 		// was paused.
@@ -141,11 +142,19 @@ func (t *TaskRunner) run() error {
 }
 
 func (t *TaskRunner) Toggle() {
-	t.toggle <- true
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.state == BREAKING {
+		t.toggle <- true
+	}
 }
 
 func (t *TaskRunner) Pause() {
-	t.pause <- true
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.state == PAUSED || t.state == RUNNING {
+		t.pause <- true
+	}
 }
 
 func (t *TaskRunner) Status() *Status {

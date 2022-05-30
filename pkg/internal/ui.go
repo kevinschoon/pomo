@@ -29,14 +29,13 @@ func setContent(wheel *Wheel, status *Status, par *widgets.Paragraph) {
 		par.Text = fmt.Sprintf(
 			`It is time to take a break!
 
-
 			Once you are ready, press [Enter]
 			to begin the next Pomodoro
 
-			%s %s pause duration
+			%s %s break duration
 
 
-			[q] - quit [p] - pause
+			[q] - quit
 			`,
 			wheel,
 			status.Pauseduration,
