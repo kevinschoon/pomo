@@ -74,7 +74,6 @@ The new state will be exported as an environment variable `POMO_STATE` for this
 command.  Possible state values are `RUNNING`, `PAUSED`, `BREAKING`, or
 `COMPLETE`.
 
-
 For example, to trigger a terminal bell when a session completes, add the
 following to `config.json`:
 ```json

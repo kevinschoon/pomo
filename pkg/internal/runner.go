@@ -78,15 +78,29 @@ func (t *TaskRunner) TimePauseDuration() time.Duration {
 
 func (t *TaskRunner) SetState(state State) {
 	t.state = state
+	// execute onEvent command if variable is set
+	if t.onEvent != nil {
+		t.runOnEvent()
+	}
 }
 
 // execute script command specified by `onEvent` on state change
-func (t *TaskRunner) OnEvent() error {
-	app, args := t.onEvent[0], t.onEvent[1:len(t.onEvent)]
-	cmd := exec.Command(app, args...)
+func (t *TaskRunner) runOnEvent() error {
+	var cmd *exec.Cmd
+	// parse command arguments
+	numArgs := len(t.onEvent)
+	app := t.onEvent[0]
+	if numArgs > 1 {
+		args := t.onEvent[1:(numArgs + 1)]
+		cmd = exec.Command(app, args...)
+	} else {
+		cmd = exec.Command(app)
+	}
+	// set state in command environment
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("POMO_STATE=%s", t.state),
 	)
+	// run command
 	err := cmd.Run()
 	if err != nil {
 		return err
@@ -104,8 +118,6 @@ func (t *TaskRunner) run() error {
 		pomodoro.Start = time.Now()
 		// Set state to RUNNIN
 		t.SetState(RUNNING)
-		// Execute onEvent command
-		t.OnEvent()
 		// Create a new timer
 		timer := time.NewTimer(t.duration)
 		// Record our started time
@@ -125,8 +137,6 @@ func (t *TaskRunner) run() error {
 			remaining := t.TimeRemaining()
 			// Change state to PAUSED
 			t.SetState(PAUSED)
-			// Execute onEvent command
-			t.OnEvent()
 			// Wait for the user to press [p]
 			<-t.pause
 			// Resume the timer with previous
@@ -137,8 +147,6 @@ func (t *TaskRunner) run() error {
 			t.duration = remaining
 			// Restore state to RUNNING
 			t.SetState(RUNNING)
-			// Execute onEvent command
-			t.OnEvent()
 			goto loop
 		}
 		pomodoro.End = time.Now()
@@ -153,8 +161,6 @@ func (t *TaskRunner) run() error {
 			break
 		}
 		t.SetState(BREAKING)
-		// Execute onEvent command
-		t.OnEvent()
 		t.notifier.Notify("Pomo", "It is time to take a break!")
 		// Reset the duration incase it
 		// was paused.
@@ -165,8 +171,6 @@ func (t *TaskRunner) run() error {
 	}
 	t.notifier.Notify("Pomo", "Pomo session has completed!")
 	t.SetState(COMPLETE)
-	// Execute onEvent command
-	t.OnEvent()
 	return nil
 }
 
