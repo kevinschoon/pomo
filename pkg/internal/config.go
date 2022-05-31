@@ -23,6 +23,7 @@ type Config struct {
 	DBPath      string    `json:"dbPath"`
 	SocketPath  string    `json:"socketPath"`
 	IconPath    string    `json:"iconPath"`
+	OnEvent     []string  `json:"onEvent"`
 	// Publish pushes updates to the configured
 	// SocketPath rather than listening for requests
 	Publish bool `json:"publish"`

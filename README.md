@@ -65,6 +65,27 @@ Example:
 }
 ```
 
+### Execute command on state change
+
+Pomo will execute the command specified in the array argument `onEvent` when the
+state changes.  The new state will be exported as an environment variable
+`POMO_STATE` for this command.  For example, to trigger a terminal bell when a
+session complete, add the following to `config.json`
+```
+...
+"onEvent": ["/bin/sh", "/path/to/script/my_script.sh"]
+...
+```
+where the contents of `my_script.sh` are
+```
+#!/bin/sh
+
+if [ "$POMO_STATE" == "COMPLETE" ] ; then
+   echo -e '\a'
+fi
+```
+Possible state values are `RUNNING`, `PAUSED`, `BREAKING`, or `COMPLETE`.
+
 ## Integrations
 
 By default pomo will setup a Unix socket and serve it's status there.
