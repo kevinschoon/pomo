@@ -1,0 +1,5 @@
+#!/bin/sh
+
+if [ "$POMO_STATE" == "BREAKING" ] ; then
+    swaynag -m "It's time to take a break!"
+fi

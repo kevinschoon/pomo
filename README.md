@@ -90,6 +90,8 @@ if [ "$POMO_STATE" == "COMPLETE" ] ; then
 fi
 ```
 
+See the `contrib` directory for user contributed scripts for use with `onEvent`.
+
 ## Integrations
 
 By default pomo will setup a Unix socket and serve it's status there.
