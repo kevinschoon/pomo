@@ -105,6 +105,8 @@ func (p Pomodoro) Duration() time.Duration {
 // Status is used to communicate the state
 // of a running Pomodoro session
 type Status struct {
+	TaskID        int           `json:"task_id"`
+	TaskMessage   string        `json:"task_message"`
 	State         State         `json:"state"`
 	Remaining     time.Duration `json:"remaining"`
 	Pauseduration time.Duration `json:"pauseduration"`

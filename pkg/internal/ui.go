@@ -14,6 +14,8 @@ func setContent(wheel *Wheel, status *Status, par *widgets.Paragraph) {
 		par.Text = fmt.Sprintf(
 			`[%d/%d] Pomodoros completed
 
+			Current Task: %s
+
 			%s %s remaining
 
 
@@ -21,6 +23,7 @@ func setContent(wheel *Wheel, status *Status, par *widgets.Paragraph) {
 			`,
 			status.Count,
 			status.NPomodoros,
+			status.TaskMessage,
 			wheel,
 			status.Remaining,
 		)
@@ -41,13 +44,17 @@ func setContent(wheel *Wheel, status *Status, par *widgets.Paragraph) {
 			status.Pauseduration,
 		)
 	case PAUSED:
-		par.Text = `Pomo is suspended.
+		par.Text = fmt.Sprintf(`Pomo is suspended.
+			
+			Current Task: %s
 
-		Press [p] to continue.
-
-
-		[q] - quit [p] - unpause
-		`
+			Press [p] to continue.
+	
+	
+			[q] - quit [p] - unpause
+			`,
+			status.TaskMessage,
+		)
 	case COMPLETE:
 		par.Text = `This session has concluded.
 
@@ -82,16 +89,20 @@ func StartUI(runner *TaskRunner) {
 	resize := func() {
 		termWidth, termHeight := ui.TerminalDimensions()
 
+		// for RUNNING and PAUSED states
 		x1 := (termWidth - 50) / 2
 		x2 := x1 + 50
 
-		y1 := (termHeight - 8) / 2
-		y2 := y1 + 8
+		y1 := (termHeight - 10) / 2
+		y2 := y1 + 10
 
 		switch runner.state {
 		case BREAKING:
-			y1 = (termHeight - 12) / 2
-			y2 = y1 + 12
+			y1 = (termHeight - 11) / 2
+			y2 = y1 + 11
+		case COMPLETE:
+			y1 = (termHeight - 8) / 2
+			y2 = y1 + 8
 		}
 
 		par.SetRect(x1, y1, x2, y2)
