@@ -2,6 +2,9 @@ package pomo
 
 import (
 	"database/sql"
+	"fmt"
+	"os"
+	"os/exec"
 	"sync"
 	"time"
 )
@@ -21,6 +24,7 @@ type TaskRunner struct {
 	notifier     Notifier
 	duration     time.Duration
 	mu           sync.Mutex
+	onEvent      []string
 }
 
 func NewMockedTaskRunner(task *Task, store *Store, notifier Notifier) (*TaskRunner, error) {
@@ -55,6 +59,7 @@ func NewTaskRunner(task *Task, config *Config) (*TaskRunner, error) {
 		toggle:       make(chan bool),
 		notifier:     NewXnotifier(config.IconPath),
 		duration:     task.Duration,
+		onEvent:      config.OnEvent,
 	}
 	return tr, nil
 }
@@ -73,6 +78,34 @@ func (t *TaskRunner) TimePauseDuration() time.Duration {
 
 func (t *TaskRunner) SetState(state State) {
 	t.state = state
+	// execute onEvent command if variable is set
+	if t.onEvent != nil {
+		go t.runOnEvent()
+	}
+}
+
+// execute script command specified by `onEvent` on state change
+func (t *TaskRunner) runOnEvent() error {
+	var cmd *exec.Cmd
+	// parse command arguments
+	numArgs := len(t.onEvent)
+	app := t.onEvent[0]
+	if numArgs > 1 {
+		args := t.onEvent[1:(numArgs + 1)]
+		cmd = exec.Command(app, args...)
+	} else {
+		cmd = exec.Command(app)
+	}
+	// set state in command environment
+	cmd.Env = append(os.Environ(),
+		fmt.Sprintf("POMO_STATE=%s", t.state),
+	)
+	// run command
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t *TaskRunner) run() error {
