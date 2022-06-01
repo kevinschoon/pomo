@@ -80,7 +80,7 @@ func (t *TaskRunner) SetState(state State) {
 	t.state = state
 	// execute onEvent command if variable is set
 	if t.onEvent != nil {
-		t.runOnEvent()
+		go t.runOnEvent()
 	}
 }
 
