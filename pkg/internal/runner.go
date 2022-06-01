@@ -192,6 +192,8 @@ func (t *TaskRunner) Pause() {
 
 func (t *TaskRunner) Status() *Status {
 	return &Status{
+		TaskID:        t.taskID,
+		TaskMessage:   t.taskMessage,
 		State:         t.state,
 		Count:         t.count,
 		NPomodoros:    t.nPomodoros,
