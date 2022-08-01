@@ -1,5 +1,9 @@
 <p align="center"><img src="https://raw.githubusercontent.com/kevinschoon/pomo/master/www/static/demo.gif" alt="demo"/></p>
 
+# Migration Notice
+
+### This project has been migrated to [codeberg](https://codeberg.org/kevinschoon/pomo), new contributions will only be accepted on that platform.
+
 # 🍅 pomo
 
 ![pomo](https://github.com/kevinschoon/pomo/workflows/pomo/badge.svg)
